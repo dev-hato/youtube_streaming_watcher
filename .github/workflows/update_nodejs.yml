@@ -1,0 +1,177 @@
+---
+name: update-nodejs
+
+on:
+  pull_request:
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get Node.js version
+        id: get_node_version
+        run: |
+          image_name=youtube_streaming_watcher_app
+          docker build -t "${image_name}" -f docker/app/Dockerfile .
+          DOCKER_CMD="node --version && npm --version"
+          mapfile -t result < <(docker run ${image_name} sh -c "${DOCKER_CMD}")
+          node_version="${result[0]//v/}"
+          npm_version=${result[1]}
+          echo "Node.js version:" "${node_version}"
+          echo "npm version:" "${npm_version}"
+          echo "::set-output name=node_version::${node_version}"
+          echo "::set-output name=npm_version::${npm_version}"
+      - name: Update versions
+        run: |
+          NODE_VERSION="${{steps.get_node_version.outputs.node_version}}"
+          NPM_VERSION="${{steps.get_node_version.outputs.npm_version}}"
+          echo "${NODE_VERSION}" > .node-version
+          NODE_PATTERN="s/\"node\": \".*\"/\"node\": \"^${NODE_VERSION}\"/g"
+          sed -i -e "${NODE_PATTERN}" package.json
+          NPM_PATTERN="s/\"npm\": \".*\"/\"npm\": \"^${NPM_VERSION}\"/g"
+          sed -i -e "${NPM_PATTERN}" package.json
+      # 差分があったときは差分を出力する
+      - name: Show diff
+        id: diff
+        run: |
+          result=$(git diff)
+          echo "::set-output name=result::$result"
+      - run: |
+          REPO_NAME="${{ github.event.pull_request.head.repo.full_name }}"
+          echo "REPO_NAME=${REPO_NAME}" >> "${GITHUB_ENV}"
+      # 差分があったときは、コミットを作りpushする
+      - name: Push
+        env:
+          HEAD_REF: ${{github.event.pull_request.head.ref}}
+        if: ${{ env.REPO_NAME == github.repository
+          && steps.diff.outputs.result != '' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "${EMAIL}"
+          git add -u
+          git commit -m "update node"
+          REPO_URL="https://"
+          REPO_URL+="${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/"
+          REPO_URL+="${{github.repository}}.git"
+          GITHUB_HEAD="HEAD:refs/heads/fix-version-${HEAD_REF}"
+          git push -f "${REPO_URL}" "${GITHUB_HEAD}"
+      - name: Get PullRequests
+        uses: actions/github-script@v5
+        env:
+          HEAD_REF: ${{github.event.pull_request.head.ref}}
+        if: ${{ env.REPO_NAME == github.repository
+          && steps.diff.outputs.result != '' }}
+        id: get_pull_requests
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const HEAD_REF = process.env["HEAD_REF"]
+            const pulls_list_params = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: "massongit:fix-version-" + HEAD_REF,
+              base: HEAD_REF,
+              state: "open"
+            }
+            console.log("call pulls.list:", pulls_list_params)
+            const pulls = await github.paginate(github.rest.pulls.list,
+                                                pulls_list_params)
+            return pulls.length
+      # pushしたブランチでPRを作る
+      - name: Create PullRequest
+        uses: actions/github-script@v5
+        env:
+          HEAD_REF: ${{github.event.pull_request.head.ref}}
+        if: ${{ env.REPO_NAME == github.repository
+          && steps.diff.outputs.result != ''
+          && steps.get_pull_requests.outputs.result == 0 }}
+        id: create_pull_request
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const HEAD_REF = process.env["HEAD_REF"]
+            const number = "#${{github.event.pull_request.number}}"
+            let title = "nodeアップデート "
+            title += number
+            const pulls_create_params = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: "massongit:fix-version-" + HEAD_REF,
+              base: HEAD_REF,
+              title,
+              body: number + " のnodeをアップデートします。"
+            }
+            console.log("call pulls.create:", pulls_create_params)
+            const create_pull_res = await github.rest.pulls.create(
+                                      pulls_create_params
+                                    )
+            return create_pull_res.data.number
+      - name: Assign a user
+        uses: actions/github-script@v5
+        if: ${{ env.REPO_NAME == github.repository
+          && steps.diff.outputs.result != ''
+          && steps.get_pull_requests.outputs.result == 0
+          && github.event.pull_request.user.login != 'dependabot[bot]' }}
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const issues_add_assignees_params = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{steps.create_pull_request.outputs.result}},
+              assignees: ["${{github.event.pull_request.user.login}}"]
+            }
+            console.log("call issues.addAssignees:")
+            console.log(issues_add_assignees_params)
+            await github.rest.issues.addAssignees(issues_add_assignees_params)
+      # 既にformat修正のPRがある状態で、手動でformatを修正した場合、format修正のPRを閉じる
+      - name: Close PullRequest
+        uses: actions/github-script@v5
+        env:
+          HEAD_REF: ${{github.event.pull_request.head.ref}}
+        if: ${{ env.REPO_NAME == github.repository
+          && steps.diff.outputs.result == '' }}
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const HEAD_REF = process.env["HEAD_REF"]
+            const head_name = "fix-version-" + HEAD_REF
+            const common_params = {
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            }
+            const pulls_list_params = {
+              head: "massongit:" + head_name,
+              base: HEAD_REF,
+              state: "open",
+              ...common_params
+            }
+            console.log("call pulls.list:", pulls_list_params)
+            const pulls = await github.paginate(github.rest.pulls.list,
+                                                pulls_list_params)
+
+            for (const pull of pulls) {
+              const pulls_update_params = {
+                pull_number: pull.number,
+                state: "closed",
+                ...common_params
+              }
+              console.log("call pulls.update:", pulls_update_params)
+              await github.rest.pulls.update(pulls_update_params)
+              const git_deleteRef_params = {
+                ref: "heads/" + head_name,
+                ...common_params
+              }
+              console.log("call git.deleteRef:", git_deleteRef_params)
+              await github.rest.git.deleteRef(git_deleteRef_params)
+            }
+      - name: Exit
+        if: ${{ steps.diff.outputs.result != '' }}
+        run: exit 1

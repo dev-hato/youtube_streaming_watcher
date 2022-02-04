@@ -103,6 +103,7 @@ fabric.properties
 
 ### Emacs template
 # -*- mode: gitignore; -*-
+*~
 \#*\#
 /.emacs.desktop
 /.emacs.desktop.lock
@@ -284,6 +285,7 @@ Sessionx.vim
 
 # Temporary
 .netrwhist
+*~
 # Auto-generated tag files
 tags
 # Persistent undo
