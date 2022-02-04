@@ -1,6 +1,30 @@
 # YouTube streaming watcher
 
-Youtubeの配信開始通知をSlackに流すbotです。
+Youtube の配信開始通知を Slack に流す bot です。
+
+## 設定方法
+
+Slack 上で bot に対してリプライを送ることで、設定を変更できます。
+
+### 通知対象のチャンネルを追加する場合
+
+```
+@bot add https://www.youtube.com/channel/...
+```
+
+### 通知対象のチャンネルを削除する場合
+
+```
+@bot delete https://www.youtube.com/channel/...
+```
+
+## 開発方法
+
+```sh
+git clone git@github.com:massongit/youtube_streaming_watcher.git
+cd youtube_streaming_watcher
+npm install
+```
 
 ## 動かす方法
 
@@ -11,19 +35,12 @@ Youtubeの配信開始通知をSlackに流すbotです。
 
 ### ローカルで動かす方法
 
-1. [Pipenv](https://pipenv-ja.readthedocs.io/ja/translate-ja/)で仮想環境を作成します。
+1. `.env` ファイルを作成し、API のトークンや通知先の Slack チャンネルをセットします。
 
-    ```sh
-    pipenv install
-    ```
-2. `.env` ファイルを作成し、APIのトークン・キーをセットします。
+   `.env.example` をコピーして使うとよいでしょう。
 
-   `.env.example` をコピーして使うとよいでしょう
-3. `channels.py` ファイルを作成し、通知したいチャンネルのID ( `https://www.youtube.com/channel/{チャンネルID}` ) をセットします。
+2. Docker コンテナを立ち上げます。
 
-   `channels.py.example` をコピーして使うとよいでしょう
-4. スクリプトを実行します。
-
-    ```sh
-    pipenv run python main.py
-    ```
+   ```sh
+   docker-compose up
+   ```
