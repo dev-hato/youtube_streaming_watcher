@@ -22,7 +22,7 @@ async function getChannelData (
 
   if (id === undefined || id === '') {
     await postMessage(
-      `引数としてチャンネルIDかチャンネルのURLを指定してください。`,
+      '引数としてチャンネルIDかチャンネルのURLを指定してください。',
       say
     )
     return

@@ -36,7 +36,7 @@ export async function startVideoNotify (): Promise<void> {
       apiCallCnt++
 
       if (searchList.data.items) {
-        for (let searchItem of searchList.data.items) {
+        for (const searchItem of searchList.data.items) {
           if (searchItem.snippet && searchItem.id?.videoId) {
             // 動画ID
             const videoId = searchItem.id.videoId
