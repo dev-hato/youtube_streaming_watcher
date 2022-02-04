@@ -4,7 +4,7 @@
     "preinstall": "npx npm-force-resolutions",
     "start": "node dist/index.js",
     "build": "tsc",
-    "fix": "eslint --fix ./**/*.ts && prettier --write  ./**/*.ts"
+    "fix": "eslint --fix **/*.ts"
   },
   "dependencies": {
     "@slack/bolt": "^3.9.0",
@@ -18,12 +18,10 @@
     "@typescript-eslint/eslint-plugin": "^5.10.2",
     "@typescript-eslint/parser": "^5.10.2",
     "eslint": "^7.32.0",
-    "eslint-config-prettier": "^8.3.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.2.0",
-    "prettier": "2.5.1",
     "textlint": "^12.1.0",
     "textlint-rule-abbr-within-parentheses": "^1.0.2",
     "textlint-rule-footnote-order": "^1.0.3",

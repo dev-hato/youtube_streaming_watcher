@@ -313,9 +313,8 @@ Temporary Items
 .github/
 docker/
 .dockerignore
-.eslintrc.yml
+.eslint*
 .gitignore
 .node-version
-.prettier*
 docker-compose*.yml
 README.md

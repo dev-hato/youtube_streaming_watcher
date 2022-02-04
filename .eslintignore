@@ -103,6 +103,7 @@ fabric.properties
 
 ### Emacs template
 # -*- mode: gitignore; -*-
+*~
 \#*\#
 /.emacs.desktop
 /.emacs.desktop.lock
@@ -133,6 +134,7 @@ tramp
 
 # cask packages
 .cask/
+dist/
 
 # Flycheck
 flycheck_*.el
@@ -231,9 +233,11 @@ web_modules/
 
 # Next.js build output
 .next
+out
 
 # Nuxt.js build / generate output
 .nuxt
+dist
 
 # Gatsby files
 .cache/
@@ -281,6 +285,7 @@ Sessionx.vim
 
 # Temporary
 .netrwhist
+*~
 # Auto-generated tag files
 tags
 # Persistent undo
