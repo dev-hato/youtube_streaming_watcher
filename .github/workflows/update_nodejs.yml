@@ -18,7 +18,7 @@ jobs:
         id: get_node_version
         run: |
           image_name=youtube_streaming_watcher_app
-          docker build -t "${image_name}" .
+          docker build -t "${image_name}" -f docker/app/Dockerfile .
           DOCKER_CMD="node --version && npm --version"
           mapfile -t result < <(docker run ${image_name} sh -c "${DOCKER_CMD}")
           node_version="${result[0]//v/}"
