@@ -5,6 +5,7 @@ env:
 extends:
   - standard
   - eslint:recommended
+  - prettier
 parser: "@typescript-eslint/parser"
 parserOptions:
   ecmaVersion: latest
