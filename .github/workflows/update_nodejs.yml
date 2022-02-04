@@ -98,7 +98,7 @@ jobs:
           script: |
             const HEAD_REF = process.env["HEAD_REF"]
             const number = "#${{github.event.pull_request.number}}"
-            let title = "nodeアップデート"
+            let title = "nodeアップデート "
             title += number
             const pulls_create_params = {
               owner: context.repo.owner,
