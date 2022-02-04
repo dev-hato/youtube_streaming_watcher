@@ -20,6 +20,9 @@ Slack 上で bot に対してリプライを送ることで、設定を変更で
 
 ## 開発方法
 
+まず、<https://pre-commit.com/> の手順に従って `pre-commit` をインストールします。  
+これにより、[.pre-commit-config.yaml](.pre-commit-config.yaml)の設定に基づいて、コミット時にクレデンシャルが含まれていないかの検査が行われるようになります。
+
 ```sh
 git clone git@github.com:massongit/youtube_streaming_watcher.git
 cd youtube_streaming_watcher
