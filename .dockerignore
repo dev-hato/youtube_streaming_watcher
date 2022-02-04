@@ -313,7 +313,7 @@ Temporary Items
 .github/
 docker/
 .dockerignore
-.eslintrc.json
+.eslintrc.yml
 .gitignore
 .node-version
 .prettier*
