@@ -90,7 +90,7 @@ jobs:
               head: "massongit:fix-format-" + HEAD_REF,
               base: HEAD_REF,
               title,
-              body: number + " のフォーマットを修正しました。"
+              body: number + " のフォーマットを修正します。"
             }
             console.log("call pulls.create:", pulls_create_params)
             const create_pull_res = await github.rest.pulls.create(
