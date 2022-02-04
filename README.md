@@ -1,22 +1,30 @@
 # YouTube streaming watcher
 
-Youtube の配信開始通知を Slack に流す bot です。
+YouTubeの配信開始通知をSlackに流すbotです。
 
 ## 設定方法
 
-Slack 上で bot に対してリプライを送ることで、設定を変更できます。
+Slack上でbotに対してリプライを送ることで、設定を変更できます。
 
 ### 通知対象のチャンネルを追加する場合
+
+<!-- markdownlint-disable MD040 -->
 
 ```
 @bot add https://www.youtube.com/channel/...
 ```
 
+<!-- markdownlint-enable MD040 -->
+
 ### 通知対象のチャンネルを削除する場合
+
+<!-- markdownlint-disable MD040 -->
 
 ```
 @bot delete https://www.youtube.com/channel/...
 ```
+
+<!-- markdownlint-enable MD040 -->
 
 ## 開発方法
 
@@ -38,11 +46,11 @@ npm install
 
 ### ローカルで動かす方法
 
-1. `.env` ファイルを作成し、API のトークンや通知先の Slack チャンネルをセットします。
+1. `.env` ファイルを作成し、APIのトークンや通知先のSlackチャンネルをセットします。
 
    `.env.example` をコピーして使うとよいでしょう。
 
-2. Docker コンテナを立ち上げます。
+2. Dockerコンテナを立ち上げます。
 
    ```sh
    docker-compose up
