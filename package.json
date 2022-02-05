@@ -9,7 +9,7 @@
   "dependencies": {
     "@slack/bolt": "^3.9.0",
     "googleapis": "^92.0.0",
-    "pg": "^8.7.1"
+    "pg": "^8.7.3"
   },
   "devDependencies": {
     "@textlint-ja/textlint-rule-no-insert-dropping-sa": "^2.0.1",
