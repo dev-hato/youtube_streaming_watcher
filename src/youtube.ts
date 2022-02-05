@@ -1,4 +1,4 @@
-import { setTimeout } from 'timers/promises'
+import sleep from 'sleep-promise'
 import { google } from 'googleapis'
 import { postgresClient } from './db'
 import { slackApp } from './slack'
@@ -60,7 +60,7 @@ export async function startVideoNotify (): Promise<void> {
             )
             await postgresClient.query('COMMIT')
 
-            await setTimeout(1000)
+            await sleep(1000)
 
             // 配信情報
             const videoResultParams = {
@@ -74,7 +74,7 @@ export async function startVideoNotify (): Promise<void> {
             if (videoResult.data.items) {
               for (const videoItem of videoResult.data.items) {
                 if (videoItem.liveStreamingDetails?.scheduledStartTime) {
-                  await setTimeout(1000)
+                  await sleep(1000)
                   const startTime = new Date(
                     Date.parse(
                       videoItem.liveStreamingDetails.scheduledStartTime
@@ -110,7 +110,7 @@ export async function startVideoNotify (): Promise<void> {
         }
       }
 
-      await setTimeout(1000)
+      await sleep(1000)
     }
 
     // APIリクエスト1回あたりの消費ユニット数 * APIリクエスト回数 * 24時間 * 60分 * 60秒 / 1日あたりの上限ユニット数 + 1秒
@@ -120,6 +120,6 @@ export async function startVideoNotify (): Promise<void> {
       (3 * apiCallCnt * 24 * 60 * 60) / apiUnitLimitPerDay + 1
     )
     console.log(`sleep: ${sleepSeconds}s`)
-    await setTimeout(sleepSeconds * 1000)
+    await sleep(sleepSeconds * 1000)
   }
 }
