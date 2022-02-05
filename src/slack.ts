@@ -17,8 +17,8 @@ async function getChannelData (
 ): Promise<RegisteredChannel | void> {
   const id = message.text
     ?.split(' ')[2]
-    .replace('<https://www.youtube.com/channel/', '')
-    .replace('>', '')
+    .replace(/<https:\/\/www\.youtube\.com\/channel\//g, '')
+    .replace(/>/g, '')
 
   if (id === undefined || id === '') {
     await postMessage(
