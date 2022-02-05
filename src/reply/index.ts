@@ -1,10 +1,8 @@
-import { App, GenericMessageEvent, SayFn } from '@slack/bolt'
-import { postgresClient } from './db'
-
-interface RegisteredChannel {
-  id: string;
-  exist: boolean;
-}
+import { GenericMessageEvent, SayFn } from '@slack/bolt'
+import { AwsCallback, AwsEvent } from '@slack/bolt/dist/receivers/AwsLambdaReceiver'
+import { createTables, runQuery } from '../common/dynamodb'
+import { awsLambdaReceiver, slackApp } from '../common/slack'
+import { RegisteredChannel } from './types'
 
 async function postMessage (message: string, say: SayFn): Promise<void> {
   console.log('call say: ', message)
@@ -14,9 +12,8 @@ async function postMessage (message: string, say: SayFn): Promise<void> {
 async function getChannelData (
   message: GenericMessageEvent,
   say: SayFn
-): Promise<RegisteredChannel | void> {
-  const id = message.text
-    ?.split(' ')[2]
+): Promise<RegisteredChannel | undefined> {
+  const id = message.text?.split(' ')[2]
     .replace(/<https:\/\/www\.youtube\.com\/channel\//g, '')
     .replace(/>/g, '')
 
@@ -28,25 +25,21 @@ async function getChannelData (
     return
   }
 
-  const registeredChannel = await postgresClient.query(
-    'SELECT channel_id FROM channels WHERE channel_id=$1',
-    [id]
-  )
+  const registeredChannel = (await runQuery(
+    'SELECT channel_id FROM youtube_streaming_watcher_channels WHERE channel_id=?',
+    [{ S: id }]
+  ))?.Items
   return {
     id,
-    exist: registeredChannel.rowCount > 0
+    exist: registeredChannel !== undefined && registeredChannel.length > 0
   }
 }
 
-export const slackApp = new App({
-  token: process.env.SLACK_BOT_TOKEN,
-  appToken: process.env.SLACK_APP_TOKEN,
-  socketMode: true
-})
-
-export async function startSlack (): Promise<void> {
-  slackApp.message('add', async ({ message, say }) => {
-    await postgresClient.query('BEGIN')
+export function setMessageEvents () {
+  slackApp.message('add', async ({
+    message,
+    say
+  }): Promise<void> => {
     const channel = await getChannelData(message as GenericMessageEvent, say)
 
     if (channel === undefined) {
@@ -59,19 +52,20 @@ export async function startSlack (): Promise<void> {
       return
     }
 
-    await postgresClient.query(
-      'INSERT INTO channels(channel_id, created_at) VALUES($1, $2)',
-      [channel.id, new Date()]
+    await runQuery(
+      'INSERT INTO youtube_streaming_watcher_channels VALUE {\'channel_id\': ?, \'created_at\': ?}',
+      [{ S: channel.id }, { S: (new Date()).toISOString() }]
     )
-    await postgresClient.query('COMMIT')
     await postMessage(
       `このチャンネルを通知対象に追加しました: https://www.youtube.com/channel/${channel.id}`,
       say
     )
   })
 
-  slackApp.message('delete', async ({ message, say }) => {
-    await postgresClient.query('BEGIN')
+  slackApp.message('delete', async ({
+    message,
+    say
+  }): Promise<void> => {
     const channel = await getChannelData(message as GenericMessageEvent, say)
 
     if (channel === undefined) {
@@ -84,16 +78,19 @@ export async function startSlack (): Promise<void> {
       return
     }
 
-    await postgresClient.query('DELETE FROM channels WHERE channel_id=$1', [
-      channel.id
-    ])
-    await postgresClient.query('COMMIT')
+    await runQuery('DELETE FROM youtube_streaming_watcher_channels WHERE channel_id=?', [{ S: channel.id }])
     await postMessage(
       `このチャンネルを通知対象から削除しました: https://www.youtube.com/channel/${channel.id}`,
       say
     )
   })
-
-  await slackApp.start()
-  console.log('⚡️ Bolt app is running!')
 }
+
+async function handler (event: AwsEvent, context: any, callback: AwsCallback) {
+  await createTables()
+  setMessageEvents()
+  const handler = await awsLambdaReceiver.start()
+  return handler(event, context, callback)
+}
+
+exports.handler = handler

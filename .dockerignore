@@ -315,6 +315,9 @@ docker/
 .dockerignore
 .eslint*
 .gitignore
+.gitleaks.toml
 .node-version
+.pre-commit-config.yaml
 docker-compose*.yml
 README.md
+*.zip
