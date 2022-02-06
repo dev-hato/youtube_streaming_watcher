@@ -15,4 +15,4 @@ rules:
   camelcase:
     - error
     - allow:
-        - youtube_v3
+        - "youtube_v3"

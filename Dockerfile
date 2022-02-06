@@ -8,14 +8,14 @@ COPY . .
 
 FROM base AS notify
 
-RUN npm run build:dev:notify
-RUN rm -rf src/ tsconfig.json webpack*
+RUN npm run build:dev:notify \
+    && rm -rf src/ tsconfig.json webpack*
 
 CMD ["npm", "run", "start:notify"]
 
 FROM base AS reply
 
-RUN npm run build:dev:reply
-RUN rm -rf src/ tsconfig.json webpack*
+RUN npm run build:dev:reply \
+    && rm -rf src/ tsconfig.json webpack*
 
 CMD ["npm", "run", "start:reply"]

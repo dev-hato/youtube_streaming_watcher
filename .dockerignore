@@ -311,7 +311,6 @@ Temporary Items
 
 .git/
 .github/
-docker/
 .dockerignore
 .eslint*
 .gitignore
@@ -319,5 +318,6 @@ docker/
 .node-version
 .pre-commit-config.yaml
 docker-compose*.yml
+Dockerfile
 README.md
 *.zip
