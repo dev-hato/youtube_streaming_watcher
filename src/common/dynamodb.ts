@@ -65,7 +65,7 @@ export async function createTables () {
   }
 }
 
-export async function runQuery (partiQLQuery: string, parameters?: AttributeValue[]): Promise<ExecuteStatementCommandOutput | void> {
+export async function runQuery (partiQLQuery: string, parameters?: AttributeValue[]): Promise<ExecuteStatementCommandOutput | undefined> {
   const input: ExecuteStatementCommandInput = { Statement: partiQLQuery }
 
   if (parameters) {
