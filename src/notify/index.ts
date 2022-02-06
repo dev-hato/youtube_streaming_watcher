@@ -1,7 +1,7 @@
 import sleep from 'sleep-promise'
 import { AwsCallback, AwsEvent } from '@slack/bolt/dist/receivers/AwsLambdaReceiver'
 import { ChatPostMessageArguments } from '@slack/web-api'
-import { google, youtube_v3 } from 'googleapis'
+import { google, youtube_v3 } from 'googleapis' // eslint-disable-line camelcase
 import { createTables, runQuery } from '../common/dynamodb'
 import { slackApp } from '../common/slack'
 
@@ -82,7 +82,7 @@ export async function handler (event: AwsEvent, context: any, callback: AwsCallb
         await sleep(1000)
 
         // 配信情報
-        const videoResultParams: youtube_v3.Params$Resource$Videos$List = {
+        const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
           part: ['liveStreamingDetails'],
           id: [videoId]
         }

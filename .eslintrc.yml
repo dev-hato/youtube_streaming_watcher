@@ -11,8 +11,3 @@ parserOptions:
   sourceType: module
 plugins:
   - "@typescript-eslint"
-rules:
-  camelcase:
-    - error
-    - allow:
-        - "youtube_v3"
