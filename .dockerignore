@@ -311,10 +311,13 @@ Temporary Items
 
 .git/
 .github/
-docker/
 .dockerignore
 .eslint*
 .gitignore
+.gitleaks.toml
 .node-version
+.pre-commit-config.yaml
 docker-compose*.yml
+Dockerfile
 README.md
+*.zip

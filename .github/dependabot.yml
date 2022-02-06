@@ -15,7 +15,7 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 1
   - package-ecosystem: "docker"
-    directory: "/docker/app"
+    directory: "/"
     schedule:
       interval: "daily"
     ignore:
