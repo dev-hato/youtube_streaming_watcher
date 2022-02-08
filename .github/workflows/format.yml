@@ -20,6 +20,8 @@ jobs:
           npm install -g npm@7.21.0
           npm install
       - run: npm run fix
+      - run: npm run fix
+        working-directory: src/
       # 差分があったときは差分を出力する
       - name: Show diff
         id: diff

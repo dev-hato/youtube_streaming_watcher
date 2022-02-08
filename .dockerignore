@@ -283,7 +283,7 @@ $RECYCLE.BIN/
 
 ### macOS template
 # General
-.DS_Store
+src/.DS_Store
 .AppleDouble
 .LSOverride
 
@@ -309,15 +309,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-.git/
-.github/
-.dockerignore
-.eslint*
-.gitignore
-.gitleaks.toml
-.node-version
-.pre-commit-config.yaml
-docker-compose*.yml
-Dockerfile
-README.md
-*.zip
+src/.eslint*
+src/dist/
+src/youtube_streaming_watcher.zip

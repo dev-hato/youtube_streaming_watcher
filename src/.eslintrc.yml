@@ -11,5 +11,3 @@ parserOptions:
   sourceType: module
 plugins:
   - "@typescript-eslint"
-rules:
-  no-new: off

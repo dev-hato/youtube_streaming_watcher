@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/youtube_streaming_watcher.iml" filepath="$PROJECT_DIR$/youtube_streaming_watcher.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/youtube_streaming_watcher.iml" filepath="$PROJECT_DIR$/.idea/youtube_streaming_watcher.iml" />
     </modules>
   </component>
 </project>

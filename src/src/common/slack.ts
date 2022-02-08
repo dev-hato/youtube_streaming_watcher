@@ -6,7 +6,6 @@ if (process.env.SLACK_SIGNING_SECRET === undefined) {
 
 const appOptions: AppOptions = {
   token: process.env.SLACK_BOT_TOKEN,
-  signingSecret: process.env.SLACK_SIGNING_SECRET,
   processBeforeResponse: true
 }
 
@@ -14,7 +13,9 @@ export const awsLambdaReceiver = new AwsLambdaReceiver({
   signingSecret: process.env.SLACK_SIGNING_SECRET
 })
 
-if (process.env.NODE_ENV !== 'development') {
+if (process.env.NODE_ENV === 'development') {
+  appOptions.signingSecret = process.env.SLACK_SIGNING_SECRET
+} else {
   appOptions.receiver = awsLambdaReceiver
 }
 

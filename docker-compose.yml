@@ -2,7 +2,6 @@ version: "3.7"
 services:
   notify:
     build:
-      context: .
       target: notify
     env_file: .env
     depends_on:
@@ -10,7 +9,6 @@ services:
 
   reply:
     build:
-      context: .
       target: reply
     env_file: .env
     ports:

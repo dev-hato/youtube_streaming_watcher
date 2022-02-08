@@ -1,15 +1,13 @@
 import sleep from 'sleep-promise'
-import { AwsCallback, AwsEvent } from '@slack/bolt/dist/receivers/AwsLambdaReceiver'
 import { ChatPostMessageArguments } from '@slack/web-api'
 import { google, youtube_v3 } from 'googleapis' // eslint-disable-line camelcase
-import { createTables, runQuery } from '../common/dynamodb'
+import { runQuery } from '../common/dynamodb'
 import { slackApp } from '../common/slack'
 
 // Youtube Data APIの1日あたりの上限ユニット数
 const apiUnitLimitPerDay = 10000
 
-export async function handler (event: AwsEvent, context: any, callback: AwsCallback) {
-  await createTables()
+export async function handler () {
   let currentNotificationAt: string | undefined
   const currentNotificationAtItems = (await runQuery('SELECT next_notification_at FROM youtube_streaming_watcher_next_notification_times'))?.Items
 
