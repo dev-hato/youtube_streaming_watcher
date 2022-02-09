@@ -20,7 +20,7 @@ jobs:
       - name: Show diff
         id: diff
         run: |
-          result=$(cdk diff)
+          result=$(npm run cdk diff)
           echo "::set-output name=result::$result"
       - name: Comment
         uses: actions/github-script@v5
