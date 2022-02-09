@@ -7,7 +7,7 @@
     "build": "tsc",
     "watch": "tsc -w",
     "cdk": "cdk",
-    "fix": "eslint --debug --fix bin/**/*.ts lib/**/*.ts script/**/*.ts",
+    "fix": "eslint --fix bin/**/*.ts lib/**/*.ts script/**/*.ts",
     "export": "ts-node script/export-dev.ts"
   },
   "devDependencies": {
