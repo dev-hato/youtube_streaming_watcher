@@ -7,7 +7,7 @@
     "build:dev": "npm run build:dev:notify && npm run build:dev:reply",
     "build:dev:notify": "NODE_ENV=development webpack -c webpack.config.dev.notify.js",
     "build:dev:reply": "NODE_ENV=development webpack -c webpack.config.dev.reply.js",
-    "fix": "eslint --resolve-plugins-relative-to . --fix src/**/*.ts"
+    "fix": "eslint --debug --resolve-plugins-relative-to . --fix src/**/*.ts"
   },
   "files": [
     "dist/lambda"
