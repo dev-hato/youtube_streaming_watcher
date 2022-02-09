@@ -1,0 +1,35 @@
+---
+name: cdk-diff
+
+on:
+  pull_request:
+
+jobs:
+  cdk-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.4.0
+      - uses: actions/setup-node@v2.5.1
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: |
+          npm install -g npm@7.21.0
+          npm install
+      # 差分があったときは差分を出力する
+      - name: Show diff
+        id: diff
+        run: |
+          result=$(cdk diff)
+          echo "::set-output name=result::$result"
+      - name: Comment
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: 'インフラの差分\n```\n${{steps.diff.outputs.result}}\n```',
+            })
