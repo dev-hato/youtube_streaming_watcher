@@ -36,6 +36,12 @@ jobs:
       - run: |
           REPO_NAME="${{ github.event.pull_request.head.repo.full_name }}"
           echo "REPO_NAME=${REPO_NAME}" >> "${GITHUB_ENV}"
+      - name: Get branch name
+        id: get_branch_name
+        run: |
+          BRANCH_NAME="$(echo '${{ matrix.directory }}' | sed -e 's:/:-:g')"
+          BRANCH_NAME="${BRANCH_NAME//\./root}"
+          echo "::set-output name=branch_name::${BRANCH_NAME}"
       # 差分があったときは、コミットを作りpushする
       - name: Push
         env:
@@ -51,8 +57,9 @@ jobs:
           REPO_URL="https://"
           REPO_URL+="${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/"
           REPO_URL+="${{github.repository}}.git"
-          GITHUB_HEAD="HEAD:refs/heads/fix-format-${HEAD_REF}-"
-          GITHUB_HEAD+="${{ matrix.directory }}"
+          GITHUB_HEAD="HEAD:refs/heads/fix-format-"
+          GITHUB_HEAD+="${{ steps.get_branch_name.outputs.branch_name }}-"
+          GITHUB_HEAD+="${HEAD_REF}"
           git push -f "${REPO_URL}" "${GITHUB_HEAD}"
       - name: Get PullRequests
         uses: actions/github-script@v5
@@ -65,8 +72,9 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const HEAD_REF = process.env["HEAD_REF"]
-            let head = "massongit:fix-format-" + HEAD_REF
-            head += '-${{ matrix.directory }}'
+            let head = "massongit:fix-format-"
+            head += "${{ steps.get_branch_name.outputs.branch_name }}-"
+            head += HEAD_REF
             const pulls_list_params = {
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -91,8 +99,9 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const HEAD_REF = process.env["HEAD_REF"]
-            let head = "massongit:fix-format-" + HEAD_REF
-            head += '-${{ matrix.directory }}'
+            let head = "massongit:fix-format-"
+            head += "${{ steps.get_branch_name.outputs.branch_name }}-"
+            head += HEAD_REF
             const number = "#${{github.event.pull_request.number}}"
             let title = "${{ matrix.directory }} のformat修正 "
             title += number
@@ -138,8 +147,9 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const HEAD_REF = process.env["HEAD_REF"]
-            let head_name = "fix-format-" + HEAD_REF
-            head_name += '-${{ matrix.directory }}'
+            let head_name = "fix-format-"
+            head_name += "${{ steps.get_branch_name.outputs.branch_name }}-"
+            head_name += HEAD_REF
             const common_params = {
               owner: context.repo.owner,
               repo: context.repo.repo
