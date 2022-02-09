@@ -16,7 +16,8 @@ jobs:
       - run: |
           npm install -g npm@7.21.0
           npm install
-      - run: npm run export
+      - name: Export infra data to source code
+        run: npm run export
       - uses: actions/setup-node@v2.5.1
         with:
           node-version-file: src/.node-version
@@ -26,7 +27,8 @@ jobs:
           npm install -g npm@7.21.0
           npm install
         working-directory: src
-      - run: npm run build
+      - name: Build source code
+        run: npm run build
         working-directory: src
       - uses: actions/setup-node@v2.5.1
         with:
@@ -44,7 +46,7 @@ jobs:
       - name: Show diff
         id: diff
         run: |
-          result=$(npm run cdk diff)
+          result=$(npm run cdk diff 2>&1)
           echo "::set-output name=result::$result"
       - name: Comment
         uses: actions/github-script@v5
