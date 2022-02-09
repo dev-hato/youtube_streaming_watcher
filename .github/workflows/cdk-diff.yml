@@ -55,7 +55,8 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             let body = 'インフラの差分\n<details>\n\n```\n'
-            body += '${{steps.diff.outputs.result}}\n```\n\n</details>'
+            body += '${{steps.diff.outputs.result}}'.trim()
+            body += '\n```\n\n</details>'
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
