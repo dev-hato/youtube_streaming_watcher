@@ -1,9 +1,10 @@
 import fs from 'fs'
 import path from 'path'
 import { dynamoDBTableProps } from '../lib/dynamodb-table-props'
+import { rate } from '../lib/events-rule-props'
 
 function main () {
-  fs.writeFileSync(path.resolve(__dirname, '../src/schema/schema.json'), JSON.stringify(
+  fs.writeFileSync(path.resolve(__dirname, '../src/config/schema.json'), JSON.stringify(
     dynamoDBTableProps.map(tableProp => {
       const attributes = [tableProp.partitionKey]
       const keySchema = [{
@@ -35,6 +36,9 @@ function main () {
       }
     })
   ))
+  fs.writeFileSync(path.resolve(__dirname, '../src/config/config.json'), JSON.stringify({
+    eventRuleRateMilliSeconds: rate.toMilliseconds()
+  }))
 }
 
 (main)()

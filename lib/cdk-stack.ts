@@ -4,9 +4,10 @@ import * as dynamodb from '@aws-cdk/aws-dynamodb'
 import * as events from '@aws-cdk/aws-events'
 import * as targets from '@aws-cdk/aws-events-targets'
 import * as lambda from '@aws-cdk/aws-lambda'
-import * as secretmanager from '@aws-cdk/aws-secretsmanager'
 import * as logs from '@aws-cdk/aws-logs'
+import * as secretmanager from '@aws-cdk/aws-secretsmanager'
 import { dynamoDBTableProps } from './dynamodb-table-props'
+import { rate } from './events-rule-props'
 
 export class CdkStack extends cdk.Stack {
   constructor (scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -38,7 +39,7 @@ export class CdkStack extends cdk.Stack {
       })
     ]))
     new events.Rule(this, 'EventsRule-notify', {
-      schedule: events.Schedule.rate(cdk.Duration.minutes(1)),
+      schedule: events.Schedule.rate(rate),
       targets: [new targets.LambdaFunction(functionData.notify)]
     })
     new apigateway.LambdaRestApi(this, 'APIGateway-reply', {

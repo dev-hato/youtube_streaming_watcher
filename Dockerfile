@@ -9,9 +9,8 @@ COPY package*.json .
 RUN npm install
 COPY . .
 
-# DynamoDBのスキーマ定義をsrc/schema/schema.jsonへ出力
-RUN npm run build \
-    && npm run export
+# CDKの設定をsrc/config/内に出力
+RUN npm run export
 
 FROM base AS src
 

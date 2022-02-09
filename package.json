@@ -8,7 +8,7 @@
     "watch": "tsc -w",
     "cdk": "cdk",
     "fix": "eslint --fix bin/**/*.ts lib/**/*.ts script/**/*.ts",
-    "export": "node --unhandled-rejections=strict script/export-dynamodb-table-schema.dev.js"
+    "export": "ts-node script/export-dev.ts"
   },
   "devDependencies": {
     "@aws-cdk/aws-logs": "^1.143.0",

@@ -151,5 +151,3 @@ export async function handler () {
   )
   console.log('next notify at ', nextNotificationAt)
 }
-
-exports.handler = handler

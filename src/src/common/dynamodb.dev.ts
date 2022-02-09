@@ -4,7 +4,7 @@ import {
   DescribeTableCommandInput
 } from '@aws-sdk/client-dynamodb'
 import { dynamoDBClient } from './dynamodb'
-import dynamoDBTableSchema from '../../schema/schema.json'
+import dynamoDBTableSchema from '../../config/schema.json'
 
 export async function createTables () {
   for (const tableSchema of dynamoDBTableSchema) {

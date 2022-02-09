@@ -19,12 +19,5 @@ export const dynamoDBTableProps: dynamodb.TableProps[] = [
     sortKey: { name: 'video_id', type: dynamodb.AttributeType.STRING },
     readCapacity: 1,
     writeCapacity: 1
-  },
-  {
-    tableName: 'youtube_streaming_watcher_received_messages',
-    partitionKey: { name: 'channel', type: dynamodb.AttributeType.STRING },
-    sortKey: { name: 'ts', type: dynamodb.AttributeType.NUMBER },
-    readCapacity: 1,
-    writeCapacity: 1
   }
 ]

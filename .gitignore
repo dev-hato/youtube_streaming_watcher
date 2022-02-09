@@ -351,6 +351,6 @@ node_modules
 cdk.out
 
 *.zip
-src/schema/schema.json
+src/config/
 lib/**/*.js
 script/**/*.js

@@ -1,6 +1,5 @@
 import { createTables } from '../common/dynamodb.dev'
-import { slackApp } from '../common/slack'
-import { setMessageEvents } from './index'
+import { setMessageEvents, slackApp } from '../common/slack'
 
 async function devHandler () {
   await createTables()
