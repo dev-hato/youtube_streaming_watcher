@@ -38,11 +38,11 @@ export class CdkStack extends cdk.Stack {
         }
       })
     ]))
-    new events.Rule(this, 'EventsRule-notify', {
+    new events.Rule(this, 'EventsRule-notify', { // eslint-disable-line no-new
       schedule: events.Schedule.rate(rate),
       targets: [new targets.LambdaFunction(functionData.notify)]
     })
-    new apigateway.LambdaRestApi(this, 'APIGateway-reply', {
+    new apigateway.LambdaRestApi(this, 'APIGateway-reply', { // eslint-disable-line no-new
       restApiName: 'youtube_streaming_watcher_reply_api',
       handler: functionData.reply,
       deployOptions: {
