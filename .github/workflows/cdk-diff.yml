@@ -47,6 +47,7 @@ jobs:
         id: diff
         run: |
           result=$(npm run cdk diff 2>&1)
+          result="${result//$'\n'/\\n}"
           echo "::set-output name=result::$result"
       - name: Comment
         uses: actions/github-script@v5
