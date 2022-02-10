@@ -46,7 +46,7 @@ jobs:
       - name: Show diff
         id: diff
         run: |
-          result=$(npm run cdk diff 2>&1)
+          result=$(cdk diff 2>&1)
           echo "${result}"
           result="${result//$'\n'/\\n}"
           echo "::set-output name=result::$result"
