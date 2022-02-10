@@ -42,13 +42,12 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-1
-      - name: Show diff
-        run: npm run cdk diff
       # 差分があったときは差分を出力する
       - name: Show diff
         id: diff
         run: |
           result=$(npm run cdk diff 2>&1)
+          echo "${result}"
           result="${result//$'\n'/\\n}"
           echo "::set-output name=result::$result"
       - name: Comment
