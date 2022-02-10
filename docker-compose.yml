@@ -4,6 +4,10 @@ services:
     build:
       context: .
       target: notify
+      cache_from:
+        - ghcr.io/massongit/youtube_streaming_watcher/notify:${TAG_NAME}
+        - ghcr.io/massongit/youtube_streaming_watcher/notify
+    image: ghcr.io/massongit/youtube_streaming_watcher/notify:${TAG_NAME}
     env_file: .env
     depends_on:
       - db
@@ -12,6 +16,10 @@ services:
     build:
       context: .
       target: reply
+      cache_from:
+        - ghcr.io/massongit/youtube_streaming_watcher/reply:${TAG_NAME}
+        - ghcr.io/massongit/youtube_streaming_watcher/reply
+    image: ghcr.io/massongit/youtube_streaming_watcher/reply:${TAG_NAME}
     env_file: .env
     ports:
       - 3000:3000

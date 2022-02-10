@@ -48,5 +48,5 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
    Dockerイメージのビルドに失敗する場合はDockerに割り当てるメモリを増やしてみてください (3GB程度割り当てれば足りるはずです)。
 
    ```sh
-   docker-compose up
+   TAG_NAME=$(git symbolic-ref --short HEAD | sed -e "s:/:-:g") docker-compose up
    ```
