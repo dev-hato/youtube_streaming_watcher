@@ -1,3 +1,4 @@
+import * as cdk from '@aws-cdk/core'
 import * as dynamodb from '@aws-cdk/aws-dynamodb'
 
 export const dynamoDBTableProps: dynamodb.TableProps[] = [
@@ -5,19 +6,22 @@ export const dynamoDBTableProps: dynamodb.TableProps[] = [
     tableName: 'youtube_streaming_watcher_channels',
     partitionKey: { name: 'channel_id', type: dynamodb.AttributeType.STRING },
     readCapacity: 1,
-    writeCapacity: 1
+    writeCapacity: 1,
+    removalPolicy: cdk.RemovalPolicy.SNAPSHOT
   },
   {
     tableName: 'youtube_streaming_watcher_next_notification_times',
     partitionKey: { name: 'next_notification_at', type: dynamodb.AttributeType.STRING },
     readCapacity: 1,
-    writeCapacity: 1
+    writeCapacity: 1,
+    removalPolicy: cdk.RemovalPolicy.SNAPSHOT
   },
   {
     tableName: 'youtube_streaming_watcher_notified_videos',
     partitionKey: { name: 'channel_id', type: dynamodb.AttributeType.STRING },
     sortKey: { name: 'video_id', type: dynamodb.AttributeType.STRING },
     readCapacity: 1,
-    writeCapacity: 1
+    writeCapacity: 1,
+    removalPolicy: cdk.RemovalPolicy.SNAPSHOT
   }
 ]

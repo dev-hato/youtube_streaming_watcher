@@ -49,7 +49,8 @@ export class CdkStack extends cdk.Stack {
         dataTraceEnabled: true,
         accessLogDestination: new apigateway.LogGroupLogDestination(
           new logs.LogGroup(this, 'Log-apigateway_reply', {
-            logGroupName: '/aws/apigateway/youtube_streaming_watcher_reply_api/access_log'
+            logGroupName: '/aws/apigateway/youtube_streaming_watcher_reply_api/access_log',
+            removalPolicy: cdk.RemovalPolicy.SNAPSHOT
           })
         ),
         accessLogFormat: apigateway.AccessLogFormat.jsonWithStandardFields()
