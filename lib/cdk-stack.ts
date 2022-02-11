@@ -4,6 +4,7 @@ import * as dynamodb from '@aws-cdk/aws-dynamodb'
 import * as events from '@aws-cdk/aws-events'
 import * as targets from '@aws-cdk/aws-events-targets'
 import * as lambda from '@aws-cdk/aws-lambda'
+import * as lambdaNode from '@aws-cdk/aws-lambda-nodejs'
 import * as logs from '@aws-cdk/aws-logs'
 import * as secretmanager from '@aws-cdk/aws-secretsmanager'
 import { dynamoDBTableProps } from './dynamodb-table-props'
@@ -25,10 +26,9 @@ export class CdkStack extends cdk.Stack {
     )
     const functionData = Object.fromEntries(['notify', 'reply'].map(functionName => [
       functionName,
-      new lambda.Function(this, `Function-${functionName}`, {
+      new lambdaNode.NodejsFunction(this, `Function-${functionName}`, {
         functionName: `youtube_streaming_watcher_${functionName}_function`,
-        code: lambda.Code.fromAsset('src/youtube_streaming_watcher.zip'),
-        handler: `dist/lambda/${functionName}.handler`,
+        entry: `./src/src/${functionName}/index.ts`,
         runtime: lambda.Runtime.NODEJS_14_X,
         environment: {
           SLACK_BOT_TOKEN: slackSecret.secretValueFromJson('slack_bot_token').toString(),

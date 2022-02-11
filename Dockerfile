@@ -19,14 +19,8 @@ RUN npm install
 
 FROM src AS notify
 
-RUN npm run build:dev:notify \
-    && rm -rf src/ tsconfig.json webpack*
-
 CMD ["npm", "run", "start:notify"]
 
 FROM src AS reply
-
-RUN npm run build:dev:reply \
-    && rm -rf src/ tsconfig.json webpack*
 
 CMD ["npm", "run", "start:reply"]

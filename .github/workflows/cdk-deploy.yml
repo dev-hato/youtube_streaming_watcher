@@ -19,27 +19,7 @@ jobs:
       - run: |
           npm install -g npm@7.21.0
           npm install
-      - name: Export infra data to source code
-        run: npm run export
-      - uses: actions/setup-node@v2.5.1
-        with:
-          node-version-file: src/.node-version
-          cache: npm
-          cache-dependency-path: src/package-lock.json
-      - run: |
-          npm install -g npm@7.21.0
-          npm install
-        working-directory: src
-      - name: Build source code
-        run: npm run build
-        working-directory: src
-      - uses: actions/setup-node@v2.5.1
-        with:
-          node-version-file: .node-version
-          cache: npm
-      - run: |
-          npm install -g npm@7.21.0
-          npm install
+      - run: npm run export
       - uses: aws-actions/configure-aws-credentials@v1.6.1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
