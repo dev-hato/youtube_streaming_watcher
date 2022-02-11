@@ -26,11 +26,15 @@ jobs:
         id: diff
         run: |
           result=$(npx cdk diff 2>&1)
-          echo "${result}"
-          result="${result//$'\n'/\\n}"
-          echo "::set-output name=result::$result"
+          echo -e "${result}"
+          result="${result//'%'/'%25'}"
+          result="${result//$'\n'/'%0A'}"
+          result="${result//$'\r'/'%0D'}"
+          echo "::set-output name=result::${result}"
       - name: Comment
         uses: actions/github-script@v5
+        env:
+          HEAD_REF: ${{github.head_ref}}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
