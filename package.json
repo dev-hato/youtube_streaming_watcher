@@ -1,17 +1,17 @@
 {
-  "name": "youtube_streaming_watcher_cdk",
+  "name": "youtube_streaming_watcher",
   "bin": {
     "cdk": "bin/cdk.js"
   },
   "scripts": {
+    "start:notify": "NODE_ENV=development ts-node src/notify/index.dev.ts",
+    "start:reply": "NODE_ENV=development ts-node src/reply/index.dev.ts",
     "build": "tsc",
     "watch": "tsc -w",
     "cdk": "cdk",
-    "fix": "eslint --fix bin/**/*.ts lib/**/*.ts script/**/*.ts",
-    "export": "ts-node script/export-dev.ts"
+    "fix": "eslint --fix bin/**/*.ts lib/**/*.ts src/**/*.ts"
   },
   "devDependencies": {
-    "@aws-cdk/aws-logs": "^1.143.0",
     "@textlint-ja/textlint-rule-no-insert-dropping-sa": "^2.0.1",
     "@tsconfig/node14": "^1.0.1",
     "@types/node": "^17.0.15",
@@ -48,8 +48,15 @@
     "@aws-cdk/aws-events-targets": "^1.143.0",
     "@aws-cdk/aws-lambda": "^1.143.0",
     "@aws-cdk/aws-lambda-nodejs": "^1.144.0",
+    "@aws-cdk/aws-logs": "^1.143.0",
     "@aws-cdk/aws-secretsmanager": "^1.143.0",
-    "@aws-cdk/core": "^1.143.0"
+    "@aws-cdk/core": "^1.143.0",
+    "@aws-sdk/client-dynamodb": "^3.49.0",
+    "@slack/bolt": "^3.9.0",
+    "@slack/web-api": "^6.6.0",
+    "@vendia/serverless-express": "^4.5.3",
+    "googleapis": "^95.0.0",
+    "sleep-promise": "^9.1.0"
   },
   "engines": {
     "node": "^14.19.0",

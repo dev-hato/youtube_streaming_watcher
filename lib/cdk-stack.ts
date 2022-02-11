@@ -28,7 +28,7 @@ export class CdkStack extends cdk.Stack {
       functionName,
       new lambdaNode.NodejsFunction(this, `Function-${functionName}`, {
         functionName: `youtube_streaming_watcher_${functionName}_function`,
-        entry: `./src/src/${functionName}/index.ts`,
+        entry: `src/${functionName}/index.ts`,
         runtime: lambda.Runtime.NODEJS_14_X,
         environment: {
           SLACK_BOT_TOKEN: slackSecret.secretValueFromJson('slack_bot_token').toString(),

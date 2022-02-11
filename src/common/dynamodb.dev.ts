@@ -4,9 +4,40 @@ import {
   DescribeTableCommandInput
 } from '@aws-sdk/client-dynamodb'
 import { dynamoDBClient } from './dynamodb'
-import dynamoDBTableSchema from '../../config/schema.json'
+import { dynamoDBTableProps } from '../../lib/dynamodb-table-props'
 
 export async function createTables () {
+  const dynamoDBTableSchema = dynamoDBTableProps.map(tableProp => {
+    const attributes = [tableProp.partitionKey]
+    const keySchema = [{
+      AttributeName: tableProp.partitionKey.name,
+      KeyType: 'HASH'
+    }]
+
+    if (tableProp.sortKey) {
+      attributes.push(tableProp.sortKey)
+      keySchema.push({
+        AttributeName: tableProp.sortKey.name,
+        KeyType: 'RANGE'
+      })
+    }
+
+    return {
+      TableName: tableProp.tableName,
+      AttributeDefinitions: attributes.map(attribute => {
+        return {
+          AttributeName: attribute.name,
+          AttributeType: attribute.type
+        }
+      }),
+      KeySchema: keySchema,
+      ProvisionedThroughput: {
+        ReadCapacityUnits: tableProp.readCapacity,
+        WriteCapacityUnits: tableProp.writeCapacity
+      }
+    }
+  })
+
   for (const tableSchema of dynamoDBTableSchema) {
     const input: DescribeTableCommandInput = { TableName: tableSchema.TableName }
 

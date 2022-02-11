@@ -1,6 +1,5 @@
 import { App, AppOptions, ExpressReceiver, GenericMessageEvent, SayFn } from '@slack/bolt'
 import { runQuery } from './dynamodb'
-import { RegisteredChannel } from '../reply/types'
 
 if (process.env.SLACK_SIGNING_SECRET === undefined) {
   throw new Error('SLACK_SIGNING_SECRET must be set.')
@@ -26,6 +25,11 @@ export const slackApp = new App(appOptions)
 async function postMessage (message: string, say: SayFn): Promise<void> {
   console.log('call say: ', message)
   await say(message)
+}
+
+interface RegisteredChannel {
+  id: string;
+  exist: boolean;
 }
 
 async function getChannelData (

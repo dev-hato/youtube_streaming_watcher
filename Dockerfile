@@ -1,26 +1,25 @@
 FROM node:14.19.0-buster AS base
 
 WORKDIR /usr/app
-RUN npm install -g npm@7.21.0
-
-FROM base AS cdk
-
+COPY .node-version .
+COPY .npmignore .
+COPY .npmrc .
 COPY package*.json .
-RUN npm install
-COPY . .
+RUN npm install -g npm@7.21.0 \
+    && npm install
+COPY tsconfig.json .
+COPY lib/dynamodb-table-props.ts lib/
+COPY lib/events-rule-props.ts lib/
+COPY src/common/ src/common/
 
-# CDKの設定をsrc/config/内に出力
-RUN npm run export
+FROM base AS notify
 
-FROM base AS src
-
-COPY --from=cdk /usr/app/src/ /usr/app/
-RUN npm install
-
-FROM src AS notify
+COPY src/notify/ src/notify/
 
 CMD ["npm", "run", "start:notify"]
 
-FROM src AS reply
+FROM base AS reply
+
+COPY src/reply/index.dev.ts src/reply/
 
 CMD ["npm", "run", "start:reply"]

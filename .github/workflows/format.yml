@@ -7,12 +7,6 @@ on:
 jobs:
   format:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        directory: ['.', 'src']
-    defaults:
-      run:
-        working-directory: ${{ matrix.directory }}
     steps:
       - uses: actions/checkout@v2.4.0
         with:
@@ -20,9 +14,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-node@v2.5.1
         with:
-          node-version-file: ${{ matrix.directory }}/.node-version
+          node-version-file: .node-version
           cache: npm
-          cache-dependency-path: ${{ matrix.directory }}/package-lock.json
+          cache-dependency-path: package-lock.json
       - run: |
           npm install -g npm@7.21.0
           npm install
@@ -36,12 +30,6 @@ jobs:
       - run: |
           REPO_NAME="${{ github.event.pull_request.head.repo.full_name }}"
           echo "REPO_NAME=${REPO_NAME}" >> "${GITHUB_ENV}"
-      - name: Get branch name
-        id: get_branch_name
-        run: |
-          BRANCH_NAME="$(echo '${{ matrix.directory }}' | sed -e 's:/:-:g')"
-          BRANCH_NAME="${BRANCH_NAME//\./root}"
-          echo "::set-output name=branch_name::${BRANCH_NAME}"
       # 差分があったときは、コミットを作りpushする
       - name: Push
         env:
@@ -58,7 +46,6 @@ jobs:
           REPO_URL+="${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/"
           REPO_URL+="${{github.repository}}.git"
           GITHUB_HEAD="HEAD:refs/heads/fix-format-"
-          GITHUB_HEAD+="${{ steps.get_branch_name.outputs.branch_name }}-"
           GITHUB_HEAD+="${HEAD_REF}"
           git push -f "${REPO_URL}" "${GITHUB_HEAD}"
       - name: Get PullRequests
@@ -73,7 +60,6 @@ jobs:
           script: |
             const HEAD_REF = process.env["HEAD_REF"]
             let head = "massongit:fix-format-"
-            head += "${{ steps.get_branch_name.outputs.branch_name }}-"
             head += HEAD_REF
             const pulls_list_params = {
               owner: context.repo.owner,
@@ -100,10 +86,9 @@ jobs:
           script: |
             const HEAD_REF = process.env["HEAD_REF"]
             let head = "massongit:fix-format-"
-            head += "${{ steps.get_branch_name.outputs.branch_name }}-"
             head += HEAD_REF
             const number = "#${{github.event.pull_request.number}}"
-            let title = "${{ matrix.directory }} のformat修正 "
+            let title = "format修正 "
             title += number
             const pulls_create_params = {
               owner: context.repo.owner,
@@ -111,7 +96,7 @@ jobs:
               head,
               base: HEAD_REF,
               title,
-              body: number + " の `${{ matrix.directory }}` のフォーマットを修正します。"
+              body: number + " のフォーマットを修正します。"
             }
             console.log("call pulls.create:", pulls_create_params)
             const create_pull_res = await github.rest.pulls.create(
@@ -148,7 +133,6 @@ jobs:
           script: |
             const HEAD_REF = process.env["HEAD_REF"]
             let head_name = "fix-format-"
-            head_name += "${{ steps.get_branch_name.outputs.branch_name }}-"
             head_name += HEAD_REF
             const common_params = {
               owner: context.repo.owner,
