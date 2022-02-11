@@ -25,7 +25,7 @@ jobs:
       - name: Show diff
         id: diff
         run: |
-          result=$(npm run cdk diff 2>&1)
+          result=$(cdk diff 2>&1)
           echo -e "${result}"
           result="${result//'%'/'%25'}"
           result="${result//$'\n'/'%0A'}"
