@@ -1,0 +1,49 @@
+---
+name: cdk-diff
+
+on:
+  pull_request:
+
+jobs:
+  cdk-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.4.0
+      - uses: actions/setup-node@v2.5.1
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: |
+          npm install -g npm@7.21.0
+          npm install
+      - uses: aws-actions/configure-aws-credentials@v1.6.1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+      # 差分があったときは差分を出力する
+      - name: Show diff
+        id: diff
+        run: |
+          result=$(npm run cdk diff 2>&1)
+          echo -e "${result}"
+          result="${result//'%'/'%25'}"
+          result="${result//$'\n'/'%0A'}"
+          result="${result//$'\r'/'%0D'}"
+          echo "::set-output name=result::${result}"
+      - name: Comment
+        uses: actions/github-script@v5
+        env:
+          HEAD_REF: ${{github.head_ref}}
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            let body = 'インフラの差分\n<details>\n\n```\n'
+            body += `${{steps.diff.outputs.result}}`.trim()
+            body += '\n```\n\n</details>'
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            })

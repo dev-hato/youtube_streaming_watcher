@@ -16,6 +16,7 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
+          cache-dependency-path: package-lock.json
       - run: |
           npm install -g npm@7.21.0
           npm install
@@ -44,7 +45,8 @@ jobs:
           REPO_URL="https://"
           REPO_URL+="${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/"
           REPO_URL+="${{github.repository}}.git"
-          GITHUB_HEAD="HEAD:refs/heads/fix-format-${HEAD_REF}"
+          GITHUB_HEAD="HEAD:refs/heads/fix-format-"
+          GITHUB_HEAD+="${HEAD_REF}"
           git push -f "${REPO_URL}" "${GITHUB_HEAD}"
       - name: Get PullRequests
         uses: actions/github-script@v5
@@ -57,10 +59,12 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const HEAD_REF = process.env["HEAD_REF"]
+            let head = "massongit:fix-format-"
+            head += HEAD_REF
             const pulls_list_params = {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              head: "massongit:fix-format-" + HEAD_REF,
+              head,
               base: HEAD_REF,
               state: "open"
             }
@@ -81,13 +85,15 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const HEAD_REF = process.env["HEAD_REF"]
+            let head = "massongit:fix-format-"
+            head += HEAD_REF
             const number = "#${{github.event.pull_request.number}}"
             let title = "format修正 "
             title += number
             const pulls_create_params = {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              head: "massongit:fix-format-" + HEAD_REF,
+              head,
               base: HEAD_REF,
               title,
               body: number + " のフォーマットを修正します。"
@@ -126,7 +132,8 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const HEAD_REF = process.env["HEAD_REF"]
-            const head_name = "fix-format-" + HEAD_REF
+            let head_name = "fix-format-"
+            head_name += HEAD_REF
             const common_params = {
               owner: context.repo.owner,
               repo: context.repo.repo

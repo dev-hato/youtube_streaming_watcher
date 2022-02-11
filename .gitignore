@@ -343,4 +343,9 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-*.zip
+*.d.ts
+node_modules
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out

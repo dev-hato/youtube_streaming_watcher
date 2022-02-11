@@ -28,14 +28,8 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
 
 ## 開発方法
 
-まず、<https://pre-commit.com/> の手順に従って `pre-commit` をインストールします。  
+<https://pre-commit.com/> の手順に従って `pre-commit` をインストールします。  
 これにより、[.pre-commit-config.yaml](.pre-commit-config.yaml)の設定に基づいて、コミット時にクレデンシャルが含まれていないかの検査が行われるようになります。
-
-```sh
-git clone git@github.com:massongit/youtube_streaming_watcher.git
-cd youtube_streaming_watcher
-npm install
-```
 
 ## 動かす方法
 
@@ -50,8 +44,9 @@ npm install
 
    `.env.example` をコピーして使うとよいでしょう。
 
-2. Dockerコンテナを立ち上げます。
+2. Dockerコンテナを立ち上げます。  
+   Dockerイメージのビルドに失敗する場合はDockerに割り当てるメモリを増やしてみてください (3GB程度割り当てれば足りるはずです)。
 
    ```sh
-   docker-compose up
+   TAG_NAME=$(git symbolic-ref --short HEAD | sed -e "s:/:-:g" | sed -e "s/^main$/latest/g") docker-compose up
    ```
