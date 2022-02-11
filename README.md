@@ -6,6 +6,16 @@ YouTubeの配信開始通知をSlackに流すbotです。
 
 Slack上でbotに対してリプライを送ることで、設定を変更できます。
 
+### 通知対象のチャンネル一覧を表示する場合
+
+<!-- markdownlint-disable MD040 -->
+
+```
+@bot list
+```
+
+<!-- markdownlint-enable MD040 -->
+
 ### 通知対象のチャンネルを追加する場合
 
 <!-- markdownlint-disable MD040 -->

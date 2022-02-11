@@ -36,7 +36,7 @@ export async function runQuery (partiQLQuery: string, parameters?: AttributeValu
   try {
     console.log('run query: ', input)
     return await dynamoDBClient.send(new ExecuteStatementCommand(input))
-  } catch (e) {
+  } catch (e: any) {
     if (e.name === 'ResourceNotFoundException') {
       console.log(e)
     } else {

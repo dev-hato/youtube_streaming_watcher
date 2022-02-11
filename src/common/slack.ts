@@ -59,6 +59,17 @@ async function getChannelData (
 }
 
 export function setMessageEvents () {
+  slackApp.message('list', async ({ message, say }): Promise<void> => {
+    const channels = (await runQuery('SELECT channel_id FROM youtube_streaming_watcher_channels'))?.Items
+
+    if (channels === undefined || channels.length === 0) {
+      await say('通知対象のチャンネルはありません')
+      return
+    }
+
+    await say('以下のチャンネルを通知します\n' + channels.map(b => '* ' + b.channel_id.S).join('\n'))
+  })
+
   slackApp.message('add', async ({ message, say }): Promise<void> => {
     const channel = await getChannelData(message as GenericMessageEvent, say)
 
