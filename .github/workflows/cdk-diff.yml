@@ -8,6 +8,11 @@ jobs:
   cdk-diff:
     runs-on: ubuntu-latest
     steps:
+      - uses: aws-actions/configure-aws-credentials@v1.6.1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
       - uses: actions/checkout@v2.4.0
       - uses: actions/setup-node@v2.5.1
         with:
@@ -16,11 +21,6 @@ jobs:
       - run: |
           npm install -g npm@7.21.0
           npm install
-      - uses: aws-actions/configure-aws-credentials@v1.6.1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-northeast-1
       # 差分があったときは差分を出力する
       - name: Show diff
         id: diff
