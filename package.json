@@ -8,7 +8,7 @@
     "start:reply": "NODE_ENV=development ts-node src/reply/index.dev.ts",
     "build": "tsc",
     "watch": "tsc -w",
-    "cdk": "DOCKER_DEFAULT_PLATFORM=linux/amd64 cdk",
+    "cdk": "cdk",
     "fix": "eslint --fix bin/**/*.ts lib/**/*.ts src/**/*.ts"
   },
   "devDependencies": {
