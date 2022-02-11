@@ -7,14 +7,14 @@ export const dynamoDBTableProps: dynamodb.TableProps[] = [
     partitionKey: { name: 'channel_id', type: dynamodb.AttributeType.STRING },
     readCapacity: 1,
     writeCapacity: 1,
-    removalPolicy: cdk.RemovalPolicy.SNAPSHOT
+    removalPolicy: cdk.RemovalPolicy.DESTROY
   },
   {
     tableName: 'youtube_streaming_watcher_next_notification_times',
     partitionKey: { name: 'next_notification_at', type: dynamodb.AttributeType.STRING },
     readCapacity: 1,
     writeCapacity: 1,
-    removalPolicy: cdk.RemovalPolicy.SNAPSHOT
+    removalPolicy: cdk.RemovalPolicy.DESTROY
   },
   {
     tableName: 'youtube_streaming_watcher_notified_videos',
@@ -22,6 +22,6 @@ export const dynamoDBTableProps: dynamodb.TableProps[] = [
     sortKey: { name: 'video_id', type: dynamodb.AttributeType.STRING },
     readCapacity: 1,
     writeCapacity: 1,
-    removalPolicy: cdk.RemovalPolicy.SNAPSHOT
+    removalPolicy: cdk.RemovalPolicy.DESTROY
   }
 ]
