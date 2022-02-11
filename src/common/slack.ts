@@ -67,7 +67,7 @@ export function setMessageEvents () {
       return
     }
 
-    await say('以下のチャンネルを通知します\n' + channels.map(b => '* ' + b.channel_id.S).join('\n'))
+    await say('以下のチャンネルを通知します\n' + channels.map(b => '* https://www.youtube.com/channel/' + b.channel_id.S).join('\n'))
   })
 
   slackApp.message('add', async ({ message, say }): Promise<void> => {
