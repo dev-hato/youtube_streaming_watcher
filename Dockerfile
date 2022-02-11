@@ -8,8 +8,8 @@ COPY package*.json .
 RUN npm install -g npm@7.21.0 \
     && npm install
 COPY tsconfig.json .
-COPY lib/dynamodb-table-props.ts lib/
-COPY lib/events-rule-props.ts lib/
+COPY lib/props/dynamodb-table-props.ts lib/props/
+COPY lib/props/events-rule-props.ts lib/props/
 COPY src/common/ src/common/
 
 FROM base AS notify

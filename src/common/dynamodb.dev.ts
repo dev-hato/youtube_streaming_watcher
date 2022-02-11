@@ -4,7 +4,7 @@ import {
   DescribeTableCommandInput
 } from '@aws-sdk/client-dynamodb'
 import { dynamoDBClient } from './dynamodb'
-import { dynamoDBTableProps } from '../../lib/dynamodb-table-props'
+import { dynamoDBTableProps } from '../../lib/props/dynamodb-table-props'
 
 export async function createTables () {
   const dynamoDBTableSchema = dynamoDBTableProps.map(tableProp => {

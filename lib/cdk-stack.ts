@@ -7,8 +7,8 @@ import * as lambda from '@aws-cdk/aws-lambda'
 import * as lambdaNode from '@aws-cdk/aws-lambda-nodejs'
 import * as logs from '@aws-cdk/aws-logs'
 import * as secretmanager from '@aws-cdk/aws-secretsmanager'
-import { dynamoDBTableProps } from './dynamodb-table-props'
-import { rate } from './events-rule-props'
+import { dynamoDBTableProps } from './props/dynamodb-table-props'
+import { rate } from './props/events-rule-props'
 
 export class CdkStack extends cdk.Stack {
   constructor (scope: cdk.Construct, id: string, props?: cdk.StackProps) {
