@@ -96,7 +96,7 @@ jobs:
             const pulls_list_params = {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              head: "massongit:fix-version-pre-commit-config-" + HEAD_REF,
+              head: "dev-hato:fix-version-pre-commit-config-" + HEAD_REF,
               base: HEAD_REF,
               state: "open"
             }
@@ -123,7 +123,7 @@ jobs:
             const pulls_create_params = {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              head: "massongit:fix-version-pre-commit-config-" + HEAD_REF,
+              head: "dev-hato:fix-version-pre-commit-config-" + HEAD_REF,
               base: HEAD_REF,
               title,
               body: number + " のgitleaksをアップデートします。"
@@ -168,7 +168,7 @@ jobs:
               repo: context.repo.repo
             }
             const pulls_list_params = {
-              head: "massongit:" + head_name,
+              head: "dev-hato:" + head_name,
               base: HEAD_REF,
               state: "open",
               ...common_params

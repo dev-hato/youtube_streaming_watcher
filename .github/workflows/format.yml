@@ -59,7 +59,7 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const HEAD_REF = process.env["HEAD_REF"]
-            let head = "massongit:fix-format-"
+            let head = "dev-hato:fix-format-"
             head += HEAD_REF
             const pulls_list_params = {
               owner: context.repo.owner,
@@ -85,7 +85,7 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const HEAD_REF = process.env["HEAD_REF"]
-            let head = "massongit:fix-format-"
+            let head = "dev-hato:fix-format-"
             head += HEAD_REF
             const number = "#${{github.event.pull_request.number}}"
             let title = "format修正 "
@@ -139,7 +139,7 @@ jobs:
               repo: context.repo.repo
             }
             const pulls_list_params = {
-              head: "massongit:" + head_name,
+              head: "dev-hato:" + head_name,
               base: HEAD_REF,
               state: "open",
               ...common_params
