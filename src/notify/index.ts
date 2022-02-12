@@ -29,7 +29,10 @@ export async function handler () {
     auth: process.env.YOUTUBE_API_KEY
   })
 
-  let apiCallCnt = 0
+  // Youtube Data APIの消費ユニット数
+  // APIごとの消費コスト: https://developers.google.com/youtube/v3/determine_quota_cost
+  let apiUnit = 0
+
   const channels = (await runQuery('SELECT channel_id FROM youtube_streaming_watcher_channels'))?.Items
 
   if (channels === undefined) {
@@ -48,7 +51,7 @@ export async function handler () {
     }
     console.log('call youtubeApi.search.list: ', searchListParams)
     const searchList = await api.search.list(searchListParams)
-    apiCallCnt++
+    apiUnit += 100
 
     if (searchList.data.items) {
       for (const searchItem of searchList.data.items) {
@@ -86,7 +89,7 @@ export async function handler () {
         }
         console.log('call youtubeApi.videos.list: ', videoResultParams)
         const videoResult = await api.videos.list(videoResultParams)
-        apiCallCnt++
+        apiUnit++
         const items = videoResult.data.items
 
         if (items === undefined) {
@@ -129,12 +132,8 @@ export async function handler () {
     await sleep(1000)
   }
 
-  // APIリクエスト1回あたりの消費ユニット数 * APIリクエスト回数 * 24時間 * 60分 * 60秒 / 1日あたりの上限ユニット数 + 1秒
-  // APIリクエスト回数は配信が少ない時間にAPIを叩きすぎないよう、対象の全チャンネルで新たな配信が1本控えている状態を下限としている
-  apiCallCnt = Math.max(apiCallCnt, 2 * channels.length)
-  const sleepSeconds = Math.ceil(
-    (3 * apiCallCnt * 24 * 60 * 60) / apiUnitLimitPerDay + 1
-  )
+  // APIリクエストの消費ユニット数 * 24時間 * 60分 * 60秒 / 1日あたりの上限ユニット数 + 1秒
+  const sleepSeconds = Math.ceil((apiUnit * 24 * 60 * 60) / apiUnitLimitPerDay + 1)
 
   if (currentNotificationAt !== undefined) {
     await runQuery(
