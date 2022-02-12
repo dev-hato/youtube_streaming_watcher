@@ -32,7 +32,7 @@ jobs:
           result="${result//$'\r'/'%0D'}"
           echo "::set-output name=result::${result}"
       - name: Comment
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         env:
           HEAD_REF: ${{github.head_ref}}
         with:
