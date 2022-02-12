@@ -33,5 +33,5 @@ jobs:
       - run: echo 'TAG_NAME=latest' >> "$GITHUB_ENV"
         if: ${{ github.event_name == 'push' }}
       - run: mv .env.example .env
-      - run: docker-compose build --build-arg BUILDKIT_INLINE_CACHE=1
-      - run: docker-compose push
+      - run: docker compose build --build-arg BUILDKIT_INLINE_CACHE=1
+      - run: docker compose push
