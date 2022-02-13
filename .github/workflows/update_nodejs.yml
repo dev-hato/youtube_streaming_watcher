@@ -19,17 +19,23 @@ jobs:
         run: |
           image_name=youtube_streaming_watcher_app
           docker build -t "${image_name}" --target base .
-          DOCKER_CMD="node --version"
+          DOCKER_CMD="node --version && npm --version"
           mapfile -t result < <(docker run ${image_name} sh -c "${DOCKER_CMD}")
           node_version="${result[0]//v/}"
+          npm_version=${result[1]}
           echo "Node.js version:" "${node_version}"
+          echo "npm version:" "${npm_version}"
           echo "::set-output name=node_version::${node_version}"
+          echo "::set-output name=npm_version::${npm_version}"
       - name: Update versions
         run: |
           NODE_VERSION="${{steps.get_node_version.outputs.node_version}}"
+          NPM_VERSION="${{steps.get_node_version.outputs.npm_version}}"
           echo "${NODE_VERSION}" > .node-version
           NODE_PATTERN="s/\"node\": \".*\"/\"node\": \"^${NODE_VERSION}\"/g"
           sed -i -e "${NODE_PATTERN}" package.json
+          NPM_PATTERN="s/\"npm\": \".*\"/\"npm\": \"^${NPM_VERSION}\"/g"
+          sed -i -e "${NPM_PATTERN}" package.json
       # 差分があったときは差分を出力する
       - name: Show diff
         id: diff

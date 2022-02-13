@@ -1,12 +1,11 @@
 FROM node:14.19.0-alpine3.15 AS base
 
-SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 WORKDIR /usr/app
 COPY .node-version .
 COPY .npmignore .
 COPY .npmrc .
 COPY package*.json .
-RUN npm install -g "npm@$(grep npm package.json | sed -e 's/ *"npm": "^\(.*\)"/\1/g')" \
+RUN npm install -g npm@7.21.0 \
     && npm install
 COPY tsconfig.json .
 COPY lib/props/ lib/props/
