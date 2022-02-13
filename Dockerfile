@@ -1,5 +1,6 @@
 FROM node:14.19.0-alpine3.15 AS base
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 WORKDIR /usr/app
 COPY .node-version .
 COPY .npmignore .
