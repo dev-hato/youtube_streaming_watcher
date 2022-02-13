@@ -55,19 +55,19 @@ export async function handler () {
       }
     })
 
-    const postedVideos = (await runQuery(
+    const postedVideos = new Set((await runQuery(
       'SELECT video_id FROM youtube_streaming_watcher_notified_videos WHERE channel_id=? AND video_id IN (' + feedItems.map(item => '?').join(', ') + ')',
       [{ S: channelId }].concat(feedItems.map(item => {
         return { S: item.videoId }
       }))
-    ))?.Items?.map(item => item.video_id.S)
+    ))?.Items?.map(item => item.video_id.S))
 
     for (const feedItem of feedItems) {
       // 動画ID
       const videoId = feedItem.videoId
 
       // 通知済みの配信の場合はスキップ
-      if (postedVideos !== undefined && postedVideos.includes(videoId)) {
+      if (postedVideos.has(videoId)) {
         console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
         continue
       }
