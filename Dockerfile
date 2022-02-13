@@ -5,7 +5,7 @@ COPY .node-version .
 COPY .npmignore .
 COPY .npmrc .
 COPY package*.json .
-RUN npm install -g npm@7.21.0 \
+RUN npm install -g "npm@$(grep npm package.json | sed -e 's/ *"npm": "^\(.*\)"/\1/g')" \
     && npm install
 COPY tsconfig.json .
 COPY lib/props/ lib/props/
