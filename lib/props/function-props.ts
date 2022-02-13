@@ -9,6 +9,7 @@ export const functionProps: { [key: string]: NodejsFunctionProps } = {
   },
   reply: {
     functionName: 'youtube_streaming_watcher_reply_function',
-    entry: 'src/reply/index.ts'
+    entry: 'src/reply/index.ts',
+    timeout: cdk.Duration.seconds(10)
   }
 }

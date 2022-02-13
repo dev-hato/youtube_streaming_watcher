@@ -53,6 +53,7 @@ async function getChannelData (
 
   // チャンネルURLとしてユーザーIDを含むものやカスタムURLが与えられた場合は、ページをスクレイピングしチャンネルIDを取得
   if (id.startsWith('https://www.youtube.com/')) {
+    await postMessage('チャンネルを追加しています。少々お待ちください :eyes:', say)
     console.log('get: ', id)
     const response = await axios.get(id)
     const $ = cheerio.load(response.data)
