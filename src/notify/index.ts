@@ -82,7 +82,7 @@ export async function handler () {
       const items = videoResult.data.items
 
       if (items === undefined) {
-        console.log('video data do not get: ', videoId)
+        console.log('video data can not get: ', videoId)
         continue
       }
 
