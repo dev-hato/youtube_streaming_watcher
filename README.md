@@ -60,3 +60,10 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
    ```sh
    TAG_NAME=$(git symbolic-ref --short HEAD | sed -e "s:/:-:g" | sed -e "s/^main$/latest/g") docker compose up
    ```
+
+## 仕様
+
+### Node.jsやnpmのバージョン
+
+dependabotがエラーにならないよう、dependabotで使用しているバージョン (以下参照) に準拠しています。
+https://github.com/dependabot/dependabot-core/blob/6e08528c0e3fdbf174d26001124d7c0f7c6bb1b9/Dockerfile#L100-L105
