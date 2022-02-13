@@ -1,3 +1,4 @@
+import Parser from 'rss-parser'
 import sleep from 'sleep-promise'
 import { ChatPostMessageArguments } from '@slack/web-api'
 import { google, youtube_v3 } from 'googleapis' // eslint-disable-line camelcase
@@ -42,90 +43,82 @@ export async function handler () {
   for (let { channel_id: { S: channelId } } of channels) {
     channelId = channelId as string
 
-    // チャンネルの配信一覧
-    const searchListParams = {
-      part: ['snippet'],
-      eventType: 'upcoming',
-      type: ['video'],
-      channelId
-    }
-    console.log('call youtubeApi.search.list: ', searchListParams)
-    const searchList = await api.search.list(searchListParams)
-    apiUnit += 100
+    // RSSから新着配信取得
+    const feedParser = new Parser<{}, { id: string }>({ customFields: { item: ['id'] } })
+    const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
+    console.log('get feed: ', feedUrl)
+    const feed = await feedParser.parseURL(feedUrl)
 
-    if (searchList.data.items) {
-      for (const searchItem of searchList.data.items) {
-        // 動画ID
-        const videoId = searchItem.id?.videoId
+    for (const feedItem of feed.items) {
+      // 動画ID
+      const videoId = feedItem.id.replace(/^yt:video:/, '')
 
-        const snippet = searchItem.snippet
+      const postedVideos = (await runQuery(
+        'SELECT video_id FROM youtube_streaming_watcher_notified_videos WHERE channel_id=? AND video_id=?',
+        [{ S: channelId }, { S: videoId }]
+      ))?.Items
 
-        if (videoId === undefined || videoId === null || snippet === undefined) {
+      // 通知済みの配信の場合はスキップ
+      if (postedVideos !== undefined && postedVideos.length > 0) {
+        console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
+        continue
+      }
+
+      await runQuery(
+        'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?}',
+        [{ S: channelId }, { S: videoId }, { S: (new Date()).toISOString() }]
+      )
+
+      await sleep(1000)
+
+      // 配信情報
+      const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
+        part: ['liveStreamingDetails'],
+        id: [videoId]
+      }
+      console.log('call youtubeApi.videos.list: ', videoResultParams)
+      const videoResult = await api.videos.list(videoResultParams)
+      apiUnit++
+      const items = videoResult.data.items
+
+      if (items === undefined) {
+        continue
+      }
+
+      for (const videoItem of items) {
+        const scheduledStartTime = videoItem.liveStreamingDetails?.scheduledStartTime
+
+        if (scheduledStartTime === undefined || scheduledStartTime === null) {
           continue
         }
 
-        const postedVideos = (await runQuery(
-          'SELECT video_id FROM youtube_streaming_watcher_notified_videos WHERE channel_id=? AND video_id=?',
-          [{ S: channelId }, { S: videoId }]
-        ))?.Items
+        const startTime = new Date(Date.parse(scheduledStartTime))
 
-        // 通知済みの配信の場合はスキップ
-        if (postedVideos !== undefined && postedVideos.length > 0) {
-          console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
+        if (startTime < new Date()) {
           continue
         }
-
-        await runQuery(
-          'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?}',
-          [{ S: channelId }, { S: videoId }, { S: (new Date()).toISOString() }]
-        )
 
         await sleep(1000)
+        const dayOfWeeks = ['日', '月', '火', '水', '木', '金', '土']
 
-        // 配信情報
-        const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
-          part: ['liveStreamingDetails'],
-          id: [videoId]
-        }
-        console.log('call youtubeApi.videos.list: ', videoResultParams)
-        const videoResult = await api.videos.list(videoResultParams)
-        apiUnit++
-        const items = videoResult.data.items
-
-        if (items === undefined) {
-          continue
-        }
-
-        for (const videoItem of items) {
-          const scheduledStartTime = videoItem.liveStreamingDetails?.scheduledStartTime
-
-          if (scheduledStartTime === undefined || scheduledStartTime === null) {
-            continue
-          }
-
-          await sleep(1000)
-          const startTime = new Date(Date.parse(scheduledStartTime))
-          const dayOfWeeks = ['日', '月', '火', '水', '木', '金', '土']
-
-          // Slack通知
-          const postMessageParams: ChatPostMessageArguments = {
-            channel: slackChannel,
-            text:
+        // Slack通知
+        const postMessageParams: ChatPostMessageArguments = {
+          channel: slackChannel,
+          text:
               'チャンネル名: ' +
-              snippet.channelTitle +
+              feed.title +
               '\n' +
               '配信名: <https://www.youtube.com/watch?v=' +
               videoId +
               '|' +
-              snippet.title +
+              feedItem.title +
               '>\n' +
               `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth()}月${startTime.getDate()}日 ` +
               `(${dayOfWeeks[startTime.getDay()]}) ` +
               `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
-          }
-          console.log('call app.client.chat.postMessage: ', postMessageParams)
-          await slackApp.client.chat.postMessage(postMessageParams)
         }
+        console.log('call app.client.chat.postMessage: ', postMessageParams)
+        await slackApp.client.chat.postMessage(postMessageParams)
       }
     }
 
