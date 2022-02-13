@@ -23,5 +23,12 @@ export const dynamoDBTableProps: dynamodb.TableProps[] = [
     readCapacity: 1,
     writeCapacity: 1,
     removalPolicy: cdk.RemovalPolicy.DESTROY
+  },
+  {
+    tableName: 'youtube_streaming_watcher_received_slack_requests',
+    partitionKey: { name: 'ts', type: dynamodb.AttributeType.STRING },
+    readCapacity: 1,
+    writeCapacity: 1,
+    removalPolicy: cdk.RemovalPolicy.DESTROY
   }
 ]

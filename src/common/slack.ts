@@ -34,6 +34,23 @@ interface RegisteredChannel {
   exist: boolean;
 }
 
+async function isReceivedRequest (ts: string): Promise<boolean> {
+  const receivedRequests = (await runQuery(
+    'SELECT ts FROM youtube_streaming_watcher_received_slack_requests WHERE ts=?',
+    [{ S: ts }]
+  ))?.Items
+
+  if (receivedRequests !== undefined && receivedRequests.length > 0) {
+    return false
+  }
+
+  await runQuery(
+    'INSERT INTO youtube_streaming_watcher_received_slack_requests VALUE {\'ts\': ?}',
+    [{ S: ts }]
+  )
+  return true
+}
+
 async function getChannelData (
   message: GenericMessageEvent,
   say: SayFn
@@ -53,7 +70,6 @@ async function getChannelData (
 
   // チャンネルURLとしてユーザーIDを含むものやカスタムURLが与えられた場合は、ページをスクレイピングしチャンネルIDを取得
   if (id.startsWith('https://www.youtube.com/')) {
-    await postMessage('チャンネルを追加しています。少々お待ちください :eyes:', say)
     console.log('get: ', id)
     const response = await axios.get(id)
     const $ = cheerio.load(response.data)
@@ -82,6 +98,14 @@ async function getChannelData (
 
 export function setMessageEvents () {
   slackApp.message('list', async ({ message, say }): Promise<void> => {
+    const ts = message.ts
+    const isReceived = await isReceivedRequest(ts)
+
+    if (!isReceived) {
+      console.log('request is already received: ', ts)
+      return
+    }
+
     const channels = (await runQuery('SELECT channel_id FROM youtube_streaming_watcher_channels'))?.Items
 
     if (channels === undefined || channels.length === 0) {
@@ -93,6 +117,14 @@ export function setMessageEvents () {
   })
 
   slackApp.message('add', async ({ message, say }): Promise<void> => {
+    const ts = message.ts
+    const isReceived = await isReceivedRequest(ts)
+
+    if (!isReceived) {
+      console.log('request is already received: ', ts)
+      return
+    }
+
     const channel = await getChannelData(message as GenericMessageEvent, say)
 
     if (channel === undefined) {
@@ -116,6 +148,14 @@ export function setMessageEvents () {
   })
 
   slackApp.message('delete', async ({ message, say }): Promise<void> => {
+    const ts = message.ts
+    const isReceived = await isReceivedRequest(ts)
+
+    if (!isReceived) {
+      console.log('request is already received: ', ts)
+      return
+    }
+
     const channel = await getChannelData(message = message as GenericMessageEvent, say)
 
     if (channel === undefined) {
