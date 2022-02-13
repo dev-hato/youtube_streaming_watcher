@@ -41,6 +41,7 @@ async function isReceivedRequest (ts: string): Promise<boolean> {
   ))?.Items
 
   if (receivedRequests !== undefined && receivedRequests.length > 0) {
+    console.log('request is already received: ', ts)
     return false
   }
 
@@ -98,11 +99,9 @@ async function getChannelData (
 
 export function setMessageEvents () {
   slackApp.message('list', async ({ message, say }): Promise<void> => {
-    const ts = message.ts
-    const isReceived = await isReceivedRequest(ts)
+    const isReceived = await isReceivedRequest(message.ts)
 
     if (!isReceived) {
-      console.log('request is already received: ', ts)
       return
     }
 
@@ -117,11 +116,9 @@ export function setMessageEvents () {
   })
 
   slackApp.message('add', async ({ message, say }): Promise<void> => {
-    const ts = message.ts
-    const isReceived = await isReceivedRequest(ts)
+    const isReceived = await isReceivedRequest(message.ts)
 
     if (!isReceived) {
-      console.log('request is already received: ', ts)
       return
     }
 
@@ -148,11 +145,9 @@ export function setMessageEvents () {
   })
 
   slackApp.message('delete', async ({ message, say }): Promise<void> => {
-    const ts = message.ts
-    const isReceived = await isReceivedRequest(ts)
+    const isReceived = await isReceivedRequest(message.ts)
 
     if (!isReceived) {
-      console.log('request is already received: ', ts)
       return
     }
 
