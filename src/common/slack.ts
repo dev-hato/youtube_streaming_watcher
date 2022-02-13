@@ -59,11 +59,11 @@ async function getChannelData (
     const idContent = $('meta[itemprop="channelId"]').attr('content')
     if (idContent === undefined) {
       await postMessage(
-          '引数として正しいチャンネルのURLを指定してください。',
-          say
+        '引数として正しいチャンネルのURLを指定してください。',
+        say
       )
       return
-    }else{
+    } else {
       id = idContent
     }
   }
