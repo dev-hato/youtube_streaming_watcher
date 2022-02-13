@@ -1,4 +1,6 @@
 import { App, AppOptions, ExpressReceiver, GenericMessageEvent, SayFn } from '@slack/bolt'
+import axios from 'axios'
+import cheerio from 'cheerio'
 import { runQuery } from './dynamodb'
 
 if (process.env.SLACK_SIGNING_SECRET === undefined) {
@@ -36,9 +38,10 @@ async function getChannelData (
   message: GenericMessageEvent,
   say: SayFn
 ): Promise<RegisteredChannel | undefined> {
-  const id = message.text?.split(' ')[2]
-    .replace(/<https:\/\/www\.youtube\.com\/channel\//g, '')
+  let id = message.text?.split(' ')[2]
+    .replace(/</, '')
     .replace(/>/g, '')
+    .replace(/https:\/\/www\.youtube\.com\/channel\//g, '')
 
   if (id === undefined || id === '') {
     await postMessage(
@@ -46,6 +49,17 @@ async function getChannelData (
       say
     )
     return
+  }
+
+  // チャンネルURLとしてユーザーIDを含むものやカスタムURLが与えられた場合は、ページをスクレイピングしチャンネルIDを取得
+  if (id.startsWith('https://www.youtube.com/')) {
+    console.log('get: ', id)
+    const response = await axios.get(id)
+    const $ = cheerio.load(response.data)
+    const idContent = $('meta[itemprop="channelId"]').attr('content')
+    if (idContent !== undefined) {
+      id = idContent
+    }
   }
 
   const registeredChannel = (await runQuery(
