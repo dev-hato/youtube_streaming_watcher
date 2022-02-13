@@ -48,18 +48,26 @@ export async function handler () {
     const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
     console.log('get feed: ', feedUrl)
     const feed = await feedParser.parseURL(feedUrl)
+    const feedItems = feed.items.map(item => {
+      return {
+        videoId: item.id.replace(/^yt:video:/, ''),
+        title: item.title
+      }
+    })
 
-    for (const feedItem of feed.items) {
+    const postedVideos = (await runQuery(
+      'SELECT video_id FROM youtube_streaming_watcher_notified_videos WHERE channel_id=? AND video_id IN (' + feedItems.map(item => '?').join(', ') + ')',
+      [{ S: channelId }].concat(feedItems.map(item => {
+        return { S: item.videoId }
+      }))
+    ))?.Items?.map(item => item.video_id.S)
+
+    for (const feedItem of feedItems) {
       // 動画ID
-      const videoId = feedItem.id.replace(/^yt:video:/, '')
-
-      const postedVideos = (await runQuery(
-        'SELECT video_id FROM youtube_streaming_watcher_notified_videos WHERE channel_id=? AND video_id=?',
-        [{ S: channelId }, { S: videoId }]
-      ))?.Items
+      const videoId = feedItem.videoId
 
       // 通知済みの配信の場合はスキップ
-      if (postedVideos !== undefined && postedVideos.length > 0) {
+      if (postedVideos !== undefined && postedVideos.includes(videoId)) {
         console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
         continue
       }
