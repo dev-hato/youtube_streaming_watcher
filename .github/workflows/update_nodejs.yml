@@ -36,6 +36,13 @@ jobs:
           sed -i -e "${NODE_PATTERN}" package.json
           NPM_PATTERN="s/\"npm\": \".*\"/\"npm\": \"^${NPM_VERSION}\"/g"
           sed -i -e "${NPM_PATTERN}" package.json
+      - uses: actions/setup-node@v2.5.1
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: |
+          NPM_VERSION="${{steps.get_node_version.outputs.npm_version}}"
           npm install -g "npm@${NPM_VERSION}"
           npm install
       # 差分があったときは差分を出力する
