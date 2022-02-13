@@ -9,6 +9,7 @@ import * as logs from '@aws-cdk/aws-logs'
 import * as secretmanager from '@aws-cdk/aws-secretsmanager'
 import { dynamoDBTableProps } from './props/dynamodb-table-props'
 import { rate } from './props/events-rule-props'
+import { functionProps } from './props/function-props'
 
 export class CdkStack extends cdk.Stack {
   constructor (scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -24,19 +25,19 @@ export class CdkStack extends cdk.Stack {
       'Secret-youtube',
       'youtube_streaming_watcher_youtube'
     )
-    const functionData = Object.fromEntries(['notify', 'reply'].map(functionName => [
-      functionName,
-      new lambdaNode.NodejsFunction(this, `Function-${functionName}`, {
-        functionName: `youtube_streaming_watcher_${functionName}_function`,
-        entry: `src/${functionName}/index.ts`,
+    const environment = {
+      SLACK_BOT_TOKEN: slackSecret.secretValueFromJson('slack_bot_token').toString(),
+      SLACK_CHANNEL: slackSecret.secretValueFromJson('slack_channel').toString(),
+      SLACK_SIGNING_SECRET: slackSecret.secretValueFromJson('slack_signing_secret').toString(),
+      YOUTUBE_API_KEY: youtubeSecret.secretValueFromJson('youtube_api_key').toString()
+    }
+    const functionData = Object.fromEntries(Object.entries(functionProps).map(([key, value]) => [
+      key,
+      new lambdaNode.NodejsFunction(this, `Function-${key}`, Object.assign(value, {
         runtime: lambda.Runtime.NODEJS_14_X,
-        environment: {
-          SLACK_BOT_TOKEN: slackSecret.secretValueFromJson('slack_bot_token').toString(),
-          SLACK_CHANNEL: slackSecret.secretValueFromJson('slack_channel').toString(),
-          SLACK_SIGNING_SECRET: slackSecret.secretValueFromJson('slack_signing_secret').toString(),
-          YOUTUBE_API_KEY: youtubeSecret.secretValueFromJson('youtube_api_key').toString()
-        }
-      })
+        bundling: { minify: true },
+        environment
+      }))
     ]))
     new events.Rule(this, 'EventsRule-notify', { // eslint-disable-line no-new
       schedule: events.Schedule.rate(rate),
