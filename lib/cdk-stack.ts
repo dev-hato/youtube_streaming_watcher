@@ -35,6 +35,7 @@ export class CdkStack extends cdk.Stack {
       key,
       new lambdaNode.NodejsFunction(this, `Function-${key}`, Object.assign(value, {
         runtime: lambda.Runtime.NODEJS_14_X,
+        bundling: { minify: true },
         environment
       }))
     ]))

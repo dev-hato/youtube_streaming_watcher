@@ -9,12 +9,13 @@ on:
 jobs:
   cdk-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
       - uses: aws-actions/configure-aws-credentials@v1.6.1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-northeast-1
+          role-to-assume: ${{ secrets.AWS_CDK_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
       - uses: actions/checkout@v2.4.0
       - uses: actions/setup-node@v2.5.1
         with:
