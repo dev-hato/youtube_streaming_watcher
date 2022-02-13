@@ -39,7 +39,7 @@ async function getChannelData (
   say: SayFn
 ): Promise<RegisteredChannel | undefined> {
   let id = message.text?.split(' ')[2]
-    .replace(/</, '')
+    .replace(/</g, '')
     .replace(/>/g, '')
     .replace(/https:\/\/www\.youtube\.com\/channel\//g, '')
 
