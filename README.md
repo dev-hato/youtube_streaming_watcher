@@ -72,4 +72,5 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
 ### npmのバージョン
 
 dependabotで使用しているバージョンに準拠しています。
+
 <https://github.com/dependabot/dependabot-core/blob/6e08528c0e3fdbf174d26001124d7c0f7c6bb1b9/Dockerfile#L100-L105>
