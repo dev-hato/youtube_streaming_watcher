@@ -60,7 +60,7 @@ async function getChannelData (
 
     if (idContent === undefined) {
       await postMessage(
-        '引数として正しいチャンネルのURLを指定してください。',
+        'チャンネルIDが取得できませんでした、正しいチャンネルのURLを指定してください',
         say
       )
       return
