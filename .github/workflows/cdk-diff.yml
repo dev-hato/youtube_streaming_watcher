@@ -36,12 +36,13 @@ jobs:
       - name: Comment
         uses: actions/github-script@v6
         env:
-          HEAD_REF: ${{github.head_ref}}
+          RESULT: ${{steps.diff.outputs.result}}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
+            const RESULT = process.env["RESULT"]
             let body = 'インフラの差分\n<details>\n\n```\n'
-            body += `${{steps.diff.outputs.result}}`.trim()
+            body += RESULT.trim()
             body += '\n```\n\n</details>'
             await github.rest.issues.createComment({
               owner: context.repo.owner,
