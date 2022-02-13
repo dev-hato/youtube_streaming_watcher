@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-      issues: write
+      pull-requests: write
     steps:
       - uses: aws-actions/configure-aws-credentials@v1.6.1
         with:
