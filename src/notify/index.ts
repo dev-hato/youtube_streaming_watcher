@@ -90,7 +90,7 @@ export async function handler () {
       const items = videoResult.data.items
 
       if (items === undefined) {
-        console.log('video data can not get: ', videoId)
+        console.log(`video data can not get: channel_id ${channelId}, video_id: ${videoId}`)
         continue
       }
 
@@ -98,12 +98,14 @@ export async function handler () {
         const scheduledStartTime = videoItem.liveStreamingDetails?.scheduledStartTime
 
         if (scheduledStartTime === undefined || scheduledStartTime === null) {
+          console.log(`start time can not get: channel_id ${channelId}, video_id: ${videoId}`)
           continue
         }
 
         const startTime = new Date(Date.parse(scheduledStartTime))
 
         if (startTime < new Date()) {
+          console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
           continue
         }
 
