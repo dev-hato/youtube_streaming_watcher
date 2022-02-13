@@ -57,15 +57,16 @@ async function getChannelData (
     const response = await axios.get(id)
     const $ = cheerio.load(response.data)
     const idContent = $('meta[itemprop="channelId"]').attr('content')
+
     if (idContent === undefined) {
       await postMessage(
-          '引数として正しいチャンネルのURLを指定してください。',
-          say
+        '引数として正しいチャンネルのURLを指定してください。',
+        say
       )
       return
-    }else{
-      id = idContent
     }
+
+    id = idContent
   }
 
   const registeredChannel = (await runQuery(
