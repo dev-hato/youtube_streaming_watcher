@@ -10,9 +10,9 @@ const apiUnitLimitPerDay = 10000
 
 export async function handler () {
   let currentNotificationAt: string | undefined
-  const currentNotificationAtItems = (await runQuery('SELECT next_notification_at FROM youtube_streaming_watcher_next_notification_times'))?.Items
+  const currentNotificationAtItems = await runQuery('SELECT next_notification_at FROM youtube_streaming_watcher_next_notification_times')
 
-  if (currentNotificationAtItems !== undefined && currentNotificationAtItems.length > 0) {
+  if (currentNotificationAtItems.length > 0) {
     currentNotificationAt = currentNotificationAtItems[0].next_notification_at.S
     if (currentNotificationAt !== undefined && new Date() < new Date(currentNotificationAt)) {
       console.log('next notification time has not come yet.')
@@ -34,9 +34,9 @@ export async function handler () {
   // APIごとの消費コスト: https://developers.google.com/youtube/v3/determine_quota_cost
   let apiUnit = 0
 
-  const channels = (await runQuery('SELECT channel_id FROM youtube_streaming_watcher_channels'))?.Items
+  const channels = await runQuery('SELECT channel_id FROM youtube_streaming_watcher_channels')
 
-  if (channels === undefined) {
+  if (channels.length === 0) {
     return
   }
 
@@ -60,7 +60,7 @@ export async function handler () {
       [{ S: channelId }].concat(feedItems.map(item => {
         return { S: item.videoId }
       }))
-    ))?.Items?.map(item => item.video_id.S))
+    )).map(item => item.video_id.S))
 
     for (const feedItem of feedItems) {
       // 動画ID
