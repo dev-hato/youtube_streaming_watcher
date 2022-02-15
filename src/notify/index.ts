@@ -171,10 +171,10 @@ export async function handler () {
 
         if (postedVideos[videoId]?.notifyMode === NotifyMode.Registered) {
           parameters.push({ S: NotifyMode.NotifyRegistered })
-          header = '【新着】\n'
+          header = ':white_check_mark: 新着\n'
         } else {
           parameters.push({ S: NotifyMode.NotifyRemind })
-          header = '【もうすぐ配信開始】\n'
+          header = ':bell: もうすぐ配信開始\n'
         }
 
         // Slack通知
