@@ -1,4 +1,4 @@
-FROM node:14.19.0-alpine3.15 AS base
+FROM node:14.19.0-buster AS base
 
 WORKDIR /usr/app
 COPY .node-version .
