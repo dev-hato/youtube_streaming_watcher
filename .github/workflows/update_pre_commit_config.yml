@@ -18,7 +18,9 @@ jobs:
           cache: npm
       - name: Install packages
         run: |
-          npm install -g npm@7.21.0
+          npm_version=$(grep \"npm\" package.json \
+                        | sed -e 's/ *"npm": "^\(.*\)"/\1/g')
+          npm install -g "npm@${npm_version}"
           npm install js-yaml
       - name: Update .pre-commit-config.yaml
         uses: actions/github-script@v6
