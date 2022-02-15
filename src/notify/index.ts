@@ -144,11 +144,12 @@ export async function handler () {
           const newStartTimeStr = startTime.toISOString()
           const notifyMode = NotifyMode.Registered
           postedVideos[videoId] = { startTime: newStartTimeStr, notifyMode }
+          const now = new Date()
 
           if (startTimeStr === undefined) { // データがない場合はINSERTする
             await runQuery(
               'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'notify_mode\': ?}',
-              [{ S: channelId }, { S: videoId }, { S: (new Date()).toISOString() }, { S: startTimeStr }, { S: notifyMode }]
+              [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: notifyMode }]
             )
           } else if (startTimeStr === '') { // start_timeやnotify_modeが欠けている古いデータについてはUPDATEする
             await runQuery(
@@ -157,7 +158,7 @@ export async function handler () {
             )
           }
 
-          if (startTime < new Date()) { // 既に配信開始している場合はスキップ
+          if (startTime < now) { // 既に配信開始している場合はスキップ
             console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
             continue
           }
