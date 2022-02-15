@@ -56,7 +56,7 @@ export async function handler () {
       channelId = channelId as string
 
       // RSSから新着配信取得
-      const feedParser = new Parser<Record<string, unknown>, { id: string }>({ customFields: { item: ['id'] } })
+      const feedParser = new Parser<{}, { id: string }>({ customFields: { item: ['id'] } })
       const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
       console.log('get feed: ', feedUrl)
       const feed = await feedParser.parseURL(feedUrl)
