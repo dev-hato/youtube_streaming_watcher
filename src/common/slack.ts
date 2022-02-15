@@ -35,12 +35,12 @@ interface RegisteredChannel {
 }
 
 async function isReceivedRequest (ts: string): Promise<boolean> {
-  const receivedRequests = (await runQuery(
+  const receivedRequests = await runQuery(
     'SELECT ts FROM youtube_streaming_watcher_received_slack_requests WHERE ts=?',
     [{ S: ts }]
-  ))?.Items
+  )
 
-  if (receivedRequests !== undefined && receivedRequests.length > 0) {
+  if (receivedRequests.length > 0) {
     console.log('request is already received: ', ts)
     return false
   }
@@ -87,10 +87,10 @@ async function getChannelData (
     id = idContent
   }
 
-  const registeredChannel = (await runQuery(
+  const registeredChannel = await runQuery(
     'SELECT channel_id FROM youtube_streaming_watcher_channels WHERE channel_id=?',
     [{ S: id }]
-  ))?.Items
+  )
   return {
     id,
     exist: registeredChannel !== undefined && registeredChannel.length > 0
@@ -105,9 +105,9 @@ export function setMessageEvents () {
       return
     }
 
-    const channels = (await runQuery('SELECT channel_id FROM youtube_streaming_watcher_channels'))?.Items
+    const channels = await runQuery('SELECT channel_id FROM youtube_streaming_watcher_channels')
 
-    if (channels === undefined || channels.length === 0) {
+    if (channels.length === 0) {
       await say('通知対象のチャンネルはありません')
       return
     }
