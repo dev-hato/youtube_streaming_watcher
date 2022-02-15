@@ -102,7 +102,7 @@ export async function handler () {
           continue
         }
 
-        const startTime = new Date(Date.parse(scheduledStartTime))
+        const startTime = new Date(Date.parse(scheduledStartTime) + (((new Date()).getTimezoneOffset() + (9 * 60)) * 60 * 1000))
 
         if (startTime < new Date()) {
           console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
