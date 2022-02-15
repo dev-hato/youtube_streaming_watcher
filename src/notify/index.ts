@@ -7,13 +7,13 @@ import { runQuery } from '../common/dynamodb'
 import { slackApp } from '../common/slack'
 
 /** 通知状況 **/
-enum NotifyMode {
+enum NotifyMode { // eslint-disable-line no-unused-vars
     /** テーブル登録完了 **/
-    Registered = 'Registered',
+    Registered = 'Registered', // eslint-disable-line no-unused-vars
     /** 登録通知完了 **/
-    NotifyRegistered = 'NotifyRegistered',
+    NotifyRegistered = 'NotifyRegistered', // eslint-disable-line no-unused-vars
     /** リマインド通知 (配信開始1時間前) 完了 **/
-    NotifyRemind = 'NotifyRemind'
+    NotifyRemind = 'NotifyRemind' // eslint-disable-line no-unused-vars
 }
 
 // Youtube Data APIの1日あたりの上限ユニット数
