@@ -53,7 +53,7 @@ export async function runQuery (partiQLQuery: string, parameters?: AttributeValu
 
       input.NextToken = nextToken
     }
-  } catch (e: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  } catch (e: any) {
     if (e.name === 'ResourceNotFoundException') {
       console.log(e)
     } else {
