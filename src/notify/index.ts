@@ -72,7 +72,13 @@ export async function handler () {
         [{ S: channelId }].concat(feedItems.map(item => {
           return { S: item.videoId }
         }))
-      )).map(item => [item.video_id.S, { startTime: item.start_time?.S || '', notifyMode: item.notify_mode?.S || '' }]))
+      )).map(item => [
+        item.video_id.S,
+        {
+          startTime: item.start_time?.S || '',
+          notifyMode: item.notify_mode?.S || ''
+        }
+      ]))
 
       for (const feedItem of feedItems) {
         // 動画ID
@@ -85,13 +91,15 @@ export async function handler () {
           startTime = new Date(startTimeStr)
           const oneHourAgoTime = new Date(startTime)
           oneHourAgoTime.setHours(oneHourAgoTime.getHours() - 1)
+          const now = new Date()
 
           // 以下を全て満たしている場合はスキップ
           // * 登録通知が完了している
           // * 以下のいずれかを満たしている
           //   * 配信開始の1時間以上前
+          //   * 既に配信開始済み
           //   * 配信開始まで1時間以内でリマインド通知が完了している
-          if (new Date() < oneHourAgoTime || postedVideos[videoId]?.notifyMode === NotifyMode.NotifyRemind) {
+          if (now < oneHourAgoTime || startTime < now || postedVideos[videoId]?.notifyMode === NotifyMode.NotifyRemind) {
             console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
             continue
           }
@@ -131,25 +139,28 @@ export async function handler () {
           if (startTime === undefined) { // 配信開始時刻を取得できなかった場合はスキップ
             console.log(`start time can not get: channel_id ${channelId}, video_id: ${videoId}`)
             continue
-          } else if (new Date(startTime) < new Date()) { // 既に配信開始している場合はスキップ
-            console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
-            continue
           }
 
           const newStartTimeStr = startTime.toISOString()
           const notifyMode = NotifyMode.Registered
           postedVideos[videoId] = { startTime: newStartTimeStr, notifyMode }
+          const now = new Date()
 
-          if (startTimeStr === undefined) {
+          if (startTimeStr === undefined && now <= startTime) { // データがない場合はINSERTする (既に配信開始している場合を除く)
             await runQuery(
               'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'notify_mode\': ?}',
               [{ S: channelId }, { S: videoId }, { S: (new Date()).toISOString() }, { S: startTimeStr }, { S: notifyMode }]
             )
-          } else if (startTimeStr === '') { // start_timeやnotify_modeが欠けている古いデータについてはUPDATEで対応する
+          } else if (startTimeStr === '') { // start_timeやnotify_modeが欠けている古いデータについてはUPDATEする
             await runQuery(
               'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET notify_mode=? WHERE channel_id=? AND video_id=?',
               [{ S: newStartTimeStr }, { S: notifyMode }, { S: channelId }, { S: videoId }]
             )
+          }
+
+          if (startTime < now) { // 既に配信開始している場合はスキップ
+            console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
+            continue
           }
         }
 
