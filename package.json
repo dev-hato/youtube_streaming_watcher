@@ -9,13 +9,13 @@
     "build": "tsc",
     "watch": "tsc -w",
     "cdk": "cdk",
-    "fix": "eslint --fix bin/**/*.ts lib/**/*.ts src/**/*.ts"
+    "fix": "eslint --fix bin/**/*.ts lib/*.ts lib/**/*.ts src/**/*.ts"
   },
   "devDependencies": {
     "@textlint-ja/textlint-rule-no-insert-dropping-sa": "^2.0.1",
     "@tsconfig/node14": "^1.0.1",
-    "@types/node": "^17.0.17",
-    "@typescript-eslint/eslint-plugin": "^5.11.0",
+    "@types/node": "^17.0.18",
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.11.0",
     "aws-cdk": "^2.10.0",
     "esbuild": "^0.14.21",

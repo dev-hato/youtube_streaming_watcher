@@ -60,7 +60,9 @@ export class CdkStack extends cdk.Stack {
     const functions = Object.values(functionData)
 
     for (const tableProp of dynamoDBTableProps) {
-      const table = new dynamodb.Table(this, `DynamoDBTable-${tableProp.tableName}`, tableProp)
+      const table = new dynamodb.Table(this, `DynamoDBTable-${tableProp.tableName}`, Object.assign(tableProp, {
+        removalPolicy: cdk.RemovalPolicy.DESTROY
+      }))
       for (const func of functions) {
         table.grant(
           func,
