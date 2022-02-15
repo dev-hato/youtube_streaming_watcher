@@ -146,7 +146,7 @@ export async function handler () {
           postedVideos[videoId] = { startTime: newStartTimeStr, notifyMode }
           const now = new Date()
 
-          if (startTimeStr === undefined && now <= startTime) { // データがない場合はINSERTする (既に配信開始している場合を除く)
+          if (startTimeStr === undefined) { // データがない場合はINSERTする
             await runQuery(
               'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'notify_mode\': ?}',
               [{ S: channelId }, { S: videoId }, { S: (new Date()).toISOString() }, { S: startTimeStr }, { S: notifyMode }]
