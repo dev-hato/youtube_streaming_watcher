@@ -29,6 +29,7 @@ export class CdkStack extends cdk.Stack {
       SLACK_BOT_TOKEN: slackSecret.secretValueFromJson('slack_bot_token').toString(),
       SLACK_CHANNEL: slackSecret.secretValueFromJson('slack_channel').toString(),
       SLACK_SIGNING_SECRET: slackSecret.secretValueFromJson('slack_signing_secret').toString(),
+      TZ: 'Asia/Tokyo',
       YOUTUBE_API_KEY: youtubeSecret.secretValueFromJson('youtube_api_key').toString()
     }
     const functionData = Object.fromEntries(Object.entries(functionProps).map(([key, value]) => [
