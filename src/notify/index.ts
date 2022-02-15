@@ -166,11 +166,22 @@ export async function handler () {
 
         await sleep(1000)
         const dayOfWeeks = ['日', '月', '火', '水', '木', '金', '土']
+        const parameters: AttributeValue[] = []
+        let header = ''
+
+        if (postedVideos[videoId]?.notifyMode === NotifyMode.Registered) {
+          parameters.push({ S: NotifyMode.NotifyRegistered })
+          header = '【新着】\n'
+        } else {
+          parameters.push({ S: NotifyMode.NotifyRemind })
+          header = '【もうすぐ配信開始】\n'
+        }
 
         // Slack通知
         const postMessageParams: ChatPostMessageArguments = {
           channel: slackChannel,
           text:
+              header +
               'チャンネル名: ' +
               feed.title +
               '\n' +
@@ -185,13 +196,6 @@ export async function handler () {
         }
         console.log('call app.client.chat.postMessage: ', postMessageParams)
         await slackApp.client.chat.postMessage(postMessageParams)
-        const parameters: AttributeValue[] = []
-
-        if (postedVideos[videoId]?.notifyMode === NotifyMode.Registered) {
-          parameters.push({ S: NotifyMode.NotifyRegistered })
-        } else {
-          parameters.push({ S: NotifyMode.NotifyRemind })
-        }
 
         await runQuery(
           'UPDATE youtube_streaming_watcher_notified_videos SET notify_mode=? WHERE channel_id=? AND video_id=?',
