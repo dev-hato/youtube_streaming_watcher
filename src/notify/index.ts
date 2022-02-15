@@ -125,7 +125,7 @@ export async function handler () {
                 '|' +
                 feedItem.title +
                 '>\n' +
-                `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth()}月${startTime.getDate()}日 ` +
+                `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
                 `(${dayOfWeeks[startTime.getDay()]}) ` +
                 `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
           }
