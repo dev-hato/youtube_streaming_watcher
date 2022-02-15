@@ -5,7 +5,7 @@ export const functionProps: { [key: string]: NodejsFunctionProps } = {
   notify: {
     functionName: 'youtube_streaming_watcher_notify_function',
     entry: 'src/notify/index.ts',
-    timeout: cdk.Duration.minutes(1)
+    timeout: cdk.Duration.seconds(40)
   },
   reply: {
     functionName: 'youtube_streaming_watcher_reply_function',

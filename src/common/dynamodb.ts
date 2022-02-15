@@ -3,8 +3,7 @@ import {
   DynamoDBClient,
   DynamoDBClientConfig,
   ExecuteStatementCommand,
-  ExecuteStatementCommandInput,
-  ExecuteStatementCommandOutput
+  ExecuteStatementCommandInput
 } from '@aws-sdk/client-dynamodb'
 
 const dynamoDBClientConfig: DynamoDBClientConfig = {}
@@ -26,16 +25,34 @@ if (process.env.NODE_ENV === 'development' && process.env.AWS_ACCESS_KEY_ID !== 
 
 export const dynamoDBClient = new DynamoDBClient(dynamoDBClientConfig)
 
-export async function runQuery (partiQLQuery: string, parameters?: AttributeValue[]): Promise<ExecuteStatementCommandOutput | undefined> {
+export async function runQuery (partiQLQuery: string, parameters?: AttributeValue[]): Promise<{ [key: string]: AttributeValue }[]> {
   const input: ExecuteStatementCommandInput = { Statement: partiQLQuery }
 
   if (parameters) {
     input.Parameters = parameters
   }
 
+  let results: { [key: string]: AttributeValue }[] = []
+
   try {
-    console.log('run query: ', input)
-    return await dynamoDBClient.send(new ExecuteStatementCommand(input))
+    while (1) {
+      console.log('run query: ', input)
+      const result = await dynamoDBClient.send(new ExecuteStatementCommand(input))
+      const items = result.Items
+
+      if (items === undefined) {
+        break
+      }
+
+      results = results.concat(items)
+      const nextToken = result.NextToken
+
+      if (nextToken === undefined) {
+        break
+      }
+
+      input.NextToken = nextToken
+    }
   } catch (e: any) {
     if (e.name === 'ResourceNotFoundException') {
       console.log(e)
@@ -44,5 +61,5 @@ export async function runQuery (partiQLQuery: string, parameters?: AttributeValu
     }
   }
 
-  return undefined
+  return results
 }
