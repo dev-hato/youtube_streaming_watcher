@@ -144,7 +144,6 @@ export async function handler () {
           const newStartTimeStr = startTime.toISOString()
           const notifyMode = NotifyMode.Registered
           postedVideos[videoId] = { startTime: newStartTimeStr, notifyMode }
-          const now = new Date()
 
           if (startTimeStr === undefined) { // データがない場合はINSERTする
             await runQuery(
@@ -158,7 +157,7 @@ export async function handler () {
             )
           }
 
-          if (startTime < now) { // 既に配信開始している場合はスキップ
+          if (startTime < new Date()) { // 既に配信開始している場合はスキップ
             console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
             continue
           }
