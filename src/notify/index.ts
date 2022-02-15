@@ -67,25 +67,12 @@ export async function handler () {
         }
       })
 
-      const postedVideos: { [key: string]: { [key: string]: string | undefined } | undefined } = Object.fromEntries((await runQuery(
+      const postedVideos: { [key: string]: { [key: string]: string } } = Object.fromEntries((await runQuery(
         'SELECT video_id, start_time, notify_mode FROM youtube_streaming_watcher_notified_videos WHERE channel_id=? AND video_id IN (' + feedItems.map(() => '?').join(', ') + ')',
         [{ S: channelId }].concat(feedItems.map(item => {
           return { S: item.videoId }
         }))
-      )).map(item => {
-        const data: (string | { [key: string]: string | undefined } | undefined)[] = [item.video_id.S]
-
-        if (item.start_time?.S === undefined) {
-          data.push(undefined)
-        } else {
-          data.push({
-            startTime: item.start_time.S,
-            notifyMode: item.notify_mode.S
-          })
-        }
-
-        return data
-      }))
+      )).map(item => [item.video_id.S, { startTime: item.start_time?.S || '', notifyMode: item.notify_mode?.S || '' }]))
 
       for (const feedItem of feedItems) {
         // 動画ID
@@ -94,7 +81,7 @@ export async function handler () {
         const startTimeStr = postedVideos[videoId]?.startTime
         let startTime: Date | undefined
 
-        if (startTimeStr !== undefined) {
+        if (startTimeStr !== undefined && startTimeStr !== '') {
           startTime = new Date(startTimeStr)
           const oneHourAgoTime = new Date(startTime)
           oneHourAgoTime.setHours(oneHourAgoTime.getHours() - 1)
@@ -149,13 +136,21 @@ export async function handler () {
             continue
           }
 
-          const startTimeStr = startTime.toISOString()
+          const newStartTimeStr = startTime.toISOString()
           const notifyMode = NotifyMode.Registered
-          postedVideos[videoId] = { startTime: startTimeStr, notifyMode }
-          await runQuery(
-            'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'notify_mode\': ?}',
-            [{ S: channelId }, { S: videoId }, { S: (new Date()).toISOString() }, { S: startTimeStr }, { S: notifyMode }]
-          )
+          postedVideos[videoId] = { startTime: newStartTimeStr, notifyMode }
+
+          if (startTimeStr === undefined) {
+            await runQuery(
+              'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'notify_mode\': ?}',
+              [{ S: channelId }, { S: videoId }, { S: (new Date()).toISOString() }, { S: startTimeStr }, { S: notifyMode }]
+            )
+          } else if (startTimeStr === '') { // start_timeやnotify_modeが欠けている古いデータについてはUPDATEで対応する
+            await runQuery(
+              'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET notify_mode=? WHERE channel_id=? AND video_id=?',
+              [{ S: newStartTimeStr }, { S: notifyMode }, { S: channelId }, { S: videoId }]
+            )
+          }
         }
 
         await sleep(1000)
