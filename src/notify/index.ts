@@ -6,10 +6,14 @@ import { google, youtube_v3 } from 'googleapis' // eslint-disable-line camelcase
 import { runQuery } from '../common/dynamodb'
 import { slackApp } from '../common/slack'
 
+/** 通知状況 **/
 enum NotifyMode {
-    Registered = 'Registered', // テーブル登録完了
-    NotifyRegistered = 'NotifyRegistered', // 登録通知完了
-    NotifyRemind = 'NotifyRemind' // リマインド通知 (配信開始1時間前) 完了
+    /** テーブル登録完了 **/
+    Registered = 'Registered',
+    /** 登録通知完了 **/
+    NotifyRegistered = 'NotifyRegistered',
+    /** リマインド通知 (配信開始1時間前) 完了 **/
+    NotifyRemind = 'NotifyRemind'
 }
 
 // Youtube Data APIの1日あたりの上限ユニット数
