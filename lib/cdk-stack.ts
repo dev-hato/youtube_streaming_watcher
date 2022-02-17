@@ -159,7 +159,6 @@ export class CdkStack extends cdk.Stack {
       ),
       managedPolicies
     })
-    const assetBucketName = cdkSecret.secretValueFromJson('asset_s3_bucket_name').toString()
     cdkDeployRole.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_deploy', {
       managedPolicyName: cdkDeployRoleName,
       statements: [
@@ -167,7 +166,7 @@ export class CdkStack extends cdk.Stack {
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['s3:PutObject'],
-          resources: [`arn:aws:s3:::${assetBucketName}/assets/*`]
+          resources: [`arn:aws:s3:::${cdkSecret.secretValueFromJson('asset_s3_bucket_name').toString()}/assets/*`]
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
