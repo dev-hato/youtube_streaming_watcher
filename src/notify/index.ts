@@ -1,9 +1,20 @@
 import Parser from 'rss-parser'
 import sleep from 'sleep-promise'
+import { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { ChatPostMessageArguments } from '@slack/web-api'
 import { google, youtube_v3 } from 'googleapis' // eslint-disable-line camelcase
 import { runQuery } from '../common/dynamodb'
 import { slackApp } from '../common/slack'
+
+/** 通知状況 **/
+enum NotifyMode { // eslint-disable-line no-unused-vars
+    /** テーブル登録完了 **/
+    Registered = 'Registered', // eslint-disable-line no-unused-vars
+    /** 登録通知完了 **/
+    NotifyRegistered = 'NotifyRegistered', // eslint-disable-line no-unused-vars
+    /** リマインド通知 (配信開始1時間前) 完了 **/
+    NotifyRemind = 'NotifyRemind' // eslint-disable-line no-unused-vars
+}
 
 // Youtube Data APIの1日あたりの上限ユニット数
 const apiUnitLimitPerDay = 10000
@@ -56,82 +67,140 @@ export async function handler () {
         }
       })
 
-      const postedVideos = new Set((await runQuery(
-        'SELECT video_id FROM youtube_streaming_watcher_notified_videos WHERE channel_id=? AND video_id IN (' + feedItems.map(item => '?').join(', ') + ')',
+      const postedVideos: { [key: string]: { [key: string]: string } } = Object.fromEntries((await runQuery(
+        'SELECT video_id, start_time, notify_mode FROM youtube_streaming_watcher_notified_videos WHERE channel_id=? AND video_id IN (' + feedItems.map(() => '?').join(', ') + ')',
         [{ S: channelId }].concat(feedItems.map(item => {
           return { S: item.videoId }
         }))
-      )).map(item => item.video_id.S))
+      )).map(item => [
+        item.video_id.S,
+        {
+          startTime: item.start_time?.S || '',
+          notifyMode: item.notify_mode?.S || ''
+        }
+      ]))
 
       for (const feedItem of feedItems) {
         // 動画ID
         const videoId = feedItem.videoId
 
-        // 通知済みの配信の場合はスキップ
-        if (postedVideos.has(videoId)) {
-          console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
-          continue
-        }
+        const startTimeStr = postedVideos[videoId]?.startTime
+        let startTime: Date | undefined
 
-        await runQuery(
-          'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?}',
-          [{ S: channelId }, { S: videoId }, { S: (new Date()).toISOString() }]
-        )
+        if (startTimeStr !== undefined && startTimeStr !== '') {
+          startTime = new Date(startTimeStr)
+          const oneHourAgoTime = new Date(startTime)
+          oneHourAgoTime.setHours(oneHourAgoTime.getHours() - 1)
+          const now = new Date()
 
-        await sleep(1000)
+          // 以下を全て満たしている場合はスキップ
+          // * 登録通知が完了している
+          // * 以下のいずれかを満たしている
+          //   * 配信開始の1時間以上前
+          //   * 既に配信開始済み
+          //   * 配信開始まで1時間以内でリマインド通知が完了している
+          if (now < oneHourAgoTime || startTime < now || postedVideos[videoId]?.notifyMode === NotifyMode.NotifyRemind) {
+            console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
+            continue
+          }
+        } else {
+          await sleep(1000)
 
-        // 配信情報
-        const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
-          part: ['liveStreamingDetails'],
-          id: [videoId]
-        }
-        console.log('call youtubeApi.videos.list: ', videoResultParams)
-        const videoResult = await api.videos.list(videoResultParams)
-        apiUnit++
-        const items = videoResult.data.items
+          // 配信情報
+          const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
+            part: ['liveStreamingDetails'],
+            id: [videoId]
+          }
+          console.log('call youtubeApi.videos.list: ', videoResultParams)
+          const videoResult = await api.videos.list(videoResultParams)
+          apiUnit++
+          const items = videoResult.data.items
 
-        if (items === undefined) {
-          console.log(`video data can not get: channel_id ${channelId}, video_id: ${videoId}`)
-          continue
-        }
+          if (items === undefined) {
+            console.log(`video data can not get: channel_id ${channelId}, video_id: ${videoId}`)
+            continue
+          }
 
-        for (const videoItem of items) {
-          const scheduledStartTime = videoItem.liveStreamingDetails?.scheduledStartTime
+          // 取得した配信開始時刻のうち、最も遅いものを配信開始時刻とする
+          for (const videoItem of items) {
+            const scheduledStartTimeStr = videoItem.liveStreamingDetails?.scheduledStartTime
 
-          if (scheduledStartTime === undefined || scheduledStartTime === null) {
+            if (scheduledStartTimeStr === undefined || scheduledStartTimeStr === null) {
+              continue
+            }
+
+            const scheduledStartTime = new Date(scheduledStartTimeStr)
+
+            if (startTime === undefined || startTime < scheduledStartTime) {
+              startTime = scheduledStartTime
+            }
+          }
+
+          if (startTime === undefined) { // 配信開始時刻を取得できなかった場合はスキップ
             console.log(`start time can not get: channel_id ${channelId}, video_id: ${videoId}`)
             continue
           }
 
-          const startTime = new Date(Date.parse(scheduledStartTime))
+          const newStartTimeStr = startTime.toISOString()
+          const notifyMode = NotifyMode.Registered
+          postedVideos[videoId] = { startTime: newStartTimeStr, notifyMode }
+          const now = new Date()
 
-          if (startTime < new Date()) {
+          if (startTimeStr === undefined) { // データがない場合はINSERTする
+            await runQuery(
+              'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'notify_mode\': ?}',
+              [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: notifyMode }]
+            )
+          } else if (startTimeStr === '') { // start_timeやnotify_modeが欠けている古いデータについてはUPDATEする
+            await runQuery(
+              'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET notify_mode=? WHERE channel_id=? AND video_id=?',
+              [{ S: newStartTimeStr }, { S: notifyMode }, { S: channelId }, { S: videoId }]
+            )
+          }
+
+          if (startTime < now) { // 既に配信開始している場合はスキップ
             console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
             continue
           }
-
-          await sleep(1000)
-          const dayOfWeeks = ['日', '月', '火', '水', '木', '金', '土']
-
-          // Slack通知
-          const postMessageParams: ChatPostMessageArguments = {
-            channel: slackChannel,
-            text:
-                'チャンネル名: ' +
-                feed.title +
-                '\n' +
-                '配信名: <https://www.youtube.com/watch?v=' +
-                videoId +
-                '|' +
-                feedItem.title +
-                '>\n' +
-                `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
-                `(${dayOfWeeks[startTime.getDay()]}) ` +
-                `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
-          }
-          console.log('call app.client.chat.postMessage: ', postMessageParams)
-          await slackApp.client.chat.postMessage(postMessageParams)
         }
+
+        await sleep(1000)
+        const dayOfWeeks = ['日', '月', '火', '水', '木', '金', '土']
+        const parameters: AttributeValue[] = []
+        let header = ''
+
+        if (postedVideos[videoId]?.notifyMode === NotifyMode.Registered) {
+          parameters.push({ S: NotifyMode.NotifyRegistered })
+          header = ':white_check_mark: 新着\n'
+        } else {
+          parameters.push({ S: NotifyMode.NotifyRemind })
+          header = ':bell: もうすぐ配信開始\n'
+        }
+
+        // Slack通知
+        const postMessageParams: ChatPostMessageArguments = {
+          channel: slackChannel,
+          text:
+              header +
+              'チャンネル名: ' +
+              feed.title +
+              '\n' +
+              '配信名: <https://www.youtube.com/watch?v=' +
+              videoId +
+              '|' +
+              feedItem.title +
+              '>\n' +
+              `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
+              `(${dayOfWeeks[startTime.getDay()]}) ` +
+              `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
+        }
+        console.log('call app.client.chat.postMessage: ', postMessageParams)
+        await slackApp.client.chat.postMessage(postMessageParams)
+
+        await runQuery(
+          'UPDATE youtube_streaming_watcher_notified_videos SET notify_mode=? WHERE channel_id=? AND video_id=?',
+          parameters.concat([{ S: channelId }, { S: videoId }])
+        )
       }
 
       await sleep(1000)
