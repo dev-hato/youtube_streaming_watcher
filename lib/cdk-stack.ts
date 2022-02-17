@@ -16,6 +16,11 @@ export class CdkStack extends cdk.Stack {
   constructor (scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
 
+    const cdkSecret = secretmanager.Secret.fromSecretNameV2(
+      this,
+      'Secret-cdk',
+      'youtube_streaming_watcher_cdk'
+    )
     const slackSecret = secretmanager.Secret.fromSecretNameV2(
       this,
       'Secret-slack',
@@ -124,10 +129,13 @@ export class CdkStack extends cdk.Stack {
         'iam:PutRolePolicy'
       ]
     })
+
+    const cdkDeployRoleName = 'youtube_streaming_watcher_cdk_deploy'
     const iamPolicyArns = [
       functionData.notify.role?.roleArn,
       functionData.reply.role?.roleArn,
       cdkDiffRole.roleArn,
+      `arn:aws:iam::${this.account}:role/${cdkDeployRoleName}`,
       `arn:aws:iam::${this.account}:role/${id.slice(0, 24)}*`
     ]
 
@@ -151,14 +159,15 @@ export class CdkStack extends cdk.Stack {
       ),
       managedPolicies
     })
+    const assetBucketName = cdkSecret.secretValueFromJson('asset_s3_bucket_name').toString()
     cdkDeployRole.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_deploy', {
-      managedPolicyName: 'youtube_streaming_watcher_cdk_deploy',
+      managedPolicyName: cdkDeployRoleName,
       statements: [
         iamPolicy,
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['s3:PutObject'],
-          resources: [`arn:aws:s3:::${cdk.DefaultStackSynthesizer.DEFAULT_FILE_ASSETS_BUCKET_NAME}/assets/*`]
+          resources: [`arn:aws:s3:::${assetBucketName}/assets/*`]
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
@@ -180,6 +189,7 @@ export class CdkStack extends cdk.Stack {
           effect: iam.Effect.ALLOW,
           actions: ['secretsmanager:GetSecretValue'],
           resources: [
+            cdkSecret,
             slackSecret,
             youtubeSecret
           ].map(s => s.secretArn)
