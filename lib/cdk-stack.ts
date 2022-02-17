@@ -79,7 +79,8 @@ export class CdkStack extends cdk.Stack {
           'dynamodb:DescribeTable',
           'dynamodb:PartiQLInsert',
           'dynamodb:PartiQLSelect',
-          'dynamodb:PartiQLDelete'
+          'dynamodb:PartiQLDelete',
+          'dynamodb:PartiQLUpdate'
         )
       }
 
