@@ -191,7 +191,7 @@ export class CdkStack extends cdk.Stack {
             cdkSecret,
             slackSecret,
             youtubeSecret
-          ].map(s => s.secretArn)
+          ].map(s => s.secretArn + '*')
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
