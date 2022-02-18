@@ -149,7 +149,7 @@ export async function handler () {
           if (startTimeStr === undefined) { // データがない場合はINSERTする
             await runQuery(
               'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'notify_mode\': ?}',
-              [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: notifyMode }]
+              [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: newStartTimeStr }, { S: notifyMode }]
             )
           } else if (startTimeStr === '') { // start_timeやnotify_modeが欠けている古いデータについてはUPDATEする
             await runQuery(
