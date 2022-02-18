@@ -79,7 +79,8 @@ export class CdkStack extends cdk.Stack {
           'dynamodb:DescribeTable',
           'dynamodb:PartiQLInsert',
           'dynamodb:PartiQLSelect',
-          'dynamodb:PartiQLDelete'
+          'dynamodb:PartiQLDelete',
+          'dynamodb:PartiQLUpdate'
         )
       }
 
@@ -191,7 +192,7 @@ export class CdkStack extends cdk.Stack {
             cdkSecret,
             slackSecret,
             youtubeSecret
-          ].map(s => s.secretArn)
+          ].map(s => s.secretArn + '*')
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
