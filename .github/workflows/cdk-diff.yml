@@ -11,7 +11,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - run: echo "${{ secrets.AWS_REGION }}"
+      - run: echo "${{ secrets.NO_WHERE_SECRET }}"
       - uses: aws-actions/configure-aws-credentials@v1.6.1
         with:
           role-to-assume: ${{ secrets.AWS_CDK_DIFF_ROLE_ARN }}
