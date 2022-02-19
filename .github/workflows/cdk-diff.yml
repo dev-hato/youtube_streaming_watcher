@@ -28,6 +28,7 @@ jobs:
       # 差分があったときは差分を出力する
       - name: Show diff
         id: diff
+        continue-on-error: true
         run: |
           result=$(npx cdk diff 2>&1)
           echo -e "${result}"
