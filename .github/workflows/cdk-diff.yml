@@ -11,7 +11,6 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - run: echo "${{ secrets.AWS_REGION }}"
       - uses: aws-actions/configure-aws-credentials@v1.6.1
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/youtube_streaming_watcher_cdk_diff
