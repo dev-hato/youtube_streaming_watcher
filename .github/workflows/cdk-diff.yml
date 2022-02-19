@@ -28,13 +28,17 @@ jobs:
       # 差分があったときは差分を出力する
       - name: Show diff
         id: diff
+        continue-on-error: true
         run: |
+          set +e
           result=$(npx cdk diff 2>&1)
+          exit_code=${?}
           echo -e "${result}"
           result="${result//'%'/'%25'}"
           result="${result//$'\n'/'%0A'}"
           result="${result//$'\r'/'%0D'}"
           echo "::set-output name=result::${result}"
+          exit ${exit_code}
       - name: Comment
         uses: actions/github-script@v6
         env:
@@ -52,3 +56,5 @@ jobs:
               issue_number: context.issue.number,
               body,
             })
+      - if: steps.diff.outcome == 'failure'
+        run: exit 1
