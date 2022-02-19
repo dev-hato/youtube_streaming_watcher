@@ -98,7 +98,8 @@ export class CdkStack extends cdk.Stack {
       'AmazonS3ReadOnlyAccess',
       'AWSCloudFormationReadOnlyAccess',
       'AmazonEventBridgeReadOnlyAccess',
-      'AWSLambda_ReadOnlyAccess'
+      'AWSLambda_ReadOnlyAccess',
+      'IAMReadOnlyAccess'
     ].map(name => iam.ManagedPolicy.fromAwsManagedPolicyName(name))
     const oidcSubBase = 'repo:dev-hato/youtube_streaming_watcher'
     const assumeRoleAction = 'sts:AssumeRoleWithWebIdentity'
@@ -118,7 +119,7 @@ export class CdkStack extends cdk.Stack {
       managedPolicies
     })
 
-    const iamPolicy = new iam.PolicyStatement({
+    const iamRoleDeployPolicy = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
         'iam:AttachRolePolicy',
@@ -132,7 +133,7 @@ export class CdkStack extends cdk.Stack {
     })
 
     const cdkDeployRoleName = 'youtube_streaming_watcher_cdk_deploy'
-    const iamPolicyArns = [
+    const iamRoleDeployPolicyResourceArns = [
       functionData.notify.role?.roleArn,
       functionData.reply.role?.roleArn,
       cdkDiffRole.roleArn,
@@ -140,9 +141,9 @@ export class CdkStack extends cdk.Stack {
       `arn:aws:iam::${this.account}:role/${id.slice(0, 24)}*`
     ]
 
-    for (const arn of iamPolicyArns) {
+    for (const arn of iamRoleDeployPolicyResourceArns) {
       if (arn !== undefined) {
-        iamPolicy.addResources(arn)
+        iamRoleDeployPolicy.addResources(arn)
       }
     }
 
@@ -163,7 +164,15 @@ export class CdkStack extends cdk.Stack {
     cdkDeployRole.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_deploy', {
       managedPolicyName: cdkDeployRoleName,
       statements: [
-        iamPolicy,
+        iamRoleDeployPolicy,
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'iam:CreatePolicyVersion',
+            'iam:DeletePolicyVersion'
+          ],
+          resources: [`arn:aws:iam::${this.account}:policy/${cdkDeployRoleName}`]
+        }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['s3:PutObject'],
@@ -183,7 +192,7 @@ export class CdkStack extends cdk.Stack {
             'apigateway:PATCH',
             'apigateway:Get*'
           ],
-          resources: [api.arnForExecuteApi()]
+          resources: [`arn:aws:apigateway:${this.region}::/restapis/${api.restApiId}/*`]
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
