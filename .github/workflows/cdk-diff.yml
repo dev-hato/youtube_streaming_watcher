@@ -14,7 +14,7 @@ jobs:
       - run: echo "${{ secrets.AWS_REGION }}"
       - uses: aws-actions/configure-aws-credentials@v1.6.1
         with:
-          role-to-assume: ${{ secrets.AWS_CDK_DIFF_ROLE_ARN }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/youtube_streaming_watcher_cdk_diff
           aws-region: ${{ secrets.AWS_REGION }}
       - uses: actions/checkout@v2.4.0
       - uses: actions/setup-node@v2.5.1
