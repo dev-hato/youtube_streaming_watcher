@@ -30,6 +30,7 @@ jobs:
         id: diff
         continue-on-error: true
         run: |
+          set +e
           result=$(npx cdk diff 2>&1)
           echo -e "${result}"
           result="${result//'%'/'%25'}"
