@@ -224,7 +224,7 @@ export class CdkStack extends cdk.Stack {
             'lambda:UpdateFunctionCode',
             'lambda:UpdateFunctionConfiguration'
           ],
-          resources: Object.values(functionData).map(f => f.functionArn)
+          resources: functions.map(f => f.functionArn)
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
