@@ -225,12 +225,12 @@ export async function handler () {
         const postMessageParams: ChatPostMessageArguments = {
           channel: slackChannel,
           text:
-                        header +
-                        `チャンネル名: <https://www.youtube.com/channel/${channelId}|${cd.title}>\n` +
-                        `配信名: <https://www.youtube.com/watch?v=${videoId}|${vd.title}>\n` +
-                        `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
-                        `(${dayOfWeeks[startTime.getDay()]}) ` +
-                        `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
+              header +
+              `チャンネル名: <https://www.youtube.com/channel/${channelId}|${cd.title}>\n` +
+              `配信名: <https://www.youtube.com/watch?v=${videoId}|${vd.title}>\n` +
+              `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
+              `(${dayOfWeeks[startTime.getDay()]}) ` +
+              `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
         }
         console.log('call app.client.chat.postMessage: ', postMessageParams)
         await slackApp.client.chat.postMessage(postMessageParams)
