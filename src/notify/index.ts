@@ -129,6 +129,7 @@ export async function handler () {
       }
 
       if (needGetStartTimeVideos.size === 0) {
+        console.log(`videos that need get start time are not found: channel_id: ${channelId}`)
         continue
       }
 
