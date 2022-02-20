@@ -46,7 +46,7 @@ export async function handler () {
   let apiUnit = 0
 
   try {
-    const videoData: {
+    const notifyVideoData: {
             [channelId: string]: {
                 title?: string,
                 videos: {
@@ -77,11 +77,11 @@ export async function handler () {
       console.log('get feed: ', feedUrl)
       const feed = await feedParser.parseURL(feedUrl)
       const videoIds = []
-      videoData[channelId] = { title: feed.title, videos: {} }
+      notifyVideoData[channelId] = { title: feed.title, videos: {} }
 
       for (const item of feed.items) {
         const videoId = item.id.replace(/^yt:video:/, '')
-        videoData[channelId].videos[videoId] = { title: item.title }
+        notifyVideoData[channelId].videos[videoId] = { title: item.title }
         videoToChannel[videoId] = channelId
         videoIds.push(videoId)
         needGetStartTimeVideos.add(videoId)
@@ -127,14 +127,14 @@ export async function handler () {
         // * 配信開始まで1時間以内でリマインド通知が完了している
         if (now < oneHourAgoTime || startTime < now || notifyMode === NotifyMode.NotifyRemind) {
           console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
-          delete videoData[channelId].videos[videoId]
+          delete notifyVideoData[channelId].videos[videoId]
           continue
         }
 
-        videoData[channelId].videos[videoId].startTime = startTime
+        notifyVideoData[channelId].videos[videoId].startTime = startTime
       }
 
-      videoData[channelId].videos[videoId].notifyMode = notifyMode || ''
+      notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode || ''
     }
 
     const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
@@ -166,16 +166,16 @@ export async function handler () {
 
           if (startTimeStr === undefined || startTimeStr === null) {
             console.log(`start time can not get: channel_id ${channelId}, video_id: ${videoId}`)
-            delete videoData[channelId].videos[videoId]
+            delete notifyVideoData[channelId].videos[videoId]
             continue
           }
 
           const startTime = new Date(startTimeStr)
           startTimeStr = startTime.toISOString()
-          videoData[channelId].videos[videoId].startTime = startTime
-          const oldNotifyMode = videoData[channelId].videos[videoId].notifyMode
+          notifyVideoData[channelId].videos[videoId].startTime = startTime
+          const oldNotifyMode = notifyVideoData[channelId].videos[videoId].notifyMode
           const notifyMode = NotifyMode.Registered
-          videoData[channelId].videos[videoId].notifyMode = notifyMode
+          notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode
           const now = new Date()
 
           if (oldNotifyMode === undefined) { // データがない場合はINSERTする
@@ -193,7 +193,7 @@ export async function handler () {
           // 既に配信開始している場合は通知しない
           if (startTime < now) {
             console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
-            delete videoData[channelId].videos[videoId]
+            delete notifyVideoData[channelId].videos[videoId]
           }
         }
       }
@@ -208,7 +208,7 @@ export async function handler () {
     }
 
     // 配信通知
-    for (const [channelId, cd] of Object.entries(videoData)) {
+    for (const [channelId, cd] of Object.entries(notifyVideoData)) {
       for (const [videoId, vd] of Object.entries(cd.videos)) {
         await sleep(1000)
         const dayOfWeeks = ['日', '月', '火', '水', '木', '金', '土']
