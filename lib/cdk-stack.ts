@@ -96,6 +96,7 @@ export class CdkStack extends cdk.Stack {
     const managedPolicies: iam.IManagedPolicy[] = [
       'AmazonDynamoDBReadOnlyAccess',
       'AmazonS3ReadOnlyAccess',
+      'AmazonSNSReadOnlyAccess',
       'AWSCloudFormationReadOnlyAccess',
       'AmazonEventBridgeReadOnlyAccess',
       'AWSLambda_ReadOnlyAccess',
@@ -251,6 +252,27 @@ export class CdkStack extends cdk.Stack {
             'logs:DeleteLogGroup'
           ],
           resources: [apiAccessLogGroup.logGroupArn]
+        }),
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'SNS:CreateTopic',
+            'SNS:DeleteTopic'
+          ],
+          resources: [`arn:aws:sns:${this.region}:${this.account}:Stack-youtube-streaming-watcher-SNSTopiclambda*`]
+        }),
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'cloudwatch:PutMetricAlarm',
+            'cloudwatch:DeleteAlarms'
+          ],
+          resources: [`arn:aws:cloudwatch:${this.region}:${this.account}:alarm:Stack-youtube-streaming-watcher-*`]
+        }),
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: ['chatbot:CreateSlackChannelConfiguration'],
+          resources: [`arn:aws:chatbot:*:${this.account}:chat-configuration/slack-channel/youtube_streaming_watcher_slack`]
         })
       ]
     }))
