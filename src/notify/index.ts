@@ -58,9 +58,6 @@ export async function handler () {
                 }
             }
         } = {}
-    const videoIdList: [string, string[]][] = []
-    const needGetStartTimeVideos: Set<string> = new Set()
-    const videoToChannel: { [videoId: string]: string } = {}
 
     const channels = await runQuery('SELECT channel_id FROM youtube_streaming_watcher_channels')
 
@@ -77,134 +74,128 @@ export async function handler () {
       console.log('get feed: ', feedUrl)
       const feed = await feedParser.parseURL(feedUrl)
       const videoIds = []
+      const needGetStartTimeVideos: Set<string> = new Set()
       notifyVideoData[channelId] = { title: feed.title, videos: {} }
 
       for (const item of feed.items) {
         const videoId = item.id.replace(/^yt:video:/, '')
         notifyVideoData[channelId].videos[videoId] = { title: item.title }
-        videoToChannel[videoId] = channelId
         videoIds.push(videoId)
         needGetStartTimeVideos.add(videoId)
       }
 
-      videoIdList.push([channelId, videoIds])
-    }
+      // 登録済み配信取得
+      const postedVideos = await runQuery(
+        'SELECT video_id, start_time, notify_mode FROM youtube_streaming_watcher_notified_videos ' +
+                'WHERE channel_id=? AND video_id IN (' + videoIds.map(() => '?').join(', ') + ')',
+        [{ S: channelId }].concat(videoIds.map(v => {
+          return { S: v }
+        }))
+      )
 
-    // 登録済み配信取得
-    const postedVideos = await runQuery(
-      'SELECT channel_id, video_id, start_time, notify_mode FROM youtube_streaming_watcher_notified_videos ' +
-            'WHERE ' + videoIdList.map(([c, vs]) =>
-        '(channel_id=? AND video_id IN (' + vs.map(() => '?').join(', ') + '))'
-      ).join(' OR '),
-      videoIdList.map(([c, vs]) => [{ S: c }].concat(vs.map(v => {
-        return { S: v }
-      }))).flat()
-    )
+      for (const item of postedVideos) {
+        const videoId = item.video_id.S
 
-    for (const item of postedVideos) {
-      const channelId = item.channel_id.S
-      const videoId = item.video_id.S
-
-      if (channelId === undefined || videoId === undefined) {
-        console.log(`channel_id or video_id can not get: channel_id ${channelId}, video_id: ${videoId}`)
-        continue
-      }
-
-      const startTimeStr = item.start_time?.S
-      const notifyMode = item.notify_mode?.S
-
-      // 登録通知が完了している場合
-      if (startTimeStr !== undefined) {
-        needGetStartTimeVideos.delete(videoId)
-        const startTime = new Date(startTimeStr)
-        const oneHourAgoTime = new Date(startTime)
-        oneHourAgoTime.setHours(oneHourAgoTime.getHours() - 1)
-        const now = new Date()
-
-        // 以下のいずれかを満たしている場合は通知しない
-        // * 配信開始の1時間以上前
-        // * 既に配信開始済み
-        // * 配信開始まで1時間以内でリマインド通知が完了している
-        if (now < oneHourAgoTime || startTime < now || notifyMode === NotifyMode.NotifyRemind) {
-          console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
-          delete notifyVideoData[channelId].videos[videoId]
+        if (videoId === undefined) {
+          console.log(`video_id can not get: channel_id ${channelId}, video_id: ${videoId}`)
           continue
         }
 
-        notifyVideoData[channelId].videos[videoId].startTime = startTime
-      }
+        const startTimeStr = item.start_time?.S
+        const notifyMode = item.notify_mode?.S
 
-      notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode || ''
-    }
-
-    const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
-      part: ['liveStreamingDetails'],
-      id: Array.from(needGetStartTimeVideos),
-      maxResults: 50
-    }
-
-    // 配信情報取得
-    while (1) {
-      await sleep(1000)
-      console.log('call youtubeApi.videos.list: ', videoResultParams)
-      const videoResult = await api.videos.list(videoResultParams)
-      apiUnit++
-
-      const items = videoResult.data.items
-
-      if (items !== undefined) {
-        for (const videoItem of items) {
-          const videoId = videoItem.id
-
-          if (videoId === undefined || videoId === null) {
-            console.log('video data can not get')
-            continue
-          }
-
-          const channelId = videoToChannel[videoId]
-          let startTimeStr = videoItem.liveStreamingDetails?.scheduledStartTime
-
-          if (startTimeStr === undefined || startTimeStr === null) {
-            console.log(`start time can not get: channel_id ${channelId}, video_id: ${videoId}`)
-            delete notifyVideoData[channelId].videos[videoId]
-            continue
-          }
-
+        // 登録通知が完了している場合
+        if (startTimeStr !== undefined) {
+          needGetStartTimeVideos.delete(videoId)
           const startTime = new Date(startTimeStr)
-          startTimeStr = startTime.toISOString()
-          notifyVideoData[channelId].videos[videoId].startTime = startTime
-          const oldNotifyMode = notifyVideoData[channelId].videos[videoId].notifyMode
-          const notifyMode = NotifyMode.Registered
-          notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode
+          const oneHourAgoTime = new Date(startTime)
+          oneHourAgoTime.setHours(oneHourAgoTime.getHours() - 1)
           const now = new Date()
 
-          if (oldNotifyMode === undefined) { // データがない場合はINSERTする
-            await runQuery(
-              'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'notify_mode\': ?}',
-              [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: notifyMode }]
-            )
-          } else if (oldNotifyMode === '') { // start_timeやnotify_modeが欠けている古いデータについてはUPDATEする
-            await runQuery(
-              'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET notify_mode=? WHERE channel_id=? AND video_id=?',
-              [{ S: startTimeStr }, { S: notifyMode }, { S: channelId }, { S: videoId }]
-            )
+          // 以下のいずれかを満たしている場合は通知しない
+          // * 配信開始の1時間以上前
+          // * 既に配信開始済み
+          // * 配信開始まで1時間以内でリマインド通知が完了している
+          if (now < oneHourAgoTime || startTime < now || notifyMode === NotifyMode.NotifyRemind) {
+            console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
+            delete notifyVideoData[channelId].videos[videoId]
+            continue
           }
 
-          // 既に配信開始している場合は通知しない
-          if (startTime < now) {
-            console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
-            delete notifyVideoData[channelId].videos[videoId]
+          notifyVideoData[channelId].videos[videoId].startTime = startTime
+        }
+
+        notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode || ''
+      }
+
+      // 配信情報取得
+      while (1) {
+        await sleep(1000)
+
+        const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
+          part: ['liveStreamingDetails'],
+          id: Array.from(needGetStartTimeVideos),
+          maxResults: 50
+        }
+        console.log('call youtubeApi.videos.list: ', videoResultParams)
+        const videoResult = await api.videos.list(videoResultParams)
+        apiUnit++
+
+        const items = videoResult.data.items
+
+        if (items !== undefined) {
+          for (const videoItem of items) {
+            const videoId = videoItem.id
+
+            if (videoId === undefined || videoId === null) {
+              console.log('video data can not get')
+              continue
+            }
+
+            let startTimeStr = videoItem.liveStreamingDetails?.scheduledStartTime
+
+            if (startTimeStr === undefined || startTimeStr === null) {
+              console.log(`start time can not get: channel_id ${channelId}, video_id: ${videoId}`)
+              delete notifyVideoData[channelId].videos[videoId]
+              continue
+            }
+
+            const startTime = new Date(startTimeStr)
+            startTimeStr = startTime.toISOString()
+            notifyVideoData[channelId].videos[videoId].startTime = startTime
+            const oldNotifyMode = notifyVideoData[channelId].videos[videoId].notifyMode
+            const notifyMode = NotifyMode.Registered
+            notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode
+            const now = new Date()
+
+            if (oldNotifyMode === undefined) { // データがない場合はINSERTする
+              await runQuery(
+                'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'notify_mode\': ?}',
+                [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: notifyMode }]
+              )
+            } else if (oldNotifyMode === '') { // start_timeやnotify_modeが欠けている古いデータについてはUPDATEする
+              await runQuery(
+                'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET notify_mode=? WHERE channel_id=? AND video_id=?',
+                [{ S: startTimeStr }, { S: notifyMode }, { S: channelId }, { S: videoId }]
+              )
+            }
+
+            // 既に配信開始している場合は通知しない
+            if (startTime < now) {
+              console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
+              delete notifyVideoData[channelId].videos[videoId]
+            }
           }
         }
+
+        const nextPageToken = videoResult.data.nextPageToken
+
+        if (nextPageToken === undefined || nextPageToken === null) {
+          break
+        }
+
+        videoResultParams.pageToken = nextPageToken
       }
-
-      const nextPageToken = videoResult.data.nextPageToken
-
-      if (nextPageToken === undefined || nextPageToken === null) {
-        break
-      }
-
-      videoResultParams.pageToken = nextPageToken
     }
 
     // 配信通知
