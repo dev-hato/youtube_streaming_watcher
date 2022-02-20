@@ -1,5 +1,8 @@
 import * as cdk from '@aws-cdk/core'
 import * as apigateway from '@aws-cdk/aws-apigateway'
+import * as chatbot from '@aws-cdk/aws-chatbot'
+import * as cloudwatch from '@aws-cdk/aws-cloudwatch'
+import * as cloudwatchActions from '@aws-cdk/aws-cloudwatch-actions'
 import * as dynamodb from '@aws-cdk/aws-dynamodb'
 import * as events from '@aws-cdk/aws-events'
 import * as iam from '@aws-cdk/aws-iam'
@@ -8,6 +11,7 @@ import * as lambda from '@aws-cdk/aws-lambda'
 import * as lambdaNode from '@aws-cdk/aws-lambda-nodejs'
 import * as logs from '@aws-cdk/aws-logs'
 import * as secretmanager from '@aws-cdk/aws-secretsmanager'
+import * as sns from '@aws-cdk/aws-sns'
 import { dynamoDBTableProps } from './props/dynamodb-table-props'
 import { rate } from './props/events-rule-props'
 import { functionProps } from './props/function-props'
@@ -26,6 +30,11 @@ export class CdkStack extends cdk.Stack {
       'Secret-slack',
       'youtube_streaming_watcher_slack'
     )
+    const slackAlertSecret = secretmanager.Secret.fromSecretNameV2(
+      this,
+      'Secret-slack_alert',
+      'youtube_streaming_watcher_slack_alert'
+    )
     const youtubeSecret = secretmanager.Secret.fromSecretNameV2(
       this,
       'Secret-youtube',
@@ -38,14 +47,40 @@ export class CdkStack extends cdk.Stack {
       TZ: 'Asia/Tokyo',
       YOUTUBE_API_KEY: youtubeSecret.secretValueFromJson('youtube_api_key').toString()
     }
-    const functionData = Object.fromEntries(Object.entries(functionProps).map(([key, value]) => [
+    const functionDataEntities: [string, lambdaNode.NodejsFunction][] = Object.entries(functionProps).map(([key, value]) => [
       key,
       new lambdaNode.NodejsFunction(this, `Function-${key}`, Object.assign(value, {
         runtime: lambda.Runtime.NODEJS_14_X,
         bundling: { minify: true },
         environment
       }))
-    ]))
+    ])
+    const functionData = Object.fromEntries(functionDataEntities)
+    const lambdaSNSTopic = new sns.Topic(this, 'SNSTopic-lambda')
+    const lambdaSNSTopicAction = new cloudwatchActions.SnsAction(lambdaSNSTopic)
+    const alarmArns = []
+
+    for (const [key, func] of functionDataEntities) {
+      const alarm = new cloudwatch.Alarm(this, `Alarm-lambda_${key}`, {
+        evaluationPeriods: 1,
+        metric: func.metric('Errors', {
+          statistic: cloudwatch.Statistic.AVERAGE,
+          period: cdk.Duration.minutes(5)
+        }),
+        threshold: 0,
+        comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD
+      })
+      alarm.addOkAction(lambdaSNSTopicAction)
+      alarm.addAlarmAction(lambdaSNSTopicAction)
+      alarmArns.push(alarm.alarmArn)
+    }
+
+    const chatbotSlackChannelConfig = new chatbot.SlackChannelConfiguration(this, 'ChatbotSlackChannelConfig-default', {
+      slackChannelConfigurationName: 'youtube_streaming_watcher_slack',
+      slackWorkspaceId: slackAlertSecret.secretValueFromJson('workspace_id').toString(),
+      slackChannelId: slackAlertSecret.secretValueFromJson('channel_id').toString(),
+      notificationTopics: [lambdaSNSTopic]
+    })
     const rule = new events.Rule(this, 'EventsRule-notify', {
       schedule: events.Schedule.rate(rate),
       targets: [new targets.LambdaFunction(functionData.notify)]
@@ -259,7 +294,7 @@ export class CdkStack extends cdk.Stack {
             'SNS:CreateTopic',
             'SNS:DeleteTopic'
           ],
-          resources: [`arn:aws:sns:${this.region}:${this.account}:Stack-youtube-streaming-watcher-SNSTopiclambda*`]
+          resources: [lambdaSNSTopic.topicArn]
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
@@ -267,12 +302,12 @@ export class CdkStack extends cdk.Stack {
             'cloudwatch:PutMetricAlarm',
             'cloudwatch:DeleteAlarms'
           ],
-          resources: [`arn:aws:cloudwatch:${this.region}:${this.account}:alarm:Stack-youtube-streaming-watcher-*`]
+          resources: alarmArns
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['chatbot:CreateSlackChannelConfiguration'],
-          resources: [`arn:aws:chatbot:*:${this.account}:chat-configuration/slack-channel/youtube_streaming_watcher_slack`]
+          resources: [chatbotSlackChannelConfig.slackChannelConfigurationArn]
         })
       ]
     }))
