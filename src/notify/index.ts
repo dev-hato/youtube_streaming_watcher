@@ -128,6 +128,11 @@ export async function handler () {
         notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode || ''
       }
 
+      if (needGetStartTimeVideos.size === 0) {
+        console.log(`videos that need get start time are not found: channel_id: ${channelId}`)
+        continue
+      }
+
       // 配信情報取得
       while (1) {
         await sleep(1000)
