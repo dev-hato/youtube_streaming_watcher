@@ -192,7 +192,7 @@ export async function handler () {
                 'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'updated_time\': ?, \'notify_mode\': ?}',
                 [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: updatedTime }, { S: notifyMode }]
               )
-            } else if (oldNotifyMode === '') { // start_timeやnotify_modeが欠けている古いデータについてはUPDATEする
+            } else {
               await runQuery(
                 'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET updated_time=? SET notify_mode=? WHERE channel_id=? AND video_id=?',
                 [{ S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: channelId }, { S: videoId }]
