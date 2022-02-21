@@ -213,7 +213,7 @@ export async function handler () {
 
         if (vd.notifyMode === NotifyMode.Registered) {
           parameters.push({ S: NotifyMode.NotifyRegistered })
-          header = ':white_check_mark: 新着\n'
+          header = ':new: 新着\n'
         } else {
           parameters.push({ S: NotifyMode.NotifyRemind })
           header = ':bell: もうすぐ配信開始\n'
