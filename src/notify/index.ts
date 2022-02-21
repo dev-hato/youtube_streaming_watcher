@@ -112,7 +112,7 @@ export async function handler () {
 
         // 登録通知が完了している場合
         if (startTimeStr !== undefined) {
-          const updateTime = item.updated_time.S
+          const updateTime = item.updated_time?.S
 
           if (updateTime !== undefined && new Date(updateTime) < notifyVideoData[channelId].videos[videoId].updatedTime) {
             notifyVideoData[channelId].videos[videoId].isUpdated = true
