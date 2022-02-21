@@ -68,7 +68,8 @@ export class CdkStack extends cdk.Stack {
           period: cdk.Duration.minutes(5)
         }),
         threshold: 0,
-        comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD
+        comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+        treatMissingData: cloudwatch.TreatMissingData.IGNORE
       })
       alarm.addOkAction(lambdaSNSTopicAction)
       alarm.addAlarmAction(lambdaSNSTopicAction)

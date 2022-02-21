@@ -227,7 +227,7 @@ export async function handler () {
 
         if (vd.notifyMode === NotifyMode.Registered) {
           parameters.push({ S: NotifyMode.NotifyRegistered })
-          header = ':white_check_mark: 新着\n'
+          header = ':new: 新着\n'
         } else if (vd.isUpdated) {
           header = ':repeat: 配信情報更新\n'
         } else {
