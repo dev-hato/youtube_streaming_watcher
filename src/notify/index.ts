@@ -53,7 +53,9 @@ export async function handler () {
                     [videoId: string]: {
                         title?: string,
                         startTime?: Date,
-                        notifyMode?: string
+                        updatedTime: Date,
+                        notifyMode?: string,
+                        isUpdated: boolean
                     }
                 }
             }
@@ -69,7 +71,7 @@ export async function handler () {
     // 新着配信一覧取得
     for (let { channel_id: { S: channelId } } of channels) {
       channelId = channelId as string
-      const feedParser = new Parser<{}, { id: string }>({ customFields: { item: ['id'] } })
+      const feedParser = new Parser<{}, { id: string, updated: string }>({ customFields: { item: ['id', 'updated'] } })
       const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
       console.log('get feed: ', feedUrl)
       const feed = await feedParser.parseURL(feedUrl)
@@ -79,14 +81,18 @@ export async function handler () {
 
       for (const item of feed.items) {
         const videoId = item.id.replace(/^yt:video:/, '')
-        notifyVideoData[channelId].videos[videoId] = { title: item.title }
+        notifyVideoData[channelId].videos[videoId] = {
+          title: item.title,
+          updatedTime: new Date(item.updated),
+          isUpdated: false
+        }
         videoIds.push(videoId)
         needGetStartTimeVideos.add(videoId)
       }
 
       // 登録済み配信取得
       const postedVideos = await runQuery(
-        'SELECT video_id, start_time, notify_mode FROM youtube_streaming_watcher_notified_videos ' +
+        'SELECT video_id, start_time, updated_time, notify_mode FROM youtube_streaming_watcher_notified_videos ' +
                 'WHERE channel_id=? AND video_id IN (' + videoIds.map(() => '?').join(', ') + ')',
         [{ S: channelId }].concat(videoIds.map(v => {
           return { S: v }
@@ -106,7 +112,14 @@ export async function handler () {
 
         // 登録通知が完了している場合
         if (startTimeStr !== undefined) {
-          needGetStartTimeVideos.delete(videoId)
+          const updateTime = item.updated_time.S
+
+          if (updateTime !== undefined && new Date(updateTime) < notifyVideoData[channelId].videos[videoId].updatedTime) {
+            notifyVideoData[channelId].videos[videoId].isUpdated = true
+          } else {
+            needGetStartTimeVideos.delete(videoId)
+          }
+
           const startTime = new Date(startTimeStr)
           const oneHourAgoTime = new Date(startTime)
           oneHourAgoTime.setHours(oneHourAgoTime.getHours() - 1)
@@ -171,17 +184,18 @@ export async function handler () {
             const oldNotifyMode = notifyVideoData[channelId].videos[videoId].notifyMode
             const notifyMode = NotifyMode.Registered
             notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode
+            const updatedTime = notifyVideoData[channelId].videos[videoId].updatedTime.toISOString()
             const now = new Date()
 
             if (oldNotifyMode === undefined) { // データがない場合はINSERTする
               await runQuery(
-                'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'notify_mode\': ?}',
-                [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: notifyMode }]
+                'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'updated_time\': ?, \'notify_mode\': ?}',
+                [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: updatedTime }, { S: notifyMode }]
               )
             } else if (oldNotifyMode === '') { // start_timeやnotify_modeが欠けている古いデータについてはUPDATEする
               await runQuery(
-                'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET notify_mode=? WHERE channel_id=? AND video_id=?',
-                [{ S: startTimeStr }, { S: notifyMode }, { S: channelId }, { S: videoId }]
+                'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET updated_time=? SET notify_mode=? WHERE channel_id=? AND video_id=?',
+                [{ S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: channelId }, { S: videoId }]
               )
             }
 
@@ -214,6 +228,8 @@ export async function handler () {
         if (vd.notifyMode === NotifyMode.Registered) {
           parameters.push({ S: NotifyMode.NotifyRegistered })
           header = ':white_check_mark: 新着\n'
+        } else if (vd.isUpdated) {
+          header = ':repeat: 配信情報更新\n'
         } else {
           parameters.push({ S: NotifyMode.NotifyRemind })
           header = ':bell: もうすぐ配信開始\n'
