@@ -55,6 +55,7 @@ export async function handler () {
                         startTime?: Date,
                         updatedTime: Date,
                         notifyMode?: string,
+                        needInsert: boolean,
                         isUpdated: boolean
                     }
                 }
@@ -84,6 +85,7 @@ export async function handler () {
         notifyVideoData[channelId].videos[videoId] = {
           title: item.title,
           updatedTime: new Date(item.updated),
+          needInsert: true,
           isUpdated: false
         }
         videoIds.push(videoId)
@@ -139,6 +141,7 @@ export async function handler () {
         }
 
         notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode || ''
+        notifyVideoData[channelId].videos[videoId].needInsert = false
       }
 
       if (needGetStartTimeVideos.size === 0) {
@@ -181,13 +184,17 @@ export async function handler () {
             const startTime = new Date(startTimeStr)
             startTimeStr = startTime.toISOString()
             notifyVideoData[channelId].videos[videoId].startTime = startTime
-            const oldNotifyMode = notifyVideoData[channelId].videos[videoId].notifyMode
-            const notifyMode = NotifyMode.Registered
+            let notifyMode = notifyVideoData[channelId].videos[videoId].notifyMode
+
+            if (notifyMode === undefined || notifyMode === '') {
+              notifyMode = NotifyMode.Registered
+            }
+
             notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode
             const updatedTime = notifyVideoData[channelId].videos[videoId].updatedTime.toISOString()
             const now = new Date()
 
-            if (oldNotifyMode === undefined) { // データがない場合はINSERTする
+            if (notifyVideoData[channelId].videos[videoId].needInsert === true) { // データがない場合はINSERTする
               await runQuery(
                 'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'updated_time\': ?, \'notify_mode\': ?}',
                 [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: updatedTime }, { S: notifyMode }]
