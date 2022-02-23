@@ -261,6 +261,10 @@ export async function handler () {
         console.log('call app.client.chat.postMessage: ', postMessageParams)
         await slackApp.client.chat.postMessage(postMessageParams)
 
+        if (parameters.length === 0) {
+          continue
+        }
+
         await runQuery(
           'UPDATE youtube_streaming_watcher_notified_videos SET notify_mode=? WHERE channel_id=? AND video_id=?',
           parameters.concat([{ S: channelId }, { S: videoId }])
