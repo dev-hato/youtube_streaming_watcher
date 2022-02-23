@@ -114,17 +114,10 @@ export async function handler () {
 
         // 登録通知が完了している場合
         if (startTimeStr !== undefined) {
-          const updateTime = item.updated_time?.S
-
-          if (updateTime !== undefined && new Date(updateTime) < notifyVideoData[channelId].videos[videoId].updatedTime) {
-            notifyVideoData[channelId].videos[videoId].isUpdated = true
-          } else {
-            needGetStartTimeVideos.delete(videoId)
-          }
-
           const startTime = new Date(startTimeStr)
           const oneHourAgoTime = new Date(startTime)
           oneHourAgoTime.setHours(oneHourAgoTime.getHours() - 1)
+          const updateTime = item.updated_time?.S
           const now = new Date()
 
           // 以下のいずれかを満たしている場合は通知しない
@@ -133,8 +126,13 @@ export async function handler () {
           // * 配信開始まで1時間以内でリマインド通知が完了している
           if (now < oneHourAgoTime || startTime < now || notifyMode === NotifyMode.NotifyRemind) {
             console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
+            needGetStartTimeVideos.delete(videoId)
             delete notifyVideoData[channelId].videos[videoId]
             continue
+          } else if (updateTime !== undefined && new Date(updateTime) < notifyVideoData[channelId].videos[videoId].updatedTime) {
+            notifyVideoData[channelId].videos[videoId].isUpdated = true
+          } else {
+            needGetStartTimeVideos.delete(videoId)
           }
 
           notifyVideoData[channelId].videos[videoId].startTime = startTime
