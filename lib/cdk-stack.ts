@@ -41,6 +41,7 @@ export class CdkStack extends cdk.Stack {
       'youtube_streaming_watcher_youtube'
     )
     const environment = {
+      NODE_OPTIONS: '--unhandled-rejections=strict',
       SLACK_BOT_TOKEN: slackSecret.secretValueFromJson('slack_bot_token').toString(),
       SLACK_CHANNEL: slackSecret.secretValueFromJson('slack_channel').toString(),
       SLACK_SIGNING_SECRET: slackSecret.secretValueFromJson('slack_signing_secret').toString(),
