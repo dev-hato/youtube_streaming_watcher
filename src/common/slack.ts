@@ -56,7 +56,7 @@ async function getChannelData (
   message: GenericMessageEvent,
   say: SayFn
 ): Promise<RegisteredChannel | undefined> {
-  let id = message.text?.split(/[  ]/)[2]
+  let id = message.text?.split(/[  ]/)[2] // eslint-disable-line no-irregular-whitespace
     .replace(/</g, '')
     .replace(/>/g, '')
     .replace(/https:\/\/www\.youtube\.com\/channel\//g, '')
