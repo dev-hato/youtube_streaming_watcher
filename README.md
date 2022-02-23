@@ -56,7 +56,7 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
    ```sh
    npm install
    ```
-3. AWS CDKのデプロイで使用するS3バケットを作成します。
+3. スタックのデプロイで使用するS3バケットを作成します。
 
    ```sh
    cdk bootstrap
@@ -78,6 +78,9 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
    ```sh
    cdk deploy
    ```
+
+次回以降デプロイするときは `youtube_streaming_watcher_cdk_deploy` Roleを使用します。  
+また、スタックの差分を見るときは `youtube_streaming_watcher_cdk_diff` Roleで `cdk diff` を実行します。
 
 ### ローカルで動かす方法
 
