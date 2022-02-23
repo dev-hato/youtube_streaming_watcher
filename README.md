@@ -48,6 +48,37 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
 - Google Cloud Platform API Key (YouTube Data API v3)
 - Slack API Token
 
+### AWSへデプロイする方法
+
+1. AWS CLIをインストールします。
+2. 実行に必要なパッケージをインストールします。
+
+   ```sh
+   npm install
+   ```
+3. AWS CDKのデプロイで使用するS3バケットを作成します。
+
+   ```sh
+   cdk bootstrap
+   ```
+4. AWSコンソールのSecret Manager上で以下のSecretを作成します。
+    * `youtube_streaming_watcher_cdk`: AWS CDK関連
+        * `asset_s3_bucket_name`: 手順3で作成したS3バケットの名前
+    * `youtube_streaming_watcher_slack`: 配信通知関連 (Slack)
+        * `slack_bot_token`: Slackのbotトークン
+        * `slack_signing_secret`: SlackのSigning Secret
+        * `slack_channel`: 通知先のチャンネル名
+    * `youtube_streaming_watcher_slack_alert`: Lambda関数のアラート関連 (Slack)
+        * `workspace_id`: 通知先のワークスペースID
+        * `channel_id`: 通知先のチャンネルID
+    * `youtube_streaming_watcher_youtube`: 配信通知関連 (YouTube)
+        * `youtube_api_key`: YouTube Data API用のAPIキー
+5. スタックをデプロイします。
+
+   ```sh
+   cdk deploy
+   ```
+
 ### ローカルで動かす方法
 
 1. `.env` ファイルを作成し、APIのトークンや通知先のSlackチャンネルをセットします。
