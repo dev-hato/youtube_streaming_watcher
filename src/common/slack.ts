@@ -1,6 +1,7 @@
 import { App, AppOptions, ExpressReceiver, GenericMessageEvent, SayFn } from '@slack/bolt'
 import axios from 'axios'
 import cheerio from 'cheerio'
+import Parser from 'rss-parser'
 import { runQuery } from './dynamodb'
 
 if (process.env.SLACK_SIGNING_SECRET === undefined) {
@@ -56,7 +57,7 @@ async function getChannelData (
   message: GenericMessageEvent,
   say: SayFn
 ): Promise<RegisteredChannel | undefined> {
-  let id = message.text?.split(' ')[2]
+  let id = message.text?.split(/[  ]/)[2] // eslint-disable-line no-irregular-whitespace
     .replace(/</g, '')
     .replace(/>/g, '')
     .replace(/https:\/\/www\.youtube\.com\/channel\//g, '')
@@ -85,6 +86,23 @@ async function getChannelData (
     }
 
     id = idContent
+  } else {
+    try {
+      const feedParser = new Parser()
+      const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${id}`
+      console.log('get feed: ', feedUrl)
+      await feedParser.parseURL(feedUrl)
+    } catch (e: any) {
+      if (e.message === 'Status code 404') {
+        await postMessage(
+          'チャンネルIDが見つかりません',
+          say
+        )
+        return
+      } else {
+        throw e
+      }
+    }
   }
 
   const registeredChannel = await runQuery(
