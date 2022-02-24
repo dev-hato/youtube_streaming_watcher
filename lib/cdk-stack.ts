@@ -20,33 +20,30 @@ export class CdkStack extends cdk.Stack {
   constructor (scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
 
-    const cdkSecret = secretmanager.Secret.fromSecretNameV2(
-      this,
-      'Secret-cdk',
-      'youtube_streaming_watcher_cdk'
-    )
-    const slackSecret = secretmanager.Secret.fromSecretNameV2(
-      this,
-      'Secret-slack',
-      'youtube_streaming_watcher_slack'
-    )
-    const slackAlertSecret = secretmanager.Secret.fromSecretNameV2(
-      this,
-      'Secret-slack_alert',
-      'youtube_streaming_watcher_slack_alert'
-    )
-    const youtubeSecret = secretmanager.Secret.fromSecretNameV2(
-      this,
-      'Secret-youtube',
-      'youtube_streaming_watcher_youtube'
-    )
+    const secrets: { [secretName: string]: secretmanager.ISecret } = {
+      slack: secretmanager.Secret.fromSecretNameV2(
+        this,
+        'Secret-slack',
+        'youtube_streaming_watcher_slack'
+      ),
+      slackAlert: secretmanager.Secret.fromSecretNameV2(
+        this,
+        'Secret-slack_alert',
+        'youtube_streaming_watcher_slack_alert'
+      ),
+      youtube: secretmanager.Secret.fromSecretNameV2(
+        this,
+        'Secret-youtube',
+        'youtube_streaming_watcher_youtube'
+      )
+    }
     const environment = {
       NODE_OPTIONS: '--unhandled-rejections=strict',
-      SLACK_BOT_TOKEN: slackSecret.secretValueFromJson('slack_bot_token').toString(),
-      SLACK_CHANNEL: slackSecret.secretValueFromJson('slack_channel').toString(),
-      SLACK_SIGNING_SECRET: slackSecret.secretValueFromJson('slack_signing_secret').toString(),
+      SLACK_BOT_TOKEN: secrets.slack.secretValueFromJson('slack_bot_token').toString(),
+      SLACK_CHANNEL: secrets.slack.secretValueFromJson('slack_channel').toString(),
+      SLACK_SIGNING_SECRET: secrets.slack.secretValueFromJson('slack_signing_secret').toString(),
       TZ: 'Asia/Tokyo',
-      YOUTUBE_API_KEY: youtubeSecret.secretValueFromJson('youtube_api_key').toString()
+      YOUTUBE_API_KEY: secrets.youtube.secretValueFromJson('youtube_api_key').toString()
     }
     const functionDataEntities: [string, lambdaNode.NodejsFunction][] = Object.entries(functionProps).map(([key, value]) => [
       key,
@@ -79,8 +76,8 @@ export class CdkStack extends cdk.Stack {
 
     const chatbotSlackChannelConfig = new chatbot.SlackChannelConfiguration(this, 'ChatbotSlackChannelConfig-default', {
       slackChannelConfigurationName: 'youtube_streaming_watcher_slack',
-      slackWorkspaceId: slackAlertSecret.secretValueFromJson('workspace_id').toString(),
-      slackChannelId: slackAlertSecret.secretValueFromJson('channel_id').toString(),
+      slackWorkspaceId: secrets.slackAlert.secretValueFromJson('workspace_id').toString(),
+      slackChannelId: secrets.slackAlert.secretValueFromJson('channel_id').toString(),
       notificationTopics: [lambdaSNSTopic]
     })
     const rule = new events.Rule(this, 'EventsRule-notify', {
@@ -214,7 +211,14 @@ export class CdkStack extends cdk.Stack {
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['s3:PutObject'],
-          resources: [`arn:aws:s3:::${cdkSecret.secretValueFromJson('asset_s3_bucket_name').toString()}/assets/*`]
+          resources: [
+            'arn:aws:s3:::' +
+             cdk.DefaultStackSynthesizer.DEFAULT_FILE_ASSETS_BUCKET_NAME
+               .replace('${Qualifier}', cdk.DefaultStackSynthesizer.DEFAULT_QUALIFIER) // eslint-disable-line no-template-curly-in-string
+               .replace('${AWS::AccountId}', this.account) // eslint-disable-line no-template-curly-in-string
+               .replace('${AWS::Region}', this.region) + // eslint-disable-line no-template-curly-in-string
+             '/assets/*'
+          ]
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
@@ -235,11 +239,7 @@ export class CdkStack extends cdk.Stack {
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['secretsmanager:GetSecretValue'],
-          resources: [
-            cdkSecret,
-            slackSecret,
-            youtubeSecret
-          ].map(s => s.secretArn + '*')
+          resources: Object.values(secrets).map(s => s.secretArn + '*')
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
