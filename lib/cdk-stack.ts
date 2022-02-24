@@ -211,14 +211,7 @@ export class CdkStack extends cdk.Stack {
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['s3:PutObject'],
-          resources: [
-            'arn:aws:s3:::' +
-             cdk.DefaultStackSynthesizer.DEFAULT_FILE_ASSETS_BUCKET_NAME
-               .replace('${Qualifier}', cdk.DefaultStackSynthesizer.DEFAULT_QUALIFIER) // eslint-disable-line no-template-curly-in-string
-               .replace('${AWS::AccountId}', this.account) // eslint-disable-line no-template-curly-in-string
-               .replace('${AWS::Region}', this.region) + // eslint-disable-line no-template-curly-in-string
-             '/assets/*'
-          ]
+          resources: [`arn:aws:s3:::cdk-${this.node.tryGetContext(cdk.BOOTSTRAP_QUALIFIER_CONTEXT) ?? cdk.DefaultStackSynthesizer.DEFAULT_QUALIFIER}-assets-${this.account}-${this.region}/assets/*`]
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
