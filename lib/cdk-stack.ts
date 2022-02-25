@@ -135,6 +135,7 @@ export class CdkStack extends Stack {
       clientIds: [oidcAud]
     })
 
+    const qualifier = this.node.tryGetContext(BOOTSTRAP_QUALIFIER_CONTEXT) ?? DefaultStackSynthesizer.DEFAULT_QUALIFIER
     const managedPolicies: iam.IManagedPolicy[] = [
       'AmazonDynamoDBReadOnlyAccess',
       'AmazonS3ReadOnlyAccess',
@@ -143,7 +144,21 @@ export class CdkStack extends Stack {
       'AmazonEventBridgeReadOnlyAccess',
       'AWSLambda_ReadOnlyAccess',
       'IAMReadOnlyAccess'
-    ].map(name => iam.ManagedPolicy.fromAwsManagedPolicyName(name))
+    ].map(name => iam.ManagedPolicy.fromAwsManagedPolicyName(name)).concat([
+      new iam.ManagedPolicy(this, 'Policy-cdk', {
+        managedPolicyName: 'youtube_streaming_watcher_cdk',
+        statements: [
+          new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            actions: ['sts:AssumeRole'],
+            resources: [
+              `arn:aws:iam::${this.account}:role/cdk-${qualifier}-lookup-role-${this.account}-${this.region}`,
+              `arn:aws:iam::${this.account}:role/cdk-${qualifier}-deploy-role-${this.account}-${this.region}`
+            ]
+          })
+        ]
+      })
+    ])
     const oidcSubBase = 'repo:dev-hato/youtube_streaming_watcher'
     const assumeRoleAction = 'sts:AssumeRoleWithWebIdentity'
 
@@ -219,7 +234,7 @@ export class CdkStack extends Stack {
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['s3:PutObject'],
-          resources: [`arn:aws:s3:::cdk-${this.node.tryGetContext(BOOTSTRAP_QUALIFIER_CONTEXT) ?? DefaultStackSynthesizer.DEFAULT_QUALIFIER}-assets-${this.account}-${this.region}/assets/*`]
+          resources: [`arn:aws:s3:::cdk-${qualifier}-assets-${this.account}-${this.region}/assets/*`]
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
