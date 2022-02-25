@@ -147,25 +147,17 @@ export class CdkStack extends Stack {
     const oidcSubBase = 'repo:dev-hato/youtube_streaming_watcher'
     const assumeRoleAction = 'sts:AssumeRoleWithWebIdentity'
 
-    const qualifier = this.node.tryGetContext(BOOTSTRAP_QUALIFIER_CONTEXT) ?? DefaultStackSynthesizer.DEFAULT_QUALIFIER
-    const assumeRolePrincipalBase = [
-      new iam.ArnPrincipal(`arn:aws:iam::${this.account}:role/cdk-${qualifier}-lookup-role-${this.account}-${this.region}`),
-      new iam.ArnPrincipal(`arn:aws:iam::${this.account}:role/cdk-${qualifier}-deploy-role-${this.account}-${this.region}`)
-    ]
     const cdkDiffRole = new iam.Role(this, 'Role-cdk_diff', {
       roleName: 'youtube_streaming_watcher_cdk_diff',
-      assumedBy: new iam.CompositePrincipal(
-        new iam.FederatedPrincipal(
-          provider.openIdConnectProviderArn,
-          {
-            StringEquals: {
-              'token.actions.githubusercontent.com:sub': oidcSubBase + ':pull_request',
-              'token.actions.githubusercontent.com:aud': oidcAud
-            }
-          },
-          assumeRoleAction
-        ),
-        ...assumeRolePrincipalBase
+      assumedBy: new iam.FederatedPrincipal(
+        provider.openIdConnectProviderArn,
+        {
+          StringEquals: {
+            'token.actions.githubusercontent.com:sub': oidcSubBase + ':pull_request',
+            'token.actions.githubusercontent.com:aud': oidcAud
+          }
+        },
+        assumeRoleAction
       ),
       managedPolicies
     })
@@ -200,18 +192,15 @@ export class CdkStack extends Stack {
 
     const cdkDeployRole = new iam.Role(this, 'Role-cdk_deploy', {
       roleName: 'youtube_streaming_watcher_cdk_deploy',
-      assumedBy: new iam.CompositePrincipal(
-        new iam.FederatedPrincipal(
-          provider.openIdConnectProviderArn,
-          {
-            StringEquals: {
-              'token.actions.githubusercontent.com:sub': oidcSubBase + ':ref:refs/heads/main',
-              'token.actions.githubusercontent.com:aud': oidcAud
-            }
-          },
-          assumeRoleAction
-        ),
-        ...assumeRolePrincipalBase
+      assumedBy: new iam.FederatedPrincipal(
+        provider.openIdConnectProviderArn,
+        {
+          StringEquals: {
+            'token.actions.githubusercontent.com:sub': oidcSubBase + ':ref:refs/heads/main',
+            'token.actions.githubusercontent.com:aud': oidcAud
+          }
+        },
+        assumeRoleAction
       ),
       managedPolicies
     })
@@ -230,7 +219,7 @@ export class CdkStack extends Stack {
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['s3:PutObject'],
-          resources: [`arn:aws:s3:::cdk-${qualifier}-assets-${this.account}-${this.region}/assets/*`]
+          resources: [`arn:aws:s3:::cdk-${this.node.tryGetContext(BOOTSTRAP_QUALIFIER_CONTEXT) ?? DefaultStackSynthesizer.DEFAULT_QUALIFIER}-assets-${this.account}-${this.region}/assets/*`]
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
