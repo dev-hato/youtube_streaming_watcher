@@ -18,6 +18,7 @@ import {
   aws_lambda_nodejs as lambdaNode,
   aws_logs as logs,
   aws_secretsmanager as secretmanager,
+  aws_s3 as s3,
   aws_sns as sns
 } from 'aws-cdk-lib'
 import { dynamoDBTableProps } from './props/dynamodb-table-props'
@@ -151,10 +152,9 @@ export class CdkStack extends Stack {
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
             actions: ['sts:AssumeRole'],
-            resources: [
-              `arn:aws:iam::${this.account}:role/cdk-${qualifier}-lookup-role-${this.account}-${this.region}`,
-              `arn:aws:iam::${this.account}:role/cdk-${qualifier}-deploy-role-${this.account}-${this.region}`
-            ]
+            resources: ['lookup', 'deploy'].map(s =>
+              iam.Role.fromRoleName(this, `Role-cdk_default_${s}`, `cdk-${qualifier}-${s}-role-${this.account}-${this.region}`).roleArn
+            )
           })
         ]
       })
@@ -234,7 +234,7 @@ export class CdkStack extends Stack {
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['s3:PutObject'],
-          resources: [`arn:aws:s3:::cdk-${qualifier}-assets-${this.account}-${this.region}/assets/*`]
+          resources: [s3.Bucket.fromBucketName(this, 'Bucket-cdk_default', `cdk-${qualifier}-assets-${this.account}-${this.region}`).bucketArn + '/assets/*']
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
