@@ -148,7 +148,7 @@ export class CdkStack extends Stack {
     const assumeRoleAction = 'sts:AssumeRoleWithWebIdentity'
 
     const qualifier = this.node.tryGetContext(BOOTSTRAP_QUALIFIER_CONTEXT) ?? DefaultStackSynthesizer.DEFAULT_QUALIFIER
-    const assumeRolePrincipalBase: iam.IPrincipal[] = [
+    const assumeRolePrincipalBase = [
       new iam.ArnPrincipal(`arn:aws:iam::${this.account}:role/cdk-${qualifier}-lookup-role-${this.account}-${this.region}`),
       new iam.ArnPrincipal(`arn:aws:iam::${this.account}:role/cdk-${qualifier}-deploy-role-${this.account}-${this.region}`)
     ]
