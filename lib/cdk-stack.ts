@@ -19,7 +19,8 @@ import {
   aws_logs as logs,
   aws_secretsmanager as secretmanager,
   aws_s3 as s3,
-  aws_sns as sns
+  aws_sns as sns,
+  aws_ssm as ssm
 } from 'aws-cdk-lib'
 import { dynamoDBTableProps } from './props/dynamodb-table-props'
 import { rate } from './props/events-rule-props'
@@ -149,6 +150,11 @@ export class CdkStack extends Stack {
       new iam.ManagedPolicy(this, 'Policy-cdk', {
         managedPolicyName: 'youtube_streaming_watcher_cdk',
         statements: [
+          new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            actions: ['ssm:GetParameter'],
+            resources: [ssm.StringParameter.fromStringParameterName(this, 'SSMParameter-cdk_bootstrap', `/cdk-bootstrap/${qualifier}/version`).parameterArn]
+          }),
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
             actions: ['sts:AssumeRole'],
