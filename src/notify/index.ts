@@ -72,10 +72,22 @@ export async function handler () {
     // 新着配信一覧取得
     for (let { channel_id: { S: channelId } } of channels) {
       channelId = channelId as string
-      const feedParser = new Parser<{}, { id: string, updated: string }>({ customFields: { item: ['id', 'updated'] } })
       const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
-      console.log('get feed: ', feedUrl)
-      const feed = await feedParser.parseURL(feedUrl)
+      let feed
+
+      try {
+        console.log('get feed: ', feedUrl)
+        const feedParser = new Parser<{}, { id: string, updated: string }>({ customFields: { item: ['id', 'updated'] } })
+        feed = await feedParser.parseURL(feedUrl)
+      } catch (e: any) {
+        if (e.message !== 'Status code 404') {
+          console.log('not found: ', feedUrl)
+          continue
+        } else {
+          throw e
+        }
+      }
+
       const videoIds = []
       const needGetStartTimeVideos: Set<string> = new Set()
       notifyVideoData[channelId] = { title: feed.title, videos: {} }
