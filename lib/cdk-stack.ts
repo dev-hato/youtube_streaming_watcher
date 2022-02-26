@@ -152,11 +152,6 @@ export class CdkStack extends Stack {
         statements: [
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
-            actions: ['ssm:GetParameter'],
-            resources: [ssm.StringParameter.fromStringParameterName(this, 'SSMParameter-cdk_bootstrap', `/cdk-bootstrap/${qualifier}/version`).parameterArn]
-          }),
-          new iam.PolicyStatement({
-            effect: iam.Effect.ALLOW,
             actions: ['sts:AssumeRole'],
             resources: ['lookup', 'deploy'].map(s =>
               iam.Role.fromRoleName(this, `Role-cdk_default_${s}`, `cdk-${qualifier}-${s}-role-${this.account}-${this.region}`).roleArn
@@ -335,5 +330,10 @@ export class CdkStack extends Stack {
         })
       ]
     }))
+    const cdkBootstrapParam = ssm.StringParameter.fromStringParameterName(this, 'SSMParameter-cdk_bootstrap', `/cdk-bootstrap/${qualifier}/version`)
+
+    for (const role of [cdkDiffRole, cdkDeployRole]) {
+      cdkBootstrapParam.grantRead(role)
+    }
   }
 }
