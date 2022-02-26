@@ -220,6 +220,12 @@ export class CdkStack extends Stack {
       ),
       managedPolicies
     })
+    const cdkBootstrapParam = ssm.StringParameter.fromStringParameterName(this, 'SSMParameter-cdk_bootstrap', `/cdk-bootstrap/${qualifier}/version`)
+
+    for (const role of [cdkDiffRole, cdkDeployRole]) {
+      cdkBootstrapParam.grantRead(role)
+    }
+
     cdkDeployRole.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_deploy', {
       managedPolicyName: cdkDeployRoleName,
       statements: [
@@ -330,10 +336,5 @@ export class CdkStack extends Stack {
         })
       ]
     }))
-    const cdkBootstrapParam = ssm.StringParameter.fromStringParameterName(this, 'SSMParameter-cdk_bootstrap', `/cdk-bootstrap/${qualifier}/version`)
-
-    for (const role of [cdkDiffRole, cdkDeployRole]) {
-      cdkBootstrapParam.grantRead(role)
-    }
   }
 }
