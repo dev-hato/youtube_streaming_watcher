@@ -18,6 +18,7 @@ import {
   aws_lambda_nodejs as lambdaNode,
   aws_logs as logs,
   aws_secretsmanager as secretmanager,
+  aws_s3 as s3,
   aws_sns as sns,
   aws_ssm as ssm
 } from 'aws-cdk-lib'
@@ -231,6 +232,11 @@ export class CdkStack extends Stack {
       managedPolicyName: cdkDeployRoleName,
       statements: [
         iamRoleDeployPolicy,
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: ['s3:PutObject'],
+          resources: [s3.Bucket.fromBucketName(this, 'Bucket-cdk_default', `cdk-${qualifier}-assets-${this.account}-${this.region}`).bucketArn + '/assets/*']
+        }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['apigateway:PATCH'],
