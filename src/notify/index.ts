@@ -80,7 +80,7 @@ export async function handler () {
         const feedParser = new Parser<{}, { id: string, updated: string }>({ customFields: { item: ['id', 'updated'] } })
         feed = await feedParser.parseURL(feedUrl)
       } catch (e: any) {
-        if (e.message !== 'Status code 404') {
+        if (e.message === 'Status code 404') {
           console.log('not found: ', feedUrl)
           continue
         } else {
