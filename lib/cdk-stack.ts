@@ -18,7 +18,6 @@ import {
   aws_lambda_nodejs as lambdaNode,
   aws_logs as logs,
   aws_secretsmanager as secretmanager,
-  aws_s3 as s3,
   aws_sns as sns,
   aws_ssm as ssm
 } from 'aws-cdk-lib'
