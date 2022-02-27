@@ -66,11 +66,11 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
 ### Node.jsのバージョン
 
 以下の2つを満たすバージョンに設定しています。
-* dependabotで使用しているバージョン: <https://github.com/dependabot/dependabot-core/blob/6e08528c0e3fdbf174d26001124d7c0f7c6bb1b9/Dockerfile#L100-L105>
+* dependabotで使用しているバージョン: <https://github.com/dependabot/dependabot-core/blob/31daef5ef4c96d83003777316e96a14eecddd190/Dockerfile#L100-L105>
 * AWS LambdaのNode.jsランタイムで対応している最新バージョン: <https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/lambda-runtimes.html>
 
 ### npmのバージョン
 
 dependabotで使用しているバージョンに準拠しています。
 
-<https://github.com/dependabot/dependabot-core/blob/6e08528c0e3fdbf174d26001124d7c0f7c6bb1b9/Dockerfile#L100-L105>
+<https://github.com/dependabot/dependabot-core/blob/31daef5ef4c96d83003777316e96a14eecddd190/Dockerfile#L100-L105>
