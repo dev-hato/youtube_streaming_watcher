@@ -62,7 +62,7 @@ export class CdkStack extends Stack {
       )
     }
     const environment = {
-      NODE_OPTIONS: '--unhandled-rejections=strict --enable-source-maps',
+      NODE_OPTIONS: '--unhandled-rejections=strict',
       SLACK_BOT_TOKEN: secrets.slackBotToken.stringValue,
       SLACK_CHANNEL: secrets.slackChannel.stringValue,
       SLACK_SIGNING_SECRET: secrets.slackSigningSecret.stringValue,
