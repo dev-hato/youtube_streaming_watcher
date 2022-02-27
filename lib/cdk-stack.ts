@@ -30,24 +30,20 @@ export class CdkStack extends Stack {
     super(scope, id, props)
 
     const secrets: { [secretName: string]: ssm.IStringParameter } = {
-      slackBotToken: ssm.StringParameter.fromSecureStringParameterAttributes(
+      slackBotToken: ssm.StringParameter.fromStringParameterName(
         this,
         'Secret-slack_bot_token',
-        {
-          parameterName: '/youtube_streaming_watcher_slack/slack_bot_token'
-        }
+        '/youtube_streaming_watcher_slack/slack_bot_token'
       ),
       slackChannel: ssm.StringParameter.fromStringParameterName(
         this,
         'Secret-slack_channel',
         '/youtube_streaming_watcher_slack/slack_channel'
       ),
-      slackSigningSecret: ssm.StringParameter.fromSecureStringParameterAttributes(
+      slackSigningSecret: ssm.StringParameter.fromStringParameterName(
         this,
         'Secret-slack_signing_secret',
-        {
-          parameterName: '/youtube_streaming_watcher_slack/slack_signing_secret'
-        }
+        '/youtube_streaming_watcher_slack/slack_signing_secret'
       ),
       slackAlertWorkspaceId: ssm.StringParameter.fromStringParameterName(
         this,
@@ -59,12 +55,10 @@ export class CdkStack extends Stack {
         'Secret-slack_alert_channel_id',
         '/youtube_streaming_watcher_slack_alert/channel_id'
       ),
-      youtubeApiKey: ssm.StringParameter.fromSecureStringParameterAttributes(
+      youtubeApiKey: ssm.StringParameter.fromStringParameterName(
         this,
-        'Secret-youtube_api_key',
-        {
-          parameterName: '/youtube_streaming_watcher_youtube/youtube_api_key'
-        }
+        'Secret-youtube',
+        '/youtube_streaming_watcher_youtube/youtube_api_key'
       )
     }
     const environment = {
