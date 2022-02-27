@@ -194,7 +194,7 @@ export class CdkStack extends Stack {
       ]
     })
 
-    const cdkDeployRoleName = cdkRoles.deploy.roleName
+    const cdkDeployRoleName = 'youtube_streaming_watcher_cdk_deploy'
     const iamRoleDeployPolicyResourceArns = [
       functionData.notify.role?.roleArn,
       functionData.reply.role?.roleArn,
