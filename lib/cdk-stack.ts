@@ -216,6 +216,7 @@ export class CdkStack extends Stack {
       'logs:DeleteLogGroup'
     )
     const cdkBootstrapParam = ssm.StringParameter.fromStringParameterName(this, 'SSMParameter-cdk_bootstrap', `/cdk-bootstrap/${qualifier}/version`)
+    iam.Role.fromRoleName(this, 'Role-cdk_default_file_publishing_role', `cdk-${qualifier}-file-publishing-role-${this.account}-${this.region}`).grant(cdkDeployRole, 'sts:AssumeRole')
     const cdkDefaultRoles = ['lookup', 'deploy'].map(s => iam.Role.fromRoleName(this, `Role-cdk_default_${s}`, `cdk-${qualifier}-${s}-role-${this.account}-${this.region}`))
 
     for (const role of [cdkDiffRole, cdkDeployRole]) {
