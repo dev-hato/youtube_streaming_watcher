@@ -17,7 +17,7 @@ COPY .node-version .
 COPY .npmignore .
 COPY .npmrc .
 COPY package*.json .
-RUN npm install -g npm@7.21.0 \
+RUN npm install -g npm@8.5.1 \
     && npm install
 COPY tsconfig.json .
 COPY lib/props/ lib/props/
