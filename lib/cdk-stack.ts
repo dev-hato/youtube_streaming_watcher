@@ -238,11 +238,6 @@ export class CdkStack extends Stack {
         iamRoleDeployPolicy,
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
-          actions: ['s3:PutObject'],
-          resources: [s3.Bucket.fromBucketName(this, 'Bucket-cdk_default', `cdk-${qualifier}-assets-${this.account}-${this.region}`).bucketArn + '/assets/*']
-        }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
           actions: ['apigateway:PATCH'],
           resources: [`arn:aws:apigateway:${this.region}::/account`]
         }),
