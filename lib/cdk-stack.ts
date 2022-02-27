@@ -220,6 +220,7 @@ export class CdkStack extends Stack {
       ),
       managedPolicies
     })
+    iam.Role.fromRoleName(this, 'Role-cdk_default_file_publishing_role', `cdk-${qualifier}-file-publishing-role-${this.account}-${this.region}`).grant(cdkDeployRole, 'sts:AssumeRole')
     const cdkBootstrapParam = ssm.StringParameter.fromStringParameterName(this, 'SSMParameter-cdk_bootstrap', `/cdk-bootstrap/${qualifier}/version`)
 
     for (const role of [cdkDiffRole, cdkDeployRole]) {
