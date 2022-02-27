@@ -99,6 +99,12 @@ async function getChannelData (
           say
         )
         return
+      } else if (e.message === 'Status code 500') {
+        await postMessage(
+          'チャンネルが存在するかの確認中にエラーが発生しました',
+          say
+        )
+        return
       } else {
         throw e
       }

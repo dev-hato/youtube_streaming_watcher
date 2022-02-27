@@ -19,6 +19,8 @@ enum NotifyMode { // eslint-disable-line no-unused-vars
 // Youtube Data APIの1日あたりの上限ユニット数
 const apiUnitLimitPerDay = 10000
 
+const maxGetFeedRetryCnt = 10
+
 export async function handler () {
   let currentNotificationAt: string | undefined
   const currentNotificationAtItems = await runQuery('SELECT next_notification_at FROM youtube_streaming_watcher_next_notification_times')
@@ -74,8 +76,28 @@ export async function handler () {
       channelId = channelId as string
       const feedParser = new Parser<{}, { id: string, updated: string }>({ customFields: { item: ['id', 'updated'] } })
       const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
-      console.log('get feed: ', feedUrl)
-      const feed = await feedParser.parseURL(feedUrl)
+      let feed
+
+      for (let i = 0; i < maxGetFeedRetryCnt; i++) {
+        try {
+          console.log('get feed: ', feedUrl)
+          feed = await feedParser.parseURL(feedUrl)
+          break
+        } catch (e: any) {
+          if (i === maxGetFeedRetryCnt - 1) {
+            throw e
+          }
+
+          console.error(e)
+          sleep(1000)
+        }
+      }
+
+      if (feed === undefined) {
+        console.log('feed is undefined')
+        continue
+      }
+
       const videoIds = []
       const needGetStartTimeVideos: Set<string> = new Set()
       notifyVideoData[channelId] = { title: feed.title, videos: {} }
