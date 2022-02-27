@@ -208,7 +208,6 @@ export class CdkStack extends Stack {
       for (const func of functions) {
         table.grant(
           func,
-          'dynamodb:CreateTable',
           'dynamodb:DescribeTable',
           'dynamodb:PartiQLInsert',
           'dynamodb:PartiQLSelect',
