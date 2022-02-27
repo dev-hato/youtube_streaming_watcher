@@ -130,6 +130,7 @@ export class CdkStack extends Stack {
     })
 
     const qualifier = this.node.tryGetContext(BOOTSTRAP_QUALIFIER_CONTEXT) ?? DefaultStackSynthesizer.DEFAULT_QUALIFIER
+    const apiArn = `arn:aws:apigateway:${this.region}::/restapis/${api.restApiId}/*`
     const managedPolicies: iam.IManagedPolicy[] = [
       'AmazonDynamoDBReadOnlyAccess',
       'AmazonS3ReadOnlyAccess',
@@ -138,7 +139,18 @@ export class CdkStack extends Stack {
       'AmazonEventBridgeReadOnlyAccess',
       'AWSLambda_ReadOnlyAccess',
       'IAMReadOnlyAccess'
-    ].map(name => iam.ManagedPolicy.fromAwsManagedPolicyName(name))
+    ].map(name => iam.ManagedPolicy.fromAwsManagedPolicyName(name)).concat([
+      new iam.ManagedPolicy(this, 'Policy-cdk', {
+        managedPolicyName: 'youtube_streaming_watcher_cdk',
+        statements: [
+          new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            actions: ['apigateway:Get*'],
+            resources: [apiArn]
+          })
+        ]
+      })
+    ])
     const oidcSubBase = 'repo:dev-hato/youtube_streaming_watcher'
     const assumeRoleAction = 'sts:AssumeRoleWithWebIdentity'
 
@@ -166,7 +178,9 @@ export class CdkStack extends Stack {
         'iam:DeleteRolePolicy',
         'iam:DetachRolePolicy',
         'iam:PassRole',
-        'iam:PutRolePolicy'
+        'iam:PutRolePolicy',
+        'iam:CreatePolicyVersion',
+        'iam:DeletePolicyVersion'
       ]
     })
 
@@ -250,14 +264,6 @@ export class CdkStack extends Stack {
         iamRoleDeployPolicy,
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
-          actions: [
-            'iam:CreatePolicyVersion',
-            'iam:DeletePolicyVersion'
-          ],
-          resources: [`arn:aws:iam::${this.account}:policy/${cdkDeployRoleName}`]
-        }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
           actions: ['apigateway:PATCH'],
           resources: [`arn:aws:apigateway:${this.region}::/account`]
         }),
@@ -267,10 +273,9 @@ export class CdkStack extends Stack {
             'apigateway:DELETE',
             'apigateway:POST',
             'apigateway:PUT',
-            'apigateway:PATCH',
-            'apigateway:Get*'
+            'apigateway:PATCH'
           ],
-          resources: [`arn:aws:apigateway:${this.region}::/restapis/${api.restApiId}/*`]
+          resources: [apiArn]
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
