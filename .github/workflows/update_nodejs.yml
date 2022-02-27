@@ -32,8 +32,6 @@ jobs:
           NODE_VERSION="${{steps.get_node_version.outputs.node_version}}"
           NPM_VERSION="${{steps.get_node_version.outputs.npm_version}}"
           echo "${NODE_VERSION}" > .node-version
-          NODE_PATTERN="s/\"node\": \".*\"/\"node\": \"^${NODE_VERSION}\"/g"
-          sed -i -e "${NODE_PATTERN}" package.json
           NPM_PATTERN="s/\"npm\": \".*\"/\"npm\": \"^${NPM_VERSION}\"/g"
           sed -i -e "${NPM_PATTERN}" package.json
       - uses: actions/setup-node@v3.0.0
