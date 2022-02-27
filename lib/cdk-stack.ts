@@ -17,6 +17,7 @@ import {
   aws_lambda as lambda,
   aws_lambda_nodejs as lambdaNode,
   aws_logs as logs,
+  aws_secretsmanager as secretmanager,
   aws_s3 as s3,
   aws_sns as sns,
   aws_ssm as ssm
@@ -29,45 +30,30 @@ export class CdkStack extends Stack {
   constructor (scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
 
-    const secrets: { [secretName: string]: ssm.IStringParameter } = {
-      slackBotToken: ssm.StringParameter.fromStringParameterName(
+    const secrets: { [secretName: string]: secretmanager.ISecret } = {
+      slack: secretmanager.Secret.fromSecretNameV2(
         this,
-        'Secret-slack_bot_token',
-        '/youtube_streaming_watcher_slack/slack_bot_token'
+        'Secret-slack',
+        'youtube_streaming_watcher_slack'
       ),
-      slackChannel: ssm.StringParameter.fromStringParameterName(
+      slackAlert: secretmanager.Secret.fromSecretNameV2(
         this,
-        'Secret-slack_channel',
-        '/youtube_streaming_watcher_slack/slack_channel'
+        'Secret-slack_alert',
+        'youtube_streaming_watcher_slack_alert'
       ),
-      slackSigningSecret: ssm.StringParameter.fromStringParameterName(
-        this,
-        'Secret-slack_signing_secret',
-        '/youtube_streaming_watcher_slack/slack_signing_secret'
-      ),
-      slackAlertWorkspaceId: ssm.StringParameter.fromStringParameterName(
-        this,
-        'Secret-slack_alert_workspace_id',
-        '/youtube_streaming_watcher_slack_alert/workspace_id'
-      ),
-      slackAlertChannelId: ssm.StringParameter.fromStringParameterName(
-        this,
-        'Secret-slack_alert_channel_id',
-        '/youtube_streaming_watcher_slack_alert/channel_id'
-      ),
-      youtubeApiKey: ssm.StringParameter.fromStringParameterName(
+      youtube: secretmanager.Secret.fromSecretNameV2(
         this,
         'Secret-youtube',
-        '/youtube_streaming_watcher_youtube/youtube_api_key'
+        'youtube_streaming_watcher_youtube'
       )
     }
     const environment = {
       NODE_OPTIONS: '--unhandled-rejections=strict',
-      SLACK_BOT_TOKEN: secrets.slackBotToken.stringValue,
-      SLACK_CHANNEL: secrets.slackChannel.stringValue,
-      SLACK_SIGNING_SECRET: secrets.slackSigningSecret.stringValue,
+      SLACK_BOT_TOKEN: secrets.slack.secretValueFromJson('slack_bot_token').toString(),
+      SLACK_CHANNEL: secrets.slack.secretValueFromJson('slack_channel').toString(),
+      SLACK_SIGNING_SECRET: secrets.slack.secretValueFromJson('slack_signing_secret').toString(),
       TZ: 'Asia/Tokyo',
-      YOUTUBE_API_KEY: secrets.youtubeApiKey.stringValue
+      YOUTUBE_API_KEY: secrets.youtube.secretValueFromJson('youtube_api_key').toString()
     }
     const functionDataEntities: [string, lambdaNode.NodejsFunction][] = Object.entries(functionProps).map(([key, value]) => [
       key,
@@ -100,8 +86,8 @@ export class CdkStack extends Stack {
 
     const chatbotSlackChannelConfig = new chatbot.SlackChannelConfiguration(this, 'ChatbotSlackChannelConfig-default', {
       slackChannelConfigurationName: 'youtube_streaming_watcher_slack',
-      slackWorkspaceId: secrets.slackAlertWorkspaceId.stringValue,
-      slackChannelId: secrets.slackAlertChannelId.stringValue,
+      slackWorkspaceId: secrets.slackAlert.secretValueFromJson('workspace_id').toString(),
+      slackChannelId: secrets.slackAlert.secretValueFromJson('channel_id').toString(),
       notificationTopics: [lambdaSNSTopic]
     })
     const rule = new events.Rule(this, 'EventsRule-notify', {
