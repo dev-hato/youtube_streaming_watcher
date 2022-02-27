@@ -164,7 +164,9 @@ export class CdkStack extends Stack {
         'iam:DeleteRolePolicy',
         'iam:DetachRolePolicy',
         'iam:PassRole',
-        'iam:PutRolePolicy'
+        'iam:PutRolePolicy',
+        'iam:CreatePolicyVersion',
+        'iam:DeletePolicyVersion'
       ]
     })
 
@@ -246,14 +248,6 @@ export class CdkStack extends Stack {
       managedPolicyName: cdkDeployRoleName,
       statements: [
         iamRoleDeployPolicy,
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'iam:CreatePolicyVersion',
-            'iam:DeletePolicyVersion'
-          ],
-          resources: [`arn:aws:iam::${this.account}:policy/${cdkDeployRoleName}`]
-        }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['apigateway:PATCH'],
