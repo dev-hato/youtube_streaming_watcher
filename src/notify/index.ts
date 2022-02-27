@@ -169,13 +169,15 @@ export async function handler () {
         continue
       }
 
+      const needGetStartTimeVideoList = Array.from(needGetStartTimeVideos)
+
       // 配信情報取得
       while (1) {
         await sleep(1000)
 
         const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
           part: ['liveStreamingDetails'],
-          id: Array.from(needGetStartTimeVideos),
+          id: needGetStartTimeVideoList,
           maxResults: 50
         }
         console.log('call youtubeApi.videos.list: ', videoResultParams)
@@ -193,6 +195,7 @@ export async function handler () {
               continue
             }
 
+            needGetStartTimeVideos.delete(videoId)
             let startTimeStr = videoItem.liveStreamingDetails?.scheduledStartTime
 
             if (startTimeStr === undefined || startTimeStr === null) {
@@ -241,6 +244,23 @@ export async function handler () {
         }
 
         videoResultParams.pageToken = nextPageToken
+      }
+
+      for (const videoId of needGetStartTimeVideos) {
+        // Slack通知
+        const postMessageParams: ChatPostMessageArguments = {
+          channel: slackChannel,
+          text:
+            ':x: 配信削除\n' +
+            `チャンネル名: <https://www.youtube.com/channel/${channelId}|${notifyVideoData[channelId].title}>\n` +
+            `配信URL: <https://www.youtube.com/watch?v=${videoId}>`
+        }
+        console.log('call app.client.chat.postMessage: ', postMessageParams)
+        await slackApp.client.chat.postMessage(postMessageParams)
+        await runQuery(
+          'DELETE FROM youtube_streaming_watcher_notified_videos WHERE channel_id=? AND video_id=?',
+          [{ S: channelId }, { S: videoId }]
+        )
       }
     }
 
