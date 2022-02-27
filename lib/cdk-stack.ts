@@ -61,7 +61,7 @@ export class CdkStack extends Stack {
       ),
       youtubeApiKey: ssm.StringParameter.fromSecureStringParameterAttributes(
         this,
-        'Secret-youtube',
+        'Secret-youtube_api_key',
         {
           parameterName: '/youtube_streaming_watcher_youtube/youtube_api_key'
         }
