@@ -25,6 +25,7 @@ import {
 import { dynamoDBTableProps } from './props/dynamodb-table-props'
 import { rate } from './props/events-rule-props'
 import { functionProps } from './props/function-props'
+import { cdkRoleProps } from './props/cdk-role-props'
 
 export class CdkStack extends Stack {
   constructor (scope: Construct, id: string, props?: StackProps) {
@@ -137,23 +138,24 @@ export class CdkStack extends Stack {
         ]
       })
     ])
-    const oidcSubBase = 'repo:dev-hato/youtube_streaming_watcher'
-    const assumeRoleAction = 'sts:AssumeRoleWithWebIdentity'
 
-    const cdkDiffRole = new iam.Role(this, 'Role-cdk_diff', {
-      roleName: 'youtube_streaming_watcher_cdk_diff',
-      assumedBy: new iam.FederatedPrincipal(
-        provider.openIdConnectProviderArn,
-        {
-          StringEquals: {
-            'token.actions.githubusercontent.com:sub': oidcSubBase + ':pull_request',
-            'token.actions.githubusercontent.com:aud': oidcAud
-          }
-        },
-        assumeRoleAction
-      ),
-      managedPolicies
-    })
+    const cdkRoles = Object.fromEntries(cdkRoleProps.map(d => [
+      d.name,
+      new iam.Role(this, `Role-cdk_${d.name}`, {
+        roleName: `youtube_streaming_watcher_cdk_${d.name}`,
+        assumedBy: new iam.FederatedPrincipal(
+          provider.openIdConnectProviderArn,
+          {
+            StringEquals: {
+              'token.actions.githubusercontent.com:sub': 'repo:dev-hato/youtube_streaming_watcher:' + d.oidcSub,
+              'token.actions.githubusercontent.com:aud': oidcAud
+            }
+          },
+          'sts:AssumeRoleWithWebIdentity'
+        ),
+        managedPolicies
+      })
+    ]))
 
     const iamRoleDeployPolicy = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
@@ -174,7 +176,7 @@ export class CdkStack extends Stack {
     const iamRoleDeployPolicyResourceArns = [
       functionData.notify.role?.roleArn,
       functionData.reply.role?.roleArn,
-      cdkDiffRole.roleArn,
+      cdkRoles.diff.roleArn,
       `arn:aws:iam::${this.account}:role/${cdkDeployRoleName}`,
       `arn:aws:iam::${this.account}:role/${id.slice(0, 24)}*`
     ]
@@ -184,21 +186,6 @@ export class CdkStack extends Stack {
         iamRoleDeployPolicy.addResources(arn)
       }
     }
-
-    const cdkDeployRole = new iam.Role(this, 'Role-cdk_deploy', {
-      roleName: 'youtube_streaming_watcher_cdk_deploy',
-      assumedBy: new iam.FederatedPrincipal(
-        provider.openIdConnectProviderArn,
-        {
-          StringEquals: {
-            'token.actions.githubusercontent.com:sub': oidcSubBase + ':ref:refs/heads/main',
-            'token.actions.githubusercontent.com:aud': oidcAud
-          }
-        },
-        assumeRoleAction
-      ),
-      managedPolicies
-    })
 
     for (const tableProp of dynamoDBTableProps) {
       const table = new dynamodb.Table(this, `DynamoDBTable-${tableProp.tableName}`, Object.assign(tableProp, {
@@ -215,25 +202,25 @@ export class CdkStack extends Stack {
           'dynamodb:PartiQLUpdate'
         )
         table.grant(
-          cdkDeployRole,
+          cdkRoles.deploy,
           'dynamodb:CreateTable',
           'dynamodb:DeleteTable'
         )
       }
     }
 
-    s3.Bucket.fromBucketName(this, 'Bucket-cdk_default', `cdk-${qualifier}-assets-${this.account}-${this.region}`).grantPut(cdkDeployRole)
+    s3.Bucket.fromBucketName(this, 'Bucket-cdk_default', `cdk-${qualifier}-assets-${this.account}-${this.region}`).grantPut(cdkRoles.deploy)
     apiAccessLogGroup.grant(
-      cdkDeployRole,
+      cdkRoles.deploy,
       'logs:CreateLogGroup',
       'logs:PutRetentionPolicy',
       'logs:DeleteLogGroup'
     )
     const cdkBootstrapParam = ssm.StringParameter.fromStringParameterName(this, 'SSMParameter-cdk_bootstrap', `/cdk-bootstrap/${qualifier}/version`)
-    iam.Role.fromRoleName(this, 'Role-cdk_default_file_publishing_role', `cdk-${qualifier}-file-publishing-role-${this.account}-${this.region}`).grant(cdkDeployRole, 'sts:AssumeRole')
+    iam.Role.fromRoleName(this, 'Role-cdk_default_file_publishing_role', `cdk-${qualifier}-file-publishing-role-${this.account}-${this.region}`).grant(cdkRoles.deploy, 'sts:AssumeRole')
     const cdkDefaultRoles = ['lookup', 'deploy'].map(s => iam.Role.fromRoleName(this, `Role-cdk_default_${s}`, `cdk-${qualifier}-${s}-role-${this.account}-${this.region}`))
 
-    for (const role of [cdkDiffRole, cdkDeployRole]) {
+    for (const role of Object.values(cdkRoles)) {
       cdkBootstrapParam.grantRead(role)
       for (const cdkDefaultRole of cdkDefaultRoles) {
         cdkDefaultRole.grant(role, 'sts:AssumeRole')
@@ -241,10 +228,10 @@ export class CdkStack extends Stack {
     }
 
     for (const secret of Object.values(secrets)) {
-      secret.grantRead(cdkDeployRole)
+      secret.grantRead(cdkRoles.deploy)
     }
 
-    cdkDeployRole.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_deploy', {
+    cdkRoles.deploy.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_deploy', {
       managedPolicyName: cdkDeployRoleName,
       statements: [
         iamRoleDeployPolicy,
