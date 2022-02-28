@@ -1,23 +1,33 @@
-import * as cdk from '@aws-cdk/core'
-import * as apigateway from '@aws-cdk/aws-apigateway'
-import * as chatbot from '@aws-cdk/aws-chatbot'
-import * as cloudwatch from '@aws-cdk/aws-cloudwatch'
-import * as cloudwatchActions from '@aws-cdk/aws-cloudwatch-actions'
-import * as dynamodb from '@aws-cdk/aws-dynamodb'
-import * as events from '@aws-cdk/aws-events'
-import * as iam from '@aws-cdk/aws-iam'
-import * as targets from '@aws-cdk/aws-events-targets'
-import * as lambda from '@aws-cdk/aws-lambda'
-import * as lambdaNode from '@aws-cdk/aws-lambda-nodejs'
-import * as logs from '@aws-cdk/aws-logs'
-import * as secretmanager from '@aws-cdk/aws-secretsmanager'
-import * as sns from '@aws-cdk/aws-sns'
+import { Construct } from 'constructs'
+import {
+  BOOTSTRAP_QUALIFIER_CONTEXT,
+  DefaultStackSynthesizer,
+  Duration,
+  RemovalPolicy,
+  Stack,
+  StackProps,
+  aws_apigateway as apigateway,
+  aws_chatbot as chatbot,
+  aws_cloudwatch as cloudwatch,
+  aws_cloudwatch_actions as cloudwatchActions,
+  aws_dynamodb as dynamodb,
+  aws_events as events,
+  aws_events_targets as targets,
+  aws_iam as iam,
+  aws_lambda as lambda,
+  aws_lambda_nodejs as lambdaNode,
+  aws_logs as logs,
+  aws_secretsmanager as secretmanager,
+  aws_s3 as s3,
+  aws_sns as sns,
+  aws_ssm as ssm
+} from 'aws-cdk-lib'
 import { dynamoDBTableProps } from './props/dynamodb-table-props'
 import { rate } from './props/events-rule-props'
 import { functionProps } from './props/function-props'
 
-export class CdkStack extends cdk.Stack {
-  constructor (scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+export class CdkStack extends Stack {
+  constructor (scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
 
     const secrets: { [secretName: string]: secretmanager.ISecret } = {
@@ -63,7 +73,7 @@ export class CdkStack extends cdk.Stack {
         evaluationPeriods: 1,
         metric: func.metric('Errors', {
           statistic: cloudwatch.Statistic.AVERAGE,
-          period: cdk.Duration.minutes(5)
+          period: Duration.minutes(5)
         }),
         threshold: 0,
         comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
@@ -86,7 +96,7 @@ export class CdkStack extends cdk.Stack {
     })
     const apiAccessLogGroup = new logs.LogGroup(this, 'Log-apigateway_reply', {
       logGroupName: '/aws/apigateway/youtube_streaming_watcher_reply_api/access_log',
-      removalPolicy: cdk.RemovalPolicy.SNAPSHOT
+      removalPolicy: RemovalPolicy.SNAPSHOT
     })
     const api = new apigateway.LambdaRestApi(this, 'APIGateway-reply', {
       restApiName: 'youtube_streaming_watcher_reply_api',
@@ -99,34 +109,14 @@ export class CdkStack extends cdk.Stack {
     })
 
     const functions = Object.values(functionData)
-    const tableArns: string[] = []
-
-    for (const tableProp of dynamoDBTableProps) {
-      const table = new dynamodb.Table(this, `DynamoDBTable-${tableProp.tableName}`, Object.assign(tableProp, {
-        removalPolicy: cdk.RemovalPolicy.DESTROY
-      }))
-
-      for (const func of functions) {
-        table.grant(
-          func,
-          'dynamodb:CreateTable',
-          'dynamodb:DescribeTable',
-          'dynamodb:PartiQLInsert',
-          'dynamodb:PartiQLSelect',
-          'dynamodb:PartiQLDelete',
-          'dynamodb:PartiQLUpdate'
-        )
-      }
-
-      tableArns.push(table.tableArn)
-    }
-
     const oidcAud = 'sts.amazonaws.com'
     const provider = new iam.OpenIdConnectProvider(this, 'OIDCProvider-github', {
       url: 'https://token.actions.githubusercontent.com',
       clientIds: [oidcAud]
     })
 
+    const qualifier = this.node.tryGetContext(BOOTSTRAP_QUALIFIER_CONTEXT) ?? DefaultStackSynthesizer.DEFAULT_QUALIFIER
+    const apiArn = `arn:aws:apigateway:${this.region}::/restapis/${api.restApiId}/*`
     const managedPolicies: iam.IManagedPolicy[] = [
       'AmazonDynamoDBReadOnlyAccess',
       'AmazonS3ReadOnlyAccess',
@@ -135,7 +125,18 @@ export class CdkStack extends cdk.Stack {
       'AmazonEventBridgeReadOnlyAccess',
       'AWSLambda_ReadOnlyAccess',
       'IAMReadOnlyAccess'
-    ].map(name => iam.ManagedPolicy.fromAwsManagedPolicyName(name))
+    ].map(name => iam.ManagedPolicy.fromAwsManagedPolicyName(name)).concat([
+      new iam.ManagedPolicy(this, 'Policy-cdk', {
+        managedPolicyName: 'youtube_streaming_watcher_cdk',
+        statements: [
+          new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            actions: ['apigateway:Get*'],
+            resources: [apiArn]
+          })
+        ]
+      })
+    ])
     const oidcSubBase = 'repo:dev-hato/youtube_streaming_watcher'
     const assumeRoleAction = 'sts:AssumeRoleWithWebIdentity'
 
@@ -163,7 +164,9 @@ export class CdkStack extends cdk.Stack {
         'iam:DeleteRolePolicy',
         'iam:DetachRolePolicy',
         'iam:PassRole',
-        'iam:PutRolePolicy'
+        'iam:PutRolePolicy',
+        'iam:CreatePolicyVersion',
+        'iam:DeletePolicyVersion'
       ]
     })
 
@@ -196,23 +199,55 @@ export class CdkStack extends cdk.Stack {
       ),
       managedPolicies
     })
+
+    for (const tableProp of dynamoDBTableProps) {
+      const table = new dynamodb.Table(this, `DynamoDBTable-${tableProp.tableName}`, Object.assign(tableProp, {
+        removalPolicy: RemovalPolicy.DESTROY
+      }))
+
+      for (const func of functions) {
+        table.grant(
+          func,
+          'dynamodb:DescribeTable',
+          'dynamodb:PartiQLInsert',
+          'dynamodb:PartiQLSelect',
+          'dynamodb:PartiQLDelete',
+          'dynamodb:PartiQLUpdate'
+        )
+        table.grant(
+          cdkDeployRole,
+          'dynamodb:CreateTable',
+          'dynamodb:DeleteTable'
+        )
+      }
+    }
+
+    s3.Bucket.fromBucketName(this, 'Bucket-cdk_default', `cdk-${qualifier}-assets-${this.account}-${this.region}`).grantPut(cdkDeployRole)
+    apiAccessLogGroup.grant(
+      cdkDeployRole,
+      'logs:CreateLogGroup',
+      'logs:PutRetentionPolicy',
+      'logs:DeleteLogGroup'
+    )
+    const cdkBootstrapParam = ssm.StringParameter.fromStringParameterName(this, 'SSMParameter-cdk_bootstrap', `/cdk-bootstrap/${qualifier}/version`)
+    iam.Role.fromRoleName(this, 'Role-cdk_default_file_publishing_role', `cdk-${qualifier}-file-publishing-role-${this.account}-${this.region}`).grant(cdkDeployRole, 'sts:AssumeRole')
+    const cdkDefaultRoles = ['lookup', 'deploy'].map(s => iam.Role.fromRoleName(this, `Role-cdk_default_${s}`, `cdk-${qualifier}-${s}-role-${this.account}-${this.region}`))
+
+    for (const role of [cdkDiffRole, cdkDeployRole]) {
+      cdkBootstrapParam.grantRead(role)
+      for (const cdkDefaultRole of cdkDefaultRoles) {
+        cdkDefaultRole.grant(role, 'sts:AssumeRole')
+      }
+    }
+
+    for (const secret of Object.values(secrets)) {
+      secret.grantRead(cdkDeployRole)
+    }
+
     cdkDeployRole.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_deploy', {
       managedPolicyName: cdkDeployRoleName,
       statements: [
         iamRoleDeployPolicy,
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'iam:CreatePolicyVersion',
-            'iam:DeletePolicyVersion'
-          ],
-          resources: [`arn:aws:iam::${this.account}:policy/${cdkDeployRoleName}`]
-        }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: ['s3:PutObject'],
-          resources: [`arn:aws:s3:::cdk-${this.node.tryGetContext(cdk.BOOTSTRAP_QUALIFIER_CONTEXT) ?? cdk.DefaultStackSynthesizer.DEFAULT_QUALIFIER}-assets-${this.account}-${this.region}/assets/*`]
-        }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['apigateway:PATCH'],
@@ -224,15 +259,9 @@ export class CdkStack extends cdk.Stack {
             'apigateway:DELETE',
             'apigateway:POST',
             'apigateway:PUT',
-            'apigateway:PATCH',
-            'apigateway:Get*'
+            'apigateway:PATCH'
           ],
-          resources: [`arn:aws:apigateway:${this.region}::/restapis/${api.restApiId}/*`]
-        }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: ['secretsmanager:GetSecretValue'],
-          resources: Object.values(secrets).map(s => s.secretArn + '*')
+          resources: [apiArn]
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
@@ -265,23 +294,6 @@ export class CdkStack extends cdk.Stack {
             'lambda:UpdateFunctionConfiguration'
           ],
           resources: functions.map(f => f.functionArn)
-        }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'dynamodb:CreateTable',
-            'dynamodb:DeleteTable'
-          ],
-          resources: tableArns
-        }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'logs:CreateLogGroup',
-            'logs:PutRetentionPolicy',
-            'logs:DeleteLogGroup'
-          ],
-          resources: [apiAccessLogGroup.logGroupArn]
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,

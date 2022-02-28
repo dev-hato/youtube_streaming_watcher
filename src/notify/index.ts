@@ -19,6 +19,8 @@ enum NotifyMode { // eslint-disable-line no-unused-vars
 // Youtube Data APIの1日あたりの上限ユニット数
 const apiUnitLimitPerDay = 10000
 
+const maxGetFeedRetryCnt = 10
+
 export async function handler () {
   let currentNotificationAt: string | undefined
   const currentNotificationAtItems = await runQuery('SELECT next_notification_at FROM youtube_streaming_watcher_next_notification_times')
@@ -74,8 +76,28 @@ export async function handler () {
       channelId = channelId as string
       const feedParser = new Parser<{}, { id: string, updated: string }>({ customFields: { item: ['id', 'updated'] } })
       const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
-      console.log('get feed: ', feedUrl)
-      const feed = await feedParser.parseURL(feedUrl)
+      let feed
+
+      for (let i = 0; i < maxGetFeedRetryCnt; i++) {
+        try {
+          console.log('get feed: ', feedUrl)
+          feed = await feedParser.parseURL(feedUrl)
+          break
+        } catch (e: any) {
+          if (i === maxGetFeedRetryCnt - 1) {
+            throw e
+          }
+
+          console.error(e)
+          sleep(1000)
+        }
+      }
+
+      if (feed === undefined) {
+        console.log('feed is undefined')
+        continue
+      }
+
       const videoIds = []
       const needGetStartTimeVideos: Set<string> = new Set()
       notifyVideoData[channelId] = { title: feed.title, videos: {} }
@@ -147,13 +169,15 @@ export async function handler () {
         continue
       }
 
+      const needGetStartTimeVideoList = Array.from(needGetStartTimeVideos)
+
       // 配信情報取得
       while (1) {
         await sleep(1000)
 
         const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
           part: ['liveStreamingDetails'],
-          id: Array.from(needGetStartTimeVideos),
+          id: needGetStartTimeVideoList,
           maxResults: 50
         }
         console.log('call youtubeApi.videos.list: ', videoResultParams)
@@ -171,6 +195,7 @@ export async function handler () {
               continue
             }
 
+            needGetStartTimeVideos.delete(videoId)
             let startTimeStr = videoItem.liveStreamingDetails?.scheduledStartTime
 
             if (startTimeStr === undefined || startTimeStr === null) {
@@ -219,6 +244,23 @@ export async function handler () {
         }
 
         videoResultParams.pageToken = nextPageToken
+      }
+
+      for (const videoId of needGetStartTimeVideos) {
+        // Slack通知
+        const postMessageParams: ChatPostMessageArguments = {
+          channel: slackChannel,
+          text:
+            ':x: 配信削除\n' +
+            `チャンネル名: <https://www.youtube.com/channel/${channelId}|${notifyVideoData[channelId].title}>\n` +
+            `配信URL: <https://www.youtube.com/watch?v=${videoId}>`
+        }
+        console.log('call app.client.chat.postMessage: ', postMessageParams)
+        await slackApp.client.chat.postMessage(postMessageParams)
+        await runQuery(
+          'DELETE FROM youtube_streaming_watcher_notified_videos WHERE channel_id=? AND video_id=?',
+          [{ S: channelId }, { S: videoId }]
+        )
       }
     }
 

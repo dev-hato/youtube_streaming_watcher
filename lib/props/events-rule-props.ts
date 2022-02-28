@@ -1,3 +1,3 @@
-import * as cdk from '@aws-cdk/core'
+import { Duration } from 'aws-cdk-lib'
 
-export const rate = cdk.Duration.minutes(1)
+export const rate = Duration.minutes(1)
