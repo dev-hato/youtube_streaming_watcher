@@ -189,7 +189,7 @@ export class CdkStack extends Stack {
 
     for (const tableProp of dynamoDBTableProps) {
       const table = new dynamodb.Table(this, `DynamoDBTable-${tableProp.tableName}`, Object.assign(tableProp, {
-        removalPolicy: RemovalPolicy.DESTROY
+        removalPolicy: RemovalPolicy.RETAIN
       }))
 
       for (const func of functions) {
