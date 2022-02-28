@@ -25,6 +25,7 @@ import {
 import { dynamoDBTableProps } from './props/dynamodb-table-props'
 import { rate } from './props/events-rule-props'
 import { functionProps } from './props/function-props'
+import { cdkRoleProps } from './props/cdk-role-props'
 
 export class CdkStack extends Stack {
   constructor (scope: Construct, id: string, props?: StackProps) {
@@ -138,10 +139,7 @@ export class CdkStack extends Stack {
       })
     ])
 
-    const cdkRoles = Object.fromEntries([
-      { name: 'diff', oidcSub: 'pull_request' },
-      { name: 'deploy', oidcSub: 'ref:refs/heads/main' }
-    ].map(d => [
+    const cdkRoles = Object.fromEntries(cdkRoleProps.map(d => [
       d.name,
       new iam.Role(this, `Role-cdk_${d.name}`, {
         roleName: `youtube_streaming_watcher_cdk_${d.name}`,
