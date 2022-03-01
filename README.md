@@ -1,6 +1,15 @@
 # YouTube streaming watcher
 
-YouTubeの配信開始通知をSlackに流すbotです。
+YouTubeの配信通知をSlackに流すbotです。
+
+## 通知される条件
+
+以下の場合に通知されます。
+
+* 配信枠作成時
+* 配信1時間前
+* 配信情報変更時
+* 配信枠削除時
 
 ## 設定方法
 
