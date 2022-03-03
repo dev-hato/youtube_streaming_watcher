@@ -26,28 +26,23 @@ import { dynamoDBTableProps } from './props/dynamodb-table-props'
 import { rate } from './props/events-rule-props'
 import { functionProps } from './props/function-props'
 import { cdkRoleProps } from './props/cdk-role-props'
+import { secretProps } from './props/secret-props'
 
 export class CdkStack extends Stack {
   constructor (scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
 
-    const secrets: { [secretName: string]: secretmanager.ISecret } = {
-      slack: secretmanager.Secret.fromSecretNameV2(
-        this,
-        'Secret-slack',
-        'youtube_streaming_watcher_slack'
-      ),
-      slackAlert: secretmanager.Secret.fromSecretNameV2(
-        this,
-        'Secret-slack_alert',
-        'youtube_streaming_watcher_slack_alert'
-      ),
-      youtube: secretmanager.Secret.fromSecretNameV2(
-        this,
-        'Secret-youtube',
-        'youtube_streaming_watcher_youtube'
-      )
-    }
+    const secrets: { [secretName: string]: secretmanager.ISecret } = Object.fromEntries(secretProps.map(key => {
+      const resourceName = key.replace(/[A-Z]/g, s => '_' + s.toLowerCase())
+      return [
+        key,
+        secretmanager.Secret.fromSecretNameV2(
+          this,
+          `Secret-${resourceName}`,
+          `youtube_streaming_watcher_${resourceName}`
+        )
+      ]
+    }))
     const environment = {
       NODE_OPTIONS: '--unhandled-rejections=strict',
       SLACK_BOT_TOKEN: secrets.slack.secretValueFromJson('slack_bot_token').toString(),
