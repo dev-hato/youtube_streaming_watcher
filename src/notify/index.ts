@@ -74,7 +74,7 @@ export async function handler () {
     // 新着配信一覧取得
     for (let { channel_id: { S: channelId } } of channels) {
       channelId = channelId as string
-      const feedParser = new Parser<{}, { id: string, updated: string }>({ customFields: { item: ['id', 'updated'] } })
+      const feedParser = new Parser<Record<string, never>, { id: string, updated: string }>({ customFields: { item: ['id', 'updated'] } })
       const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
       let feed
 
@@ -83,7 +83,7 @@ export async function handler () {
           console.log('get feed: ', feedUrl)
           feed = await feedParser.parseURL(feedUrl)
           break
-        } catch (e: any) {
+        } catch (e) {
           if (i === maxGetFeedRetryCnt - 1) {
             throw e
           }
