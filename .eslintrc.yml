@@ -2,9 +2,9 @@
 env:
   es2020: true
 extends:
+  - standard
   - eslint:recommended
   - plugin:@typescript-eslint/recommended
-  - eslint-config-prettier
 globals:
   Atomics: readonly
   SharedArrayBuffer: readonly
