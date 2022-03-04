@@ -1,13 +1,25 @@
 ---
 env:
-  browser: true
-  es2021: true
+  es2020: true
 extends:
   - standard
   - eslint:recommended
-parser: "@typescript-eslint/parser"
+globals:
+  Atomics: readonly
+  SharedArrayBuffer: readonly
+parser: '@typescript-eslint/parser'
 parserOptions:
-  ecmaVersion: latest
+  project: ./tsconfig.json
   sourceType: module
 plugins:
-  - "@typescript-eslint"
+  - '@typescript-eslint'
+
+overrides:
+  # JSON files
+  - files:
+      - "*.json"
+    extends:
+      - plugin:jsonc/recommended-with-json
+    parser: jsonc-eslint-parser
+    parserOptions:
+      jsonSyntax: JSON
