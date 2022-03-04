@@ -19,8 +19,3 @@ overrides:
     parser: jsonc-eslint-parser
     parserOptions:
       jsonSyntax: JSON
-  - files:
-      - "bin/**/*.ts"
-      - "lib/**/*.ts"
-    rules:
-      no-new: off
