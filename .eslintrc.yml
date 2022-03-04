@@ -4,16 +4,12 @@ env:
 extends:
   - standard
   - eslint:recommended
+  - plugin:@typescript-eslint/recommended
 globals:
   Atomics: readonly
   SharedArrayBuffer: readonly
-parser: '@typescript-eslint/parser'
 parserOptions:
   project: ./tsconfig.json
-  sourceType: module
-plugins:
-  - '@typescript-eslint'
-
 overrides:
   # JSON files
   - files:
@@ -23,3 +19,8 @@ overrides:
     parser: jsonc-eslint-parser
     parserOptions:
       jsonSyntax: JSON
+  - files:
+      - "bin/**/*.ts"
+      - "lib/**/*.ts"
+    rules:
+      no-new: off
