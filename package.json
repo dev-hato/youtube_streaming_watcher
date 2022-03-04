@@ -51,7 +51,7 @@
     "aws-cdk-lib": "^2.15.0",
     "axios": "^0.26.0",
     "cheerio": "^1.0.0-rc.10",
-    "constructs": "^10.0.76",
+    "constructs": "^10.0.78",
     "googleapis": "^95.0.0",
     "rss-parser": "^3.12.0",
     "sleep-promise": "^9.1.0"
