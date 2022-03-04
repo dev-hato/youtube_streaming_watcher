@@ -4,7 +4,7 @@ env:
 extends:
   - eslint:recommended
   - plugin:@typescript-eslint/recommended
-  - prettier
+  - eslint-config-prettier
 globals:
   Atomics: readonly
   SharedArrayBuffer: readonly
