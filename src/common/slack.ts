@@ -92,22 +92,24 @@ async function getChannelData (
       const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${id}`
       console.log('get feed: ', feedUrl)
       await feedParser.parseURL(feedUrl)
-    } catch (e: any) {
-      if (e.message === 'Status code 404') {
-        await postMessage(
-          'チャンネルIDが見つかりません',
-          say
-        )
-        return
-      } else if (e.message === 'Status code 500') {
-        await postMessage(
-          'チャンネルが存在するかの確認中にエラーが発生しました',
-          say
-        )
-        return
-      } else {
-        throw e
+    } catch (e) {
+      if (e instanceof Error) {
+        if (e.message === 'Status code 404') {
+          await postMessage(
+            'チャンネルIDが見つかりません',
+            say
+          )
+          return
+        } else if (e.message === 'Status code 500') {
+          await postMessage(
+            'チャンネルが存在するかの確認中にエラーが発生しました',
+            say
+          )
+          return
+        }
       }
+
+      throw e
     }
   }
 

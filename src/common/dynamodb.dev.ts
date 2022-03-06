@@ -45,8 +45,8 @@ export async function createTables () {
       console.log('call describe table: ', input)
       await dynamoDBClient.send(new DescribeTableCommand(input))
       return
-    } catch (e: any) {
-      if (e.name === 'ResourceNotFoundException') {
+    } catch (e) {
+      if (e instanceof Error && e.name === 'ResourceNotFoundException') {
         console.log(`table ${input.TableName} is not exists.`)
       } else {
         throw e
@@ -56,8 +56,8 @@ export async function createTables () {
     try {
       console.log('call create table: ', tableSchema)
       await dynamoDBClient.send(new CreateTableCommand(tableSchema))
-    } catch (e: any) {
-      if (e.name === 'ResourceInUseException') {
+    } catch (e) {
+      if (e instanceof Error && e.name === 'ResourceInUseException') {
         console.log(`table ${tableSchema.TableName} is already exists.`)
       } else {
         throw e

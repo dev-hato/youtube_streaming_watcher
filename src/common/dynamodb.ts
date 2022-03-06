@@ -53,8 +53,8 @@ export async function runQuery (partiQLQuery: string, parameters?: AttributeValu
 
       input.NextToken = nextToken
     }
-  } catch (e: any) {
-    if (e.name === 'ResourceNotFoundException') {
+  } catch (e) {
+    if (e instanceof Error && e.name === 'ResourceNotFoundException') {
       console.log(e)
     } else {
       throw e
