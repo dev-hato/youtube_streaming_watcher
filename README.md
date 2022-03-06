@@ -103,6 +103,13 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
    TAG_NAME=$(git symbolic-ref --short HEAD | sed -e "s:/:-:g" | sed -e "s/^main$/latest/g") docker compose up
    ```
 
+### forkしたリポジトリでCI/CDを動かす方法
+
+以下のRepository secretsを設定します。
+
+* `AWS_ACCOUNT`: AWSアカウントID
+* `AWS_REGION`: AWSのリージョン
+
 ## 仕様
 
 ### Node.jsのバージョン
