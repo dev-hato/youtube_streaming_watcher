@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-    if: github.repository == 'dev-hato/hato-atama' || (secrets.AWS_ACCOUNT != '' && secrets.AWS_REGION != '')
+    if: github.repository == 'dev-hato/youtube_streaming_watcher' || (secrets.AWS_ACCOUNT != '' && secrets.AWS_REGION != '')
     steps:
       - run: |
           ROLE="arn:aws:iam::${{ secrets.AWS_ACCOUNT }}"
