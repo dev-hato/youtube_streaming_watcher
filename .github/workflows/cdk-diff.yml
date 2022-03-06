@@ -10,6 +10,7 @@ jobs:
     permissions:
       id-token: write
       pull-requests: write
+    if: github.repository == 'dev-hato/hato-atama' || (secrets.AWS_ACCOUNT != '' && secrets.AWS_REGION != '')
     steps:
       - run: |
           ROLE="arn:aws:iam::${{ secrets.AWS_ACCOUNT }}"
