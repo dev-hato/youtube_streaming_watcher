@@ -6,14 +6,14 @@ services:
       context: .
       target: notify
       cache_from:
-        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME}
-        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notifyy:${TAG_NAME}
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notifyy
       args:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - DYNAMODB_ENDPOINT
         - DYNAMODB_REGION
-    image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME}
+    image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notifyy:${TAG_NAME}
     env_file: .env
     depends_on:
       - db
