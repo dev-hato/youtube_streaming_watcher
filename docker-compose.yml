@@ -6,14 +6,14 @@ services:
       context: .
       target: notify
       cache_from:
-        - ghcr.io/dev-hato/youtube_streaming_watcher/notify:${TAG_NAME}
-        - ghcr.io/dev-hato/youtube_streaming_watcher/notify
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME}
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify
       args:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - DYNAMODB_ENDPOINT
         - DYNAMODB_REGION
-    image: ghcr.io/dev-hato/youtube_streaming_watcher/notify:${TAG_NAME}
+    image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME}
     env_file: .env
     depends_on:
       - db
@@ -23,14 +23,14 @@ services:
       context: .
       target: reply
       cache_from:
-        - ghcr.io/dev-hato/youtube_streaming_watcher/reply:${TAG_NAME}
-        - ghcr.io/dev-hato/youtube_streaming_watcher/reply
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME}
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply
       args:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - DYNAMODB_ENDPOINT
         - DYNAMODB_REGION
-    image: ghcr.io/dev-hato/youtube_streaming_watcher/reply:${TAG_NAME}
+    image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME}
     env_file: .env
     ports:
       - 3000:3000
