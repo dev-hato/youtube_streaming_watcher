@@ -13,9 +13,9 @@ jobs:
     steps:
       - if: github.repository == 'dev-hato/youtube_streaming_watcher'
         run: echo "${{github.repository}}"
-      - if: secrets.AWS_ACCOUNT != '' && secrets.AWS_REGION != ''
+      - if: ${{secrets.AWS_ACCOUNT}} != '' && ${{secrets.AWS_REGION}} != ''
         run: echo "B"
-      - if: github.repository == 'dev-hato/youtube_streaming_watcher' || (secrets.AWS_ACCOUNT != '' && secrets.AWS_REGION != '')
+      - if: github.repository == 'dev-hato/youtube_streaming_watcher' || (${{secrets.AWS_ACCOUNT}} != '' && ${{secrets.AWS_REGION}} != '')
         run: echo "C"
       - run: |
           ROLE="arn:aws:iam::${{ secrets.AWS_ACCOUNT }}"
