@@ -80,7 +80,8 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
         * `channel_id`: 通知先のチャンネルID
     * `youtube_streaming_watcher_youtube`: 配信通知関連 (YouTube)
         * `youtube_api_key`: YouTube Data API用のAPIキー
-5. スタックをデプロイします。
+5. スタックをデプロイします。  
+なお、リポジトリが `dev-hato/youtube_streaming_watcher` 以外の場合は環境変数 `REPOSITORY=org/repository` をセットした状態で実行します。
 
    ```sh
    cdk deploy
@@ -101,6 +102,13 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
    ```sh
    TAG_NAME=$(git symbolic-ref --short HEAD | sed -e "s:/:-:g" | sed -e "s/^main$/latest/g") docker compose up
    ```
+
+### forkしたリポジトリでCI/CDを動かす方法
+
+以下のRepository secretsを設定します。
+
+* `AWS_ACCOUNT`: AWSアカウントID
+* `AWS_REGION`: AWSのリージョン
 
 ## 仕様
 

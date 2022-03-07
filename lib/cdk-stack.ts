@@ -142,7 +142,7 @@ export class CdkStack extends Stack {
           provider.openIdConnectProviderArn,
           {
             StringEquals: {
-              'token.actions.githubusercontent.com:sub': 'repo:dev-hato/youtube_streaming_watcher:' + d.oidcSub,
+              'token.actions.githubusercontent.com:sub': 'repo:' + (process.env.REPOSITORY || 'dev-hato/youtube_streaming_watcher') + ':' + d.oidcSub,
               'token.actions.githubusercontent.com:aud': oidcAud
             }
           },

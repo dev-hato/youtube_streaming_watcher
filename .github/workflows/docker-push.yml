@@ -15,6 +15,7 @@ jobs:
       COMPOSE_DOCKER_CLI_BUILD: 1
     permissions:
       packages: write
+    if: github.repository == github.event.pull_request.head.repo.full_name
     steps:
       - uses: actions/checkout@v3
       - name: Login to GitHub Container Registry
@@ -32,6 +33,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
       - run: echo 'TAG_NAME=latest' >> "$GITHUB_ENV"
         if: ${{ github.event_name == 'push' }}
+      - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       - run: mv .env.example .env
       - run: docker compose build --build-arg BUILDKIT_INLINE_CACHE=1
       - run: docker compose push

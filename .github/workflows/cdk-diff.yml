@@ -10,11 +10,13 @@ jobs:
     permissions:
       id-token: write
       pull-requests: write
+    if: github.repository == github.event.pull_request.head.repo.full_name
     steps:
       - run: |
           ROLE="arn:aws:iam::${{ secrets.AWS_ACCOUNT }}"
           ROLE+=":role/youtube_streaming_watcher_cdk_diff"
           echo "ROLE=${ROLE}" >> "${GITHUB_ENV}"
+          echo "REPOSITORY=${{github.repository}}" >> "${GITHUB_ENV}"
       - uses: aws-actions/configure-aws-credentials@v1.6.1
         with:
           role-to-assume: ${{ env.ROLE }}
