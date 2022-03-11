@@ -16,6 +16,19 @@ enum NotifyMode { // eslint-disable-line no-unused-vars
     NotifyRemind = 'NotifyRemind' // eslint-disable-line no-unused-vars
 }
 
+/**
+ * 配信のプライバシーステータス
+ * https://developers.google.com/youtube/v3/docs/videos?hl=ja
+ */
+enum PrivacyStatus {
+    /** 公開 **/
+    Public = 'public',
+    /** メンバーシップ限定・限界公開 **/
+    Unlisted = 'unlisted',
+    /** 非公開 **/
+    Private = 'private'
+}
+
 // Youtube Data APIの1日あたりの上限ユニット数
 const apiUnitLimitPerDay = 10000
 
@@ -58,7 +71,8 @@ export async function handler () {
                         updatedTime: Date,
                         notifyMode?: string,
                         needInsert: boolean,
-                        isUpdated: boolean
+                        isUpdated: boolean,
+                        privacyStatus: string
                     }
                 }
             }
@@ -108,7 +122,8 @@ export async function handler () {
           title: item.title,
           updatedTime: new Date(item.updated),
           needInsert: true,
-          isUpdated: false
+          isUpdated: false,
+          privacyStatus: PrivacyStatus.Public
         }
         videoIds.push(videoId)
         needGetStartTimeVideos.add(videoId)
@@ -116,7 +131,7 @@ export async function handler () {
 
       // 登録済み配信取得
       const postedVideos = await runQuery(
-        'SELECT video_id, start_time, updated_time, notify_mode FROM youtube_streaming_watcher_notified_videos ' +
+        'SELECT video_id, start_time, updated_time, notify_mode, privacy_status FROM youtube_streaming_watcher_notified_videos ' +
                 'WHERE channel_id=? AND video_id IN (' + videoIds.map(() => '?').join(', ') + ')',
         [{ S: channelId }].concat(videoIds.map(v => {
           return { S: v }
@@ -162,6 +177,7 @@ export async function handler () {
 
         notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode || ''
         notifyVideoData[channelId].videos[videoId].needInsert = false
+        notifyVideoData[channelId].videos[videoId].privacyStatus = item.privacy_status?.S || PrivacyStatus.Public
       }
 
       if (needGetStartTimeVideos.size === 0) {
@@ -176,7 +192,7 @@ export async function handler () {
         await sleep(1000)
 
         const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
-          part: ['liveStreamingDetails'],
+          part: ['liveStreamingDetails', 'status'],
           id: needGetStartTimeVideoList,
           maxResults: 50
         }
@@ -214,18 +230,24 @@ export async function handler () {
             }
 
             notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode
+            const privacyStatus = videoItem.status?.privacyStatus
+
+            if (privacyStatus !== undefined && privacyStatus !== null) {
+              notifyVideoData[channelId].videos[videoId].privacyStatus = privacyStatus
+            }
+
             const updatedTime = notifyVideoData[channelId].videos[videoId].updatedTime.toISOString()
             const now = new Date()
 
             if (notifyVideoData[channelId].videos[videoId].needInsert === true) { // データがない場合はINSERTする
               await runQuery(
-                'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'updated_time\': ?, \'notify_mode\': ?}',
-                [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: updatedTime }, { S: notifyMode }]
+                'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'updated_time\': ?, \'notify_mode\': ?, \'privacy_status\': ?}',
+                [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: notifyVideoData[channelId].videos[videoId].privacyStatus }]
               )
             } else {
               await runQuery(
-                'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET updated_time=? SET notify_mode=? WHERE channel_id=? AND video_id=?',
-                [{ S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: channelId }, { S: videoId }]
+                'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET updated_time=? SET notify_mode=? SET privacy_status=? WHERE channel_id=? AND video_id=?',
+                [{ S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: notifyVideoData[channelId].videos[videoId].privacyStatus }, { S: channelId }, { S: videoId }]
               )
             }
 
@@ -274,12 +296,16 @@ export async function handler () {
 
         if (vd.notifyMode === NotifyMode.Registered) {
           parameters.push({ S: NotifyMode.NotifyRegistered })
-          header = ':new: 新着\n'
+          header = ':new: 新着'
         } else if (vd.isUpdated) {
-          header = ':repeat: 配信情報更新\n'
+          header = ':repeat: 配信情報更新'
         } else {
           parameters.push({ S: NotifyMode.NotifyRemind })
-          header = ':bell: もうすぐ配信開始\n'
+          header = ':bell: もうすぐ配信開始'
+        }
+
+        if (vd.privacyStatus === PrivacyStatus.Unlisted) {
+          header += ' (メンバーシップ限定・限定公開)'
         }
 
         const startTime = vd.startTime
@@ -293,7 +319,7 @@ export async function handler () {
         const postMessageParams: ChatPostMessageArguments = {
           channel: slackChannel,
           text:
-              header +
+              header + '\n' +
               `チャンネル名: <https://www.youtube.com/channel/${channelId}|${cd.title}>\n` +
               `配信名: <https://www.youtube.com/watch?v=${videoId}|${vd.title}>\n` +
               `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
