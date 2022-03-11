@@ -20,13 +20,13 @@ enum NotifyMode { // eslint-disable-line no-unused-vars
  * 配信のプライバシーステータス
  * https://developers.google.com/youtube/v3/docs/videos?hl=ja
  */
-enum PrivacyStatus {
+enum PrivacyStatus { // eslint-disable-line no-unused-vars
     /** 公開 **/
-    Public = 'public',
+    Public = 'public', // eslint-disable-line no-unused-vars
     /** メンバーシップ限定・限界公開 **/
-    Unlisted = 'unlisted',
+    Unlisted = 'unlisted', // eslint-disable-line no-unused-vars
     /** 非公開 **/
-    Private = 'private'
+    Private = 'private' // eslint-disable-line no-unused-vars
 }
 
 // Youtube Data APIの1日あたりの上限ユニット数
