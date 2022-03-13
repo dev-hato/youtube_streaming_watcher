@@ -313,6 +313,7 @@ export async function handler () {
           }
         } else if (vd.isUpdated) {
           header = ':repeat: '
+
           if (vd.isLiveStreaming) {
             header += '配信'
           } else {
