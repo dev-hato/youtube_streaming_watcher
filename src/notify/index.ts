@@ -72,6 +72,7 @@ export async function handler () {
                         notifyMode?: string,
                         needInsert: boolean,
                         isUpdated: boolean,
+                        isLiveStreaming: boolean,
                         privacyStatus: string
                     }
                 }
@@ -123,6 +124,7 @@ export async function handler () {
           updatedTime: new Date(item.updated),
           needInsert: true,
           isUpdated: false,
+          isLiveStreaming: true,
           privacyStatus: PrivacyStatus.Public
         }
         videoIds.push(videoId)
@@ -131,7 +133,7 @@ export async function handler () {
 
       // 登録済み配信取得
       const postedVideos = await runQuery(
-        'SELECT video_id, start_time, updated_time, notify_mode, privacy_status FROM youtube_streaming_watcher_notified_videos ' +
+        'SELECT video_id, start_time, updated_time, notify_mode, privacy_status, is_live_streaming FROM youtube_streaming_watcher_notified_videos ' +
                 'WHERE channel_id=? AND video_id IN (' + videoIds.map(() => '?').join(', ') + ')',
         [{ S: channelId }].concat(videoIds.map(v => {
           return { S: v }
@@ -178,6 +180,7 @@ export async function handler () {
         notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode || ''
         notifyVideoData[channelId].videos[videoId].needInsert = false
         notifyVideoData[channelId].videos[videoId].privacyStatus = item.privacy_status?.S || PrivacyStatus.Public
+        notifyVideoData[channelId].videos[videoId].isLiveStreaming = item.is_live_streaming?.BOOL || true
       }
 
       if (needGetStartTimeVideos.size === 0) {
@@ -192,7 +195,7 @@ export async function handler () {
         await sleep(1000)
 
         const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
-          part: ['liveStreamingDetails', 'status'],
+          part: ['liveStreamingDetails', 'snippet', 'status'],
           id: needGetStartTimeVideoList,
           maxResults: 50
         }
@@ -215,9 +218,15 @@ export async function handler () {
             let startTimeStr = videoItem.liveStreamingDetails?.scheduledStartTime
 
             if (startTimeStr === undefined || startTimeStr === null) {
-              console.log(`start time can not get: channel_id ${channelId}, video_id: ${videoId}`)
-              delete notifyVideoData[channelId].videos[videoId]
-              continue
+              const publishedAt = videoItem.snippet?.publishedAt
+              if (publishedAt !== undefined && publishedAt !== null) {
+                startTimeStr = publishedAt
+                notifyVideoData[channelId].videos[videoId].isLiveStreaming = false
+              } else {
+                console.log(`start time can not get: channel_id ${channelId}, video_id: ${videoId}`)
+                delete notifyVideoData[channelId].videos[videoId]
+                continue
+              }
             }
 
             const startTime = new Date(startTimeStr)
@@ -241,18 +250,18 @@ export async function handler () {
 
             if (notifyVideoData[channelId].videos[videoId].needInsert === true) { // データがない場合はINSERTする
               await runQuery(
-                'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'updated_time\': ?, \'notify_mode\': ?, \'privacy_status\': ?}',
-                [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: notifyVideoData[channelId].videos[videoId].privacyStatus }]
+                'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'updated_time\': ?, \'notify_mode\': ?, \'privacy_status\': ?, \'is_live_streaming\': ?}',
+                [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: notifyVideoData[channelId].videos[videoId].privacyStatus }, { BOOL: notifyVideoData[channelId].videos[videoId].isLiveStreaming }]
               )
             } else {
               await runQuery(
-                'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET updated_time=? SET notify_mode=? SET privacy_status=? WHERE channel_id=? AND video_id=?',
-                [{ S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: notifyVideoData[channelId].videos[videoId].privacyStatus }, { S: channelId }, { S: videoId }]
+                'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET updated_time=? SET notify_mode=? SET privacy_status=? SET is_live_streaming=? WHERE channel_id=? AND video_id=?',
+                [{ S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: notifyVideoData[channelId].videos[videoId].privacyStatus }, { BOOL: notifyVideoData[channelId].videos[videoId].isLiveStreaming }, { S: channelId }, { S: videoId }]
               )
             }
 
             // 既に配信開始している場合は通知しない
-            if (startTime < now) {
+            if (notifyVideoData[channelId].videos[videoId].isLiveStreaming && startTime < now) {
               console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
               delete notifyVideoData[channelId].videos[videoId]
             }
@@ -297,11 +306,28 @@ export async function handler () {
         if (vd.notifyMode === NotifyMode.Registered) {
           parameters.push({ S: NotifyMode.NotifyRegistered })
           header = ':new: 新着'
+          if (vd.isLiveStreaming) {
+            header += '配信'
+          } else {
+            header += '動画'
+          }
         } else if (vd.isUpdated) {
-          header = ':repeat: 配信情報更新'
+          header = ':repeat: '
+          if (vd.isLiveStreaming) {
+            header += '配信'
+          } else {
+            header += '動画'
+          }
+
+          header += '情報更新'
         } else {
           parameters.push({ S: NotifyMode.NotifyRemind })
-          header = ':bell: もうすぐ配信開始'
+          header = ':bell: もうすぐ'
+          if (vd.isLiveStreaming) {
+            header += '配信開始'
+          } else {
+            header += '公開'
+          }
         }
 
         if (vd.privacyStatus === PrivacyStatus.Unlisted) {
