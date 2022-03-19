@@ -42,7 +42,7 @@ export async function createTables () {
     const input: DescribeTableCommandInput = { TableName: tableSchema.TableName }
 
     try {
-      console.log('call describe table: ', input)
+      console.log('call describe table:', input)
       await dynamoDBClient.send(new DescribeTableCommand(input))
       return
     } catch (e) {
@@ -54,7 +54,7 @@ export async function createTables () {
     }
 
     try {
-      console.log('call create table: ', tableSchema)
+      console.log('call create table:', tableSchema)
       await dynamoDBClient.send(new CreateTableCommand(tableSchema))
     } catch (e) {
       if (e instanceof Error && e.name === 'ResourceInUseException') {

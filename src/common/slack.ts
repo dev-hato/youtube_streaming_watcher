@@ -28,7 +28,7 @@ if (process.env.NODE_ENV === 'development') {
 export const slackApp = new App(appOptions)
 
 async function postMessage (message: string, say: SayFn): Promise<void> {
-  console.log('call say: ', message)
+  console.log('call say:', message)
   await say(message)
 }
 
@@ -44,7 +44,7 @@ async function isReceivedRequest (ts: string): Promise<boolean> {
   )
 
   if (receivedRequests.length > 0) {
-    console.log('request is already received: ', ts)
+    console.log('request is already received:', ts)
     return false
   }
 
@@ -74,7 +74,7 @@ async function getChannelData (
 
   // チャンネルURLとしてユーザーIDを含むものやカスタムURLが与えられた場合は、ページをスクレイピングしチャンネルIDを取得
   if (id.startsWith('https://www.youtube.com/')) {
-    console.log('get: ', id)
+    console.log('get:', id)
     const response = await axios.get(id)
     const $ = cheerio.load(response.data)
     const idContent = $('meta[itemprop="channelId"]').attr('content')
@@ -92,7 +92,7 @@ async function getChannelData (
     try {
       const feedParser = new Parser()
       const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${id}`
-      console.log('get feed: ', feedUrl)
+      console.log('get feed:', feedUrl)
       await feedParser.parseURL(feedUrl)
     } catch (e) {
       if (e instanceof Error) {
