@@ -145,7 +145,7 @@ export async function handler () {
           isUpdated: false,
           isLiveStreaming: true,
           privacyStatus: PrivacyStatus.Public,
-          isCollab: false,
+          isCollab: false
         }
         videoIds.add(videoId)
         videoIdsPerChannels[channelId].push(videoId)
