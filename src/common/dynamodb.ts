@@ -36,7 +36,7 @@ export async function runQuery (partiQLQuery: string, parameters?: AttributeValu
 
   try {
     while (1) {
-      console.log('run query: ', input)
+      console.log('run query:', input)
       const result = await dynamoDBClient.send(new ExecuteStatementCommand(input))
       const items = result.Items
 
