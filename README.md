@@ -79,7 +79,7 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
     * `youtube_streaming_watcher_slack_alert`: Lambda関数のアラート関連 (Slack)
         * `workspace_id`: 通知先のワークスペースID
         * `channel_id`: 通知先のチャンネルID
-   * `youtube_streaming_watcher_twitter`: 配信通知関連 (Twitter)
+    * `youtube_streaming_watcher_twitter`: 配信通知関連 (Twitter)
         * `twitter_bearer_token`: ベアラートークン
     * `youtube_streaming_watcher_youtube`: 配信通知関連 (YouTube)
         * `youtube_api_key`: YouTube Data API用のAPIキー
