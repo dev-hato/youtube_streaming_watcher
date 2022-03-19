@@ -95,7 +95,7 @@ export async function handler () {
 
       for (let i = 0; i < maxGetFeedRetryCnt; i++) {
         try {
-          console.log('get feed: ', feedUrl)
+          console.log('get feed:', feedUrl)
           feed = await feedParser.parseURL(feedUrl)
           break
         } catch (e) {
@@ -199,7 +199,7 @@ export async function handler () {
           id: needGetStartTimeVideoList,
           maxResults: 50
         }
-        console.log('call youtubeApi.videos.list: ', videoResultParams)
+        console.log('call youtubeApi.videos.list:', videoResultParams)
         const videoResult = await api.videos.list(videoResultParams)
         apiUnit++
 
@@ -286,7 +286,7 @@ export async function handler () {
             `チャンネル名: <https://www.youtube.com/channel/${channelId}|${notifyVideoData[channelId].title}>\n` +
             `配信URL: <https://www.youtube.com/watch?v=${videoId}>`
         }
-        console.log('call app.client.chat.postMessage: ', postMessageParams)
+        console.log('call app.client.chat.postMessage:', postMessageParams)
         await slackApp.client.chat.postMessage(postMessageParams)
         await runQuery(
           'DELETE FROM youtube_streaming_watcher_notified_videos WHERE channel_id=? AND video_id=?',
@@ -353,7 +353,7 @@ export async function handler () {
               `(${dayOfWeeks[startTime.getDay()]}) ` +
               `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
         }
-        console.log('call app.client.chat.postMessage: ', postMessageParams)
+        console.log('call app.client.chat.postMessage:', postMessageParams)
         await slackApp.client.chat.postMessage(postMessageParams)
 
         if (parameters.length === 0) {
