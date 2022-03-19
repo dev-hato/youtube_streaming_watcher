@@ -104,7 +104,7 @@ export async function handler () {
           }
 
           console.error(e)
-          sleep(1000)
+          await sleep(1000)
         }
       }
 
