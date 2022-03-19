@@ -163,9 +163,10 @@ export async function handler () {
         console.log('get twitter user timeline:', twitterId)
         const timeLine = await twitterApiReadOnly.v2.userTimeline(twitterId, { max_results: 30 })
         const tweetStack = timeLine.tweets
+        const getTweetMaxCount = tweetStack.length * 2
         const tweets: Array<{ url: string, createdAt: string | undefined }> = []
 
-        while (tweetStack.length > 0) {
+        for (let i = 0; i < getTweetMaxCount && tweetStack.length > 0; i++) {
           const tweet = tweetStack.pop()
 
           if (tweet === undefined) {
