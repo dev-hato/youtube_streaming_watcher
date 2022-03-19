@@ -215,6 +215,11 @@ export async function handler () {
 
           const videoId = videoIdsPattern[1]
 
+          if (videoId.length > 11) {
+            console.log('video id maybe invalid:', videoId)
+            continue
+          }
+
           if (videoIds.has(videoId)) {
             continue
           }
