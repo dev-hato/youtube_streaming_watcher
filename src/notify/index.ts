@@ -1,3 +1,4 @@
+import axios from 'axios'
 import Parser from 'rss-parser'
 import sleep from 'sleep-promise'
 import { AttributeValue } from '@aws-sdk/client-dynamodb'
@@ -5,6 +6,7 @@ import { ChatPostMessageArguments } from '@slack/web-api'
 import { google, youtube_v3 } from 'googleapis' // eslint-disable-line camelcase
 import { runQuery } from '../common/dynamodb'
 import { slackApp } from '../common/slack'
+import { twitterApiReadOnly } from '../common/twitter'
 
 /** 通知状況 **/
 enum NotifyMode { // eslint-disable-line no-unused-vars
@@ -62,33 +64,50 @@ export async function handler () {
 
   try {
     const notifyVideoData: {
+            /** チャンネルID
+             * 通常は配信のチャンネルIDが入る
+             * コラボ配信の場合は配信をツイートした配信者のチャンネルIDが入る
+             *  **/
             [channelId: string]: {
                 title?: string,
                 videos: {
                     [videoId: string]: {
-                        title?: string,
+                        videoTitle?: string,
                         startTime?: Date,
                         updatedTime: Date,
                         notifyMode?: string,
                         needInsert: boolean,
                         isUpdated: boolean,
                         isLiveStreaming: boolean,
-                        privacyStatus: string
+                        privacyStatus: string,
+                        /** コラボ配信か **/
+                        isCollab: boolean,
+                        /** 配信のチャンネルID (コラボ配信の場合のみ入る) **/
+                        collabChannelId?: string,
+                        /** 配信のチャンネルタイトル (コラボ配信の場合のみ入る) **/
+                        collabChannelTitle?: string,
                     }
                 }
             }
         } = {}
 
-    const channels = await runQuery('SELECT channel_id FROM youtube_streaming_watcher_channels')
+    const channels = await runQuery('SELECT channel_id, twitter_id FROM youtube_streaming_watcher_channels')
 
     if (channels.length === 0) {
       console.log('registered channels are not found')
       return
     }
 
+    const videoIds = new Set()
+    const videoIdsPerChannels: { [channelId: string]: Array<string> } = {}
+    const needGetStartTimeVideos: { [channelId: string]: Set<string> } = {}
+
     // 新着配信一覧取得
-    for (let { channel_id: { S: channelId } } of channels) {
-      channelId = channelId as string
+    for (const { channel_id: { S: channelId } } of channels) {
+      if (channelId === undefined) {
+        continue
+      }
+
       const feedParser = new Parser<Record<string, never>, { id: string, updated: string }>({ customFields: { item: ['id', 'updated'] } })
       const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
       let feed
@@ -113,29 +132,123 @@ export async function handler () {
         continue
       }
 
-      const videoIds = []
-      const needGetStartTimeVideos: Set<string> = new Set()
+      videoIdsPerChannels[channelId] = []
+      needGetStartTimeVideos[channelId] = new Set()
       notifyVideoData[channelId] = { title: feed.title, videos: {} }
 
       for (const item of feed.items) {
         const videoId = item.id.replace(/^yt:video:/, '')
         notifyVideoData[channelId].videos[videoId] = {
-          title: item.title,
+          videoTitle: item.title,
           updatedTime: new Date(item.updated),
           needInsert: true,
           isUpdated: false,
           isLiveStreaming: true,
-          privacyStatus: PrivacyStatus.Public
+          privacyStatus: PrivacyStatus.Public,
+          isCollab: false
         }
-        videoIds.push(videoId)
-        needGetStartTimeVideos.add(videoId)
+        videoIds.add(videoId)
+        videoIdsPerChannels[channelId].push(videoId)
+        needGetStartTimeVideos[channelId].add(videoId)
+      }
+    }
+
+    for (const { channel_id: { S: channelId }, twitter_id: { S: twitterId } } of channels) {
+      if (channelId === undefined) {
+        continue
+      }
+
+      if (twitterId !== undefined) {
+        await sleep(1000)
+        console.log('get twitter user timeline:', twitterId)
+        const timeLine = await twitterApiReadOnly.v2.userTimeline(twitterId, { max_results: 30 })
+        const tweetStack = timeLine.tweets
+        const getTweetMaxCount = tweetStack.length * 2
+        const tweets: Array<{ url: string, createdAt: string | undefined }> = []
+
+        for (let i = 0; i < getTweetMaxCount && tweetStack.length > 0; i++) {
+          const tweet = tweetStack.pop()
+
+          if (tweet === undefined) {
+            continue
+          }
+
+          for (const shortUrl of tweet.text.matchAll(/https:\/\/t\.co\/[a-zA-Z0-9]+/g)) {
+            await sleep(1000)
+            const tweetUrl = shortUrl[0]
+            let url
+
+            try {
+              console.log('get:', tweetUrl)
+              const response = await axios.get(tweetUrl)
+              url = response.request.res.responseUrl
+            } catch (e) {
+              console.log(e)
+              continue
+            }
+            const twitterIdPattern = url.match(/https:\/\/twitter\.com\/[^/]+\/status\/([^/]+)/)
+
+            if (twitterIdPattern === null || twitterIdPattern.length < 2) {
+              tweets.push({ url, createdAt: tweet.created_at })
+              continue
+            }
+
+            const tweetId = twitterIdPattern[1]
+
+            if (tweet.id === tweetId) {
+              continue
+            }
+
+            await sleep(1000)
+            console.log('get tweet:', tweetId)
+            const tweetsResult = await twitterApiReadOnly.v2.tweets(tweetId)
+            tweetStack.push(tweetsResult.data[0])
+          }
+        }
+
+        for (const { url, createdAt } of tweets) {
+          const videoIdsPattern = url.match(/https:\/\/www\.youtube\.com\/watch\?v=([^&]+)/)
+
+          if (videoIdsPattern === null || videoIdsPattern.length < 2) {
+            continue
+          }
+
+          const videoId = videoIdsPattern[1]
+
+          if (videoId.length > 11) {
+            console.log('video id maybe invalid:', videoId)
+            continue
+          }
+
+          if (videoIds.has(videoId)) {
+            continue
+          }
+
+          let updatedTime = new Date()
+
+          if (createdAt) {
+            updatedTime = new Date(createdAt)
+          }
+
+          notifyVideoData[channelId].videos[videoId] = {
+            updatedTime,
+            needInsert: true,
+            isUpdated: false,
+            isLiveStreaming: true,
+            privacyStatus: PrivacyStatus.Public,
+            isCollab: true
+          }
+          videoIds.add(videoId)
+          videoIdsPerChannels[channelId].push(videoId)
+          needGetStartTimeVideos[channelId].add(videoId)
+        }
       }
 
       // 登録済み配信取得
       const postedVideos = await runQuery(
         'SELECT video_id, start_time, updated_time, notify_mode, privacy_status, is_live_streaming FROM youtube_streaming_watcher_notified_videos ' +
-                'WHERE channel_id=? AND video_id IN (' + videoIds.map(() => '?').join(', ') + ')',
-        [{ S: channelId }].concat(videoIds.map(v => {
+                'WHERE channel_id=? AND video_id IN (' + videoIdsPerChannels[channelId].map(() => '?').join(', ') + ')',
+        [{ S: channelId }].concat(videoIdsPerChannels[channelId].map(v => {
           return { S: v }
         }))
       )
@@ -165,13 +278,13 @@ export async function handler () {
           // * 配信開始まで1時間以内でリマインド通知が完了している
           if (now < oneHourAgoTime || startTime < now || notifyMode === NotifyMode.NotifyRemind) {
             console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
-            needGetStartTimeVideos.delete(videoId)
+            needGetStartTimeVideos[channelId].delete(videoId)
             delete notifyVideoData[channelId].videos[videoId]
             continue
           } else if (updateTime !== undefined && new Date(updateTime) < notifyVideoData[channelId].videos[videoId].updatedTime) {
             notifyVideoData[channelId].videos[videoId].isUpdated = true
           } else {
-            needGetStartTimeVideos.delete(videoId)
+            needGetStartTimeVideos[channelId].delete(videoId)
           }
 
           notifyVideoData[channelId].videos[videoId].startTime = startTime
@@ -183,12 +296,12 @@ export async function handler () {
         notifyVideoData[channelId].videos[videoId].isLiveStreaming = item.is_live_streaming?.BOOL || true
       }
 
-      if (needGetStartTimeVideos.size === 0) {
+      if (needGetStartTimeVideos[channelId].size === 0) {
         console.log(`videos that need get start time are not found: channel_id: ${channelId}`)
         continue
       }
 
-      const needGetStartTimeVideoList = Array.from(needGetStartTimeVideos)
+      const needGetStartTimeVideoList = Array.from(needGetStartTimeVideos[channelId])
 
       // 配信情報取得
       while (1) {
@@ -214,7 +327,7 @@ export async function handler () {
               continue
             }
 
-            needGetStartTimeVideos.delete(videoId)
+            needGetStartTimeVideos[channelId].delete(videoId)
             let startTimeStr = videoItem.liveStreamingDetails?.scheduledStartTime
 
             if (startTimeStr === undefined || startTimeStr === null) {
@@ -243,6 +356,20 @@ export async function handler () {
 
             if (privacyStatus !== undefined && privacyStatus !== null) {
               notifyVideoData[channelId].videos[videoId].privacyStatus = privacyStatus
+            }
+
+            if (notifyVideoData[channelId].videos[videoId].isCollab) {
+              if (channelId === videoItem.snippet?.channelId) {
+                notifyVideoData[channelId].videos[videoId].isCollab = false
+              } else {
+                if (videoItem.snippet?.channelId) {
+                  notifyVideoData[channelId].videos[videoId].collabChannelId = videoItem.snippet?.channelId
+                }
+
+                if (videoItem.snippet?.channelTitle) {
+                  notifyVideoData[channelId].videos[videoId].collabChannelTitle = videoItem.snippet?.channelTitle
+                }
+              }
             }
 
             const updatedTime = notifyVideoData[channelId].videos[videoId].updatedTime.toISOString()
@@ -277,13 +404,16 @@ export async function handler () {
         videoResultParams.pageToken = nextPageToken
       }
 
-      for (const videoId of needGetStartTimeVideos) {
+      for (const videoId of needGetStartTimeVideos[channelId]) {
+        const showChannelId: string = notifyVideoData[channelId].videos[videoId].collabChannelId || channelId
+        const showChannelTitle: string = notifyVideoData[channelId].videos[videoId].collabChannelTitle || notifyVideoData[channelId].title || '(不明)'
+
         // Slack通知
         const postMessageParams: ChatPostMessageArguments = {
           channel: slackChannel,
           text:
             ':x: 配信削除\n' +
-            `チャンネル名: <https://www.youtube.com/channel/${channelId}|${notifyVideoData[channelId].title}>\n` +
+            `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n` +
             `配信URL: <https://www.youtube.com/watch?v=${videoId}>`
         }
         console.log('call app.client.chat.postMessage:', postMessageParams)
@@ -301,38 +431,52 @@ export async function handler () {
         await sleep(1000)
         const dayOfWeeks = ['日', '月', '火', '水', '木', '金', '土']
         const parameters: AttributeValue[] = []
-        let header = ''
+        let text = ''
 
         if (vd.notifyMode === NotifyMode.Registered) {
           parameters.push({ S: NotifyMode.NotifyRegistered })
-          header = ':new: 新着'
+          text = ':new: 新着'
+
+          if (vd.isCollab) {
+            text += 'コラボ'
+          }
+
           if (vd.isLiveStreaming) {
-            header += '配信'
+            text += '配信'
           } else {
-            header += '動画'
+            text += '動画'
           }
         } else if (vd.isUpdated) {
-          header = ':repeat: '
+          text = ':repeat: '
 
-          if (vd.isLiveStreaming) {
-            header += '配信'
-          } else {
-            header += '動画'
+          if (vd.isCollab) {
+            text += 'コラボ'
           }
 
-          header += '情報更新'
+          if (vd.isLiveStreaming) {
+            text += '配信'
+          } else {
+            text += '動画'
+          }
+
+          text += '情報更新'
         } else {
           parameters.push({ S: NotifyMode.NotifyRemind })
-          header = ':bell: もうすぐ'
+          text = ':bell: もうすぐ'
+
+          if (vd.isCollab) {
+            text += 'コラボ'
+          }
+
           if (vd.isLiveStreaming) {
-            header += '配信開始'
+            text += '配信開始'
           } else {
-            header += '公開'
+            text += '動画公開'
           }
         }
 
         if (vd.privacyStatus === PrivacyStatus.Unlisted) {
-          header += ' (メンバーシップ限定・限定公開)'
+          text += ' (メンバーシップ限定・限定公開)'
         }
 
         const startTime = vd.startTime
@@ -342,16 +486,24 @@ export async function handler () {
           continue
         }
 
+        const showChannelId: string = vd.collabChannelId || channelId
+        const showChannelTitle: string = vd.collabChannelTitle || cd.title || '(不明)'
+        text += '\n' +
+                `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
+
+        if (vd.isCollab) {
+          text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${cd.title}>\n`
+        }
+
+        text += `配信名: <https://www.youtube.com/watch?v=${videoId}|${vd.videoTitle}>\n` +
+                `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
+                `(${dayOfWeeks[startTime.getDay()]}) ` +
+                `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
+
         // Slack通知
         const postMessageParams: ChatPostMessageArguments = {
           channel: slackChannel,
-          text:
-              header + '\n' +
-              `チャンネル名: <https://www.youtube.com/channel/${channelId}|${cd.title}>\n` +
-              `配信名: <https://www.youtube.com/watch?v=${videoId}|${vd.title}>\n` +
-              `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
-              `(${dayOfWeeks[startTime.getDay()]}) ` +
-              `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
+          text
         }
         console.log('call app.client.chat.postMessage:', postMessageParams)
         await slackApp.client.chat.postMessage(postMessageParams)
