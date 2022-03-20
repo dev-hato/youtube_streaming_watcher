@@ -377,6 +377,8 @@ export async function handler () {
 
             const updatedTime = notifyVideoData[channelId].videos[videoId].updatedTime.toISOString()
             const now = new Date()
+            const yesterday = new Date(now.getTime())
+            yesterday.setDate(now.getDate() - 1)
 
             if (notifyVideoData[channelId].videos[videoId].needInsert === true) { // データがない場合はINSERTする
               await runQuery(
@@ -390,8 +392,11 @@ export async function handler () {
               )
             }
 
-            // 既に配信開始している場合は通知しない
-            if (notifyVideoData[channelId].videos[videoId].isLiveStreaming && startTime < now) {
+            // 既に配信開始している、もしくは、動画投稿から1日以上経っている場合は通知しない
+            if (
+              (notifyVideoData[channelId].videos[videoId].isLiveStreaming && startTime < now) ||
+              (!notifyVideoData[channelId].videos[videoId].isLiveStreaming && startTime < yesterday)
+            ) {
               console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
               delete notifyVideoData[channelId].videos[videoId]
             }
