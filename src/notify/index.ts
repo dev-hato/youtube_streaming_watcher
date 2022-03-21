@@ -153,10 +153,7 @@ export async function handler () {
       }
     }
 
-    for (const channel of channels) {
-      const channelId = channel.channel_id?.S
-      const twitterId = channel.twitter_id?.S
-
+    for (const { channel_id: { S: channelId }, twitter_id: { S: twitterId } } of channels) {
       if (channelId === undefined) {
         continue
       }
