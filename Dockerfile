@@ -1,4 +1,4 @@
-FROM node:14.19.0-bullseye-slim AS base
+FROM node:14.19.1-bullseye-slim AS base
 
 ARG AWS_ACCESS_KEY_ID=""
 ENV AWS_ACCESS_KEY_ID ${AWS_ACCESS_KEY_ID}
