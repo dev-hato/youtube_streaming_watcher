@@ -55,8 +55,7 @@
     "constructs": "^10.0.91",
     "googleapis": "^97.0.0",
     "rss-parser": "^3.12.0",
-    "sleep-promise": "^9.1.0",
-    "twitter-api-v2": "^1.11.0"
+    "sleep-promise": "^9.1.0"
   },
   "engines": {
     "node": ">=14.19.0 <17.0.0",
