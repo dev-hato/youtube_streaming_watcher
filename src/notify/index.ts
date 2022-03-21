@@ -1,7 +1,6 @@
 import axios from 'axios'
 import Parser from 'rss-parser'
 import sleep from 'sleep-promise'
-import { TweetV2 } from 'twitter-api-v2'
 import { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { ChatPostMessageArguments } from '@slack/web-api'
 import { google, youtube_v3 } from 'googleapis' // eslint-disable-line camelcase
@@ -166,55 +165,51 @@ export async function handler () {
         await sleep(1000)
         console.log('get twitter user timeline:', twitterId)
         const timeLine = await twitterApiReadOnly.v2.userTimeline(twitterId, { max_results: 30 })
-        const tweetDataList: Array<{ url: string, createdAt: string | undefined }> = []
-        let tweets: TweetV2[] = timeLine.tweets
+        const tweetStack = timeLine.tweets
+        const getTweetMaxCount = tweetStack.length * 2
+        const tweets: Array<{ url: string, createdAt: string | undefined }> = []
 
-        for (let i = 0; i < 10 && tweets.length > 0; i++) {
-          const tweetIds: string[] = []
+        for (let i = 0; i < getTweetMaxCount && tweetStack.length > 0; i++) {
+          const tweet = tweetStack.pop()
 
-          for (const tweet of tweets) {
-            for (const shortUrl of tweet.text.matchAll(/https:\/\/t\.co\/[a-zA-Z0-9]+/g)) {
-              const tweetUrl = shortUrl[0]
-              let url
+          if (tweet === undefined) {
+            continue
+          }
 
-              try {
-                await sleep(1000)
-                console.log('get:', tweetUrl)
-                const response = await axios.get(tweetUrl)
-                url = response.request.res.responseUrl
-              } catch (e) {
-                console.log(e)
-                continue
-              }
+          for (const shortUrl of tweet.text.matchAll(/https:\/\/t\.co\/[a-zA-Z0-9]+/g)) {
+            await sleep(1000)
+            const tweetUrl = shortUrl[0]
+            let url
 
-              const twitterIdPattern = url.match(/https:\/\/twitter\.com\/[^/]+\/status\/([^/]+)/)
-
-              if (twitterIdPattern === null || twitterIdPattern.length < 2) {
-                tweetDataList.push({ url, createdAt: tweet.created_at })
-                continue
-              }
-
-              const tweetId = twitterIdPattern[1]
-
-              if (tweet.id === tweetId) {
-                continue
-              }
-
-              tweetIds.push(tweetId)
+            try {
+              console.log('get:', tweetUrl)
+              const response = await axios.get(tweetUrl)
+              url = response.request.res.responseUrl
+            } catch (e) {
+              console.log(e)
+              continue
             }
-          }
+            const twitterIdPattern = url.match(/https:\/\/twitter\.com\/[^/]+\/status\/([^/]+)/)
 
-          if (tweetIds.length === 0) {
-            break
-          }
+            if (twitterIdPattern === null || twitterIdPattern.length < 2) {
+              tweets.push({ url, createdAt: tweet.created_at })
+              continue
+            }
 
-          await sleep(1000)
-          console.log('get tweets:', tweetIds)
-          const tweetsResult = await twitterApiReadOnly.v2.tweets(tweetIds)
-          tweets = tweetsResult.data
+            const tweetId = twitterIdPattern[1]
+
+            if (tweet.id === tweetId) {
+              continue
+            }
+
+            await sleep(1000)
+            console.log('get tweet:', tweetId)
+            const tweetsResult = await twitterApiReadOnly.v2.tweets(tweetId)
+            tweetStack.push(tweetsResult.data[0])
+          }
         }
 
-        for (const { url, createdAt } of tweetDataList) {
+        for (const { url, createdAt } of tweets) {
           const videoIdsPattern = url.match(/https:\/\/www\.youtube\.com\/watch\?v=([^&]+)/)
 
           if (videoIdsPattern === null || videoIdsPattern.length < 2) {
