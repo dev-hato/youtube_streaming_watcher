@@ -165,7 +165,7 @@ export async function handler () {
       if (twitterId !== undefined) {
         await sleep(1000)
         console.log('get twitter user timeline:', twitterId)
-        const timeLine = await twitterApiReadOnly.v2.userTimeline(twitterId, { max_results: 10 })
+        const timeLine = await twitterApiReadOnly.v2.userTimeline(twitterId, { max_results: 30 })
         const tweetDataList: Array<{ url: string, createdAt: string | undefined }> = []
         let tweets: TweetV2[] = timeLine.tweets
 
