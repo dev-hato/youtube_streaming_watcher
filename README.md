@@ -56,7 +56,6 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
 
 - Google Cloud Platform API Key (YouTube Data API v3)
 - Slack API Token
-- Twitter API
 
 ### AWSへデプロイする方法
 
@@ -79,8 +78,6 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
     * `youtube_streaming_watcher_slack_alert`: Lambda関数のアラート関連 (Slack)
         * `workspace_id`: 通知先のワークスペースID
         * `channel_id`: 通知先のチャンネルID
-    * `youtube_streaming_watcher_twitter`: 配信通知関連 (Twitter)
-        * `twitter_bearer_token`: ベアラートークン
     * `youtube_streaming_watcher_youtube`: 配信通知関連 (YouTube)
         * `youtube_api_key`: YouTube Data API用のAPIキー
 5. スタックをデプロイします。  
