@@ -45,7 +45,7 @@
     "typescript": "^4.6.2"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.54.1",
+    "@aws-sdk/client-dynamodb": "^3.55.0",
     "@slack/bolt": "^3.10.0",
     "@slack/web-api": "^6.6.0",
     "@vendia/serverless-express": "^4.5.4",
