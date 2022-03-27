@@ -194,7 +194,7 @@ export async function handler (): Promise<void> {
       while (true) {
         await sleep(1000)
 
-        const videoResultParams: youtube_v3.Params$Resource$Videos$List = {
+        const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
           part: ['liveStreamingDetails', 'snippet', 'status'],
           id: needGetStartTimeVideoList,
           maxResults: 50
