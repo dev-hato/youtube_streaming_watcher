@@ -2,7 +2,7 @@ import Parser from 'rss-parser'
 import sleep from 'sleep-promise'
 import { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { ChatPostMessageArguments } from '@slack/web-api'
-import { google, youtube_v3 } from 'googleapis'
+import { google, youtube_v3 } from 'googleapis' // eslint-disable-line camelcase
 import { runQuery } from '../common/dynamodb'
 import { slackApp } from '../common/slack'
 
