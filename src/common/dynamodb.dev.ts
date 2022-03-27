@@ -6,7 +6,7 @@ import {
 import { dynamoDBClient } from './dynamodb'
 import { dynamoDBTableProps } from '../../lib/props/dynamodb-table-props'
 
-export async function createTables () {
+export async function createTables (): Promise<void> {
   const dynamoDBTableSchema = dynamoDBTableProps.map(tableProp => {
     const attributes = [tableProp.partitionKey]
     const keySchema = [{
@@ -14,7 +14,7 @@ export async function createTables () {
       KeyType: 'HASH'
     }]
 
-    if (tableProp.sortKey) {
+    if (tableProp.sortKey != null) {
       attributes.push(tableProp.sortKey)
       keySchema.push({
         AttributeName: tableProp.sortKey.name,
@@ -46,7 +46,7 @@ export async function createTables () {
       await dynamoDBClient.send(new DescribeTableCommand(input))
       return
     } catch (e) {
-      if (e instanceof Error && e.name === 'ResourceNotFoundException') {
+      if (e instanceof Error && e.name === 'ResourceNotFoundException' && input.TableName !== undefined) {
         console.log(`table ${input.TableName} is not exists.`)
       } else {
         throw e
@@ -57,7 +57,7 @@ export async function createTables () {
       console.log('call create table:', tableSchema)
       await dynamoDBClient.send(new CreateTableCommand(tableSchema))
     } catch (e) {
-      if (e instanceof Error && e.name === 'ResourceInUseException') {
+      if (e instanceof Error && e.name === 'ResourceInUseException' && tableSchema.TableName !== undefined) {
         console.log(`table ${tableSchema.TableName} is already exists.`)
       } else {
         throw e

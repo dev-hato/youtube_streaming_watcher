@@ -2,31 +2,31 @@ import Parser from 'rss-parser'
 import sleep from 'sleep-promise'
 import { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { ChatPostMessageArguments } from '@slack/web-api'
-import { google, youtube_v3 } from 'googleapis' // eslint-disable-line camelcase
+import { google, youtube_v3 } from 'googleapis'
 import { runQuery } from '../common/dynamodb'
 import { slackApp } from '../common/slack'
 
 /** 通知状況 **/
-enum NotifyMode { // eslint-disable-line no-unused-vars
-    /** テーブル登録完了 **/
-    Registered = 'Registered', // eslint-disable-line no-unused-vars
-    /** 登録通知完了 **/
-    NotifyRegistered = 'NotifyRegistered', // eslint-disable-line no-unused-vars
-    /** リマインド通知 (配信開始1時間前) 完了 **/
-    NotifyRemind = 'NotifyRemind' // eslint-disable-line no-unused-vars
+enum NotifyMode {
+  /** テーブル登録完了 **/
+  Registered = 'Registered',
+  /** 登録通知完了 **/
+  NotifyRegistered = 'NotifyRegistered',
+  /** リマインド通知 (配信開始1時間前) 完了 **/
+  NotifyRemind = 'NotifyRemind'
 }
 
 /**
  * 配信のプライバシーステータス
  * https://developers.google.com/youtube/v3/docs/videos?hl=ja
  */
-enum PrivacyStatus { // eslint-disable-line no-unused-vars
-    /** 公開 **/
-    Public = 'public', // eslint-disable-line no-unused-vars
-    /** メンバーシップ限定・限界公開 **/
-    Unlisted = 'unlisted', // eslint-disable-line no-unused-vars
-    /** 非公開 **/
-    Private = 'private' // eslint-disable-line no-unused-vars
+enum PrivacyStatus {
+  /** 公開 **/
+  Public = 'public',
+  /** メンバーシップ限定・限界公開 **/
+  Unlisted = 'unlisted',
+  /** 非公開 **/
+  Private = 'private'
 }
 
 // Youtube Data APIの1日あたりの上限ユニット数
@@ -34,7 +34,7 @@ const apiUnitLimitPerDay = 10000
 
 const maxGetFeedRetryCnt = 10
 
-export async function handler () {
+export async function handler (): Promise<void> {
   let currentNotificationAt: string | undefined
   const currentNotificationAtItems = await runQuery('SELECT next_notification_at FROM youtube_streaming_watcher_next_notification_times')
 
@@ -62,22 +62,22 @@ export async function handler () {
 
   try {
     const notifyVideoData: {
-            [channelId: string]: {
-                title?: string,
-                videos: {
-                    [videoId: string]: {
-                        title?: string,
-                        startTime?: Date,
-                        updatedTime: Date,
-                        notifyMode?: string,
-                        needInsert: boolean,
-                        isUpdated: boolean,
-                        isLiveStreaming: boolean,
-                        privacyStatus: string
-                    }
-                }
-            }
-        } = {}
+      [channelId: string]: {
+        title?: string
+        videos: {
+          [videoId: string]: {
+            title?: string
+            startTime?: Date
+            updatedTime: Date
+            notifyMode?: string
+            needInsert: boolean
+            isUpdated: boolean
+            isLiveStreaming: boolean
+            privacyStatus: string
+          }
+        }
+      }
+    } = {}
 
     const channels = await runQuery('SELECT channel_id FROM youtube_streaming_watcher_channels')
 
@@ -144,7 +144,7 @@ export async function handler () {
         const videoId = item.video_id.S
 
         if (videoId === undefined) {
-          console.log(`video_id can not get: channel_id ${channelId}, video_id: ${videoId}`)
+          console.log(`video_id can not get: channel_id ${channelId}`)
           continue
         }
 
@@ -177,10 +177,10 @@ export async function handler () {
           notifyVideoData[channelId].videos[videoId].startTime = startTime
         }
 
-        notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode || ''
+        notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode ?? ''
         notifyVideoData[channelId].videos[videoId].needInsert = false
-        notifyVideoData[channelId].videos[videoId].privacyStatus = item.privacy_status?.S || PrivacyStatus.Public
-        notifyVideoData[channelId].videos[videoId].isLiveStreaming = item.is_live_streaming?.BOOL || true
+        notifyVideoData[channelId].videos[videoId].privacyStatus = item.privacy_status?.S ?? PrivacyStatus.Public
+        notifyVideoData[channelId].videos[videoId].isLiveStreaming = item.is_live_streaming?.BOOL ?? true
       }
 
       if (needGetStartTimeVideos.size === 0) {
@@ -191,10 +191,10 @@ export async function handler () {
       const needGetStartTimeVideoList = Array.from(needGetStartTimeVideos)
 
       // 配信情報取得
-      while (1) {
+      while (true) {
         await sleep(1000)
 
-        const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
+        const videoResultParams: youtube_v3.Params$Resource$Videos$List = {
           part: ['liveStreamingDetails', 'snippet', 'status'],
           id: needGetStartTimeVideoList,
           maxResults: 50
@@ -250,7 +250,7 @@ export async function handler () {
             const yesterday = new Date(now.getTime())
             yesterday.setDate(now.getDate() - 1)
 
-            if (notifyVideoData[channelId].videos[videoId].needInsert === true) { // データがない場合はINSERTする
+            if (notifyVideoData[channelId].videos[videoId].needInsert) { // データがない場合はINSERTする
               await runQuery(
                 'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'updated_time\': ?, \'notify_mode\': ?, \'privacy_status\': ?, \'is_live_streaming\': ?}',
                 [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: notifyVideoData[channelId].videos[videoId].privacyStatus }, { BOOL: notifyVideoData[channelId].videos[videoId].isLiveStreaming }]
@@ -267,7 +267,7 @@ export async function handler () {
               (notifyVideoData[channelId].videos[videoId].isLiveStreaming && startTime < now) ||
               (!notifyVideoData[channelId].videos[videoId].isLiveStreaming && startTime < yesterday)
             ) {
-              console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
+              console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime.toISOString()}`)
               delete notifyVideoData[channelId].videos[videoId]
             }
           }
@@ -283,13 +283,19 @@ export async function handler () {
       }
 
       for (const videoId of needGetStartTimeVideos) {
+        const title = notifyVideoData[channelId].title
+        let text = ':x: 配信削除\n'
+
+        if (title !== undefined) {
+          text += `チャンネル名: <https://www.youtube.com/channel/${channelId}|${title}>\n`
+        }
+
+        text += `配信URL: <https://www.youtube.com/watch?v=${videoId}>`
+
         // Slack通知
         const postMessageParams: ChatPostMessageArguments = {
           channel: slackChannel,
-          text:
-            ':x: 配信削除\n' +
-            `チャンネル名: <https://www.youtube.com/channel/${channelId}|${notifyVideoData[channelId].title}>\n` +
-            `配信URL: <https://www.youtube.com/watch?v=${videoId}>`
+          text
         }
         console.log('call app.client.chat.postMessage:', postMessageParams)
         await slackApp.client.chat.postMessage(postMessageParams)
@@ -306,38 +312,38 @@ export async function handler () {
         await sleep(1000)
         const dayOfWeeks = ['日', '月', '火', '水', '木', '金', '土']
         const parameters: AttributeValue[] = []
-        let header = ''
+        let text = ''
 
         if (vd.notifyMode === NotifyMode.Registered) {
           parameters.push({ S: NotifyMode.NotifyRegistered })
-          header = ':new: 新着'
+          text = ':new: 新着'
           if (vd.isLiveStreaming) {
-            header += '配信'
+            text += '配信'
           } else {
-            header += '動画'
+            text += '動画'
           }
         } else if (vd.isUpdated) {
-          header = ':repeat: '
+          text = ':repeat: '
 
           if (vd.isLiveStreaming) {
-            header += '配信'
+            text += '配信'
           } else {
-            header += '動画'
+            text += '動画'
           }
 
-          header += '情報更新'
+          text += '情報更新'
         } else {
           parameters.push({ S: NotifyMode.NotifyRemind })
-          header = ':bell: もうすぐ'
+          text = ':bell: もうすぐ'
           if (vd.isLiveStreaming) {
-            header += '配信開始'
+            text += '配信開始'
           } else {
-            header += '公開'
+            text += '公開'
           }
         }
 
         if (vd.privacyStatus === PrivacyStatus.Unlisted) {
-          header += ' (メンバーシップ限定・限定公開)'
+          text += ' (メンバーシップ限定・限定公開)'
         }
 
         const startTime = vd.startTime
@@ -347,16 +353,24 @@ export async function handler () {
           continue
         }
 
+        text += '\n'
+
+        if (cd.title !== undefined) {
+          text += `チャンネル名: <https://www.youtube.com/channel/${channelId}|${cd.title}>\n`
+        }
+
+        if (vd.title !== undefined) {
+          text += `配信名: <https://www.youtube.com/watch?v=${videoId}|${vd.title}>\n`
+        }
+
+        text += `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
+            `(${dayOfWeeks[startTime.getDay()]}) ` +
+            `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
+
         // Slack通知
         const postMessageParams: ChatPostMessageArguments = {
           channel: slackChannel,
-          text:
-              header + '\n' +
-              `チャンネル名: <https://www.youtube.com/channel/${channelId}|${cd.title}>\n` +
-              `配信名: <https://www.youtube.com/watch?v=${videoId}|${vd.title}>\n` +
-              `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
-              `(${dayOfWeeks[startTime.getDay()]}) ` +
-              `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
+          text
         }
         console.log('call app.client.chat.postMessage:', postMessageParams)
         await slackApp.client.chat.postMessage(postMessageParams)

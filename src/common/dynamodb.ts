@@ -25,17 +25,17 @@ if (process.env.NODE_ENV === 'development' && process.env.AWS_ACCESS_KEY_ID !== 
 
 export const dynamoDBClient = new DynamoDBClient(dynamoDBClientConfig)
 
-export async function runQuery (partiQLQuery: string, parameters?: AttributeValue[]): Promise<{ [key: string]: AttributeValue }[]> {
+export async function runQuery (partiQLQuery: string, parameters?: AttributeValue[]): Promise<Array<{ [key: string]: AttributeValue }>> {
   const input: ExecuteStatementCommandInput = { Statement: partiQLQuery }
 
-  if (parameters) {
+  if (parameters != null) {
     input.Parameters = parameters
   }
 
-  let results: { [key: string]: AttributeValue }[] = []
+  let results: Array<{ [key: string]: AttributeValue }> = []
 
   try {
-    while (1) {
+    while (true) {
       console.log('run query:', input)
       const result = await dynamoDBClient.send(new ExecuteStatementCommand(input))
       const items = result.Items
