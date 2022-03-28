@@ -14,7 +14,7 @@ export async function createTables (): Promise<void> {
       KeyType: 'HASH'
     }]
 
-    if (tableProp.sortKey !== null) {
+    if (tableProp.sortKey !== undefined) {
       attributes.push(tableProp.sortKey)
       keySchema.push({
         AttributeName: tableProp.sortKey.name,

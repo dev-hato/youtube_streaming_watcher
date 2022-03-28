@@ -7,4 +7,4 @@ async function devHandler (): Promise<void> {
   await slackApp.start()
 }
 
-await devHandler()
+devHandler().then(() => {}, () => {})
