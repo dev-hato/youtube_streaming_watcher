@@ -29,6 +29,18 @@ enum PrivacyStatus {
   Private = 'private'
 }
 
+/** 配信・動画情報 **/
+interface Video {
+  title?: string
+  startTime?: Date
+  updatedTime: Date
+  notifyMode?: string
+  needInsert: boolean
+  isUpdated: boolean
+  isLiveStreaming: boolean
+  privacyStatus: string
+}
+
 // Youtube Data APIの1日あたりの上限ユニット数
 const apiUnitLimitPerDay = 10000
 
@@ -64,18 +76,7 @@ export async function handler (): Promise<void> {
     const notifyVideoData: {
       [channelId: string]: {
         title?: string
-        videos: {
-          [videoId: string]: {
-            title?: string
-            startTime?: Date
-            updatedTime: Date
-            notifyMode?: string
-            needInsert: boolean
-            isUpdated: boolean
-            isLiveStreaming: boolean
-            privacyStatus: string
-          }
-        }
+        videos: Map<string, Video>
       }
     } = {}
 
@@ -115,18 +116,18 @@ export async function handler (): Promise<void> {
 
       const videoIds = []
       const needGetStartTimeVideos: Set<string> = new Set()
-      notifyVideoData[channelId] = { title: feed.title, videos: {} }
+      notifyVideoData[channelId] = { title: feed.title, videos: new Map<string, Video>() }
 
       for (const item of feed.items) {
         const videoId = item.id.replace(/^yt:video:/, '')
-        notifyVideoData[channelId].videos[videoId] = {
+        notifyVideoData[channelId].videos.set(videoId, {
           title: item.title,
           updatedTime: new Date(item.updated),
           needInsert: true,
           isUpdated: false,
           isLiveStreaming: true,
           privacyStatus: PrivacyStatus.Public
-        }
+        })
         videoIds.push(videoId)
         needGetStartTimeVideos.add(videoId)
       }
@@ -150,6 +151,7 @@ export async function handler (): Promise<void> {
 
         const startTimeStr = item.start_time?.S
         const notifyMode = item.notify_mode?.S
+        const video = notifyVideoData[channelId].videos.get(videoId)
 
         // 登録通知が完了している場合
         if (startTimeStr !== undefined) {
@@ -166,21 +168,27 @@ export async function handler (): Promise<void> {
           if (now < oneHourAgoTime || startTime < now || notifyMode === NotifyMode.NotifyRemind) {
             console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
             needGetStartTimeVideos.delete(videoId)
-            delete notifyVideoData[channelId].videos[videoId]
+            notifyVideoData[channelId].videos.delete(videoId)
             continue
-          } else if (updateTime !== undefined && new Date(updateTime) < notifyVideoData[channelId].videos[videoId].updatedTime) {
-            notifyVideoData[channelId].videos[videoId].isUpdated = true
+          } else if (updateTime !== undefined && video !== undefined && new Date(updateTime) < video.updatedTime) {
+            video.isUpdated = true
           } else {
             needGetStartTimeVideos.delete(videoId)
           }
 
-          notifyVideoData[channelId].videos[videoId].startTime = startTime
+          if (video !== undefined) {
+            video.startTime = startTime
+          }
         }
 
-        notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode ?? ''
-        notifyVideoData[channelId].videos[videoId].needInsert = false
-        notifyVideoData[channelId].videos[videoId].privacyStatus = item.privacy_status?.S ?? PrivacyStatus.Public
-        notifyVideoData[channelId].videos[videoId].isLiveStreaming = item.is_live_streaming?.BOOL ?? true
+        if (video === undefined) {
+          continue
+        }
+
+        video.notifyMode = notifyMode ?? ''
+        video.needInsert = false
+        video.privacyStatus = item.privacy_status?.S ?? PrivacyStatus.Public
+        video.isLiveStreaming = item.is_live_streaming?.BOOL ?? true
       }
 
       if (needGetStartTimeVideos.size === 0) {
@@ -215,60 +223,65 @@ export async function handler (): Promise<void> {
             }
 
             needGetStartTimeVideos.delete(videoId)
+            const video = notifyVideoData[channelId].videos.get(videoId)
             let startTimeStr = videoItem.liveStreamingDetails?.scheduledStartTime
 
             if (startTimeStr === undefined || startTimeStr === null) {
               const publishedAt = videoItem.snippet?.publishedAt
               if (publishedAt !== undefined && publishedAt !== null) {
                 startTimeStr = publishedAt
-                notifyVideoData[channelId].videos[videoId].isLiveStreaming = false
+                if (video !== undefined) {
+                  video.isLiveStreaming = false
+                }
               } else {
                 console.log(`start time can not get: channel_id ${channelId}, video_id: ${videoId}`)
-                delete notifyVideoData[channelId].videos[videoId]
+                notifyVideoData[channelId].videos.delete(videoId)
                 continue
               }
             }
 
             const startTime = new Date(startTimeStr)
             startTimeStr = startTime.toISOString()
-            notifyVideoData[channelId].videos[videoId].startTime = startTime
-            let notifyMode = notifyVideoData[channelId].videos[videoId].notifyMode
+
+            if (video === undefined) {
+              continue
+            }
+
+            video.startTime = startTime
+            let notifyMode = video.notifyMode
 
             if (notifyMode === undefined || notifyMode === '') {
               notifyMode = NotifyMode.Registered
             }
 
-            notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode
+            video.notifyMode = notifyMode
             const privacyStatus = videoItem.status?.privacyStatus
 
             if (privacyStatus !== undefined && privacyStatus !== null) {
-              notifyVideoData[channelId].videos[videoId].privacyStatus = privacyStatus
+              video.privacyStatus = privacyStatus
             }
 
-            const updatedTime = notifyVideoData[channelId].videos[videoId].updatedTime.toISOString()
+            const updatedTime = video.updatedTime.toISOString()
             const now = new Date()
             const yesterday = new Date(now.getTime())
             yesterday.setDate(now.getDate() - 1)
 
-            if (notifyVideoData[channelId].videos[videoId].needInsert) { // データがない場合はINSERTする
+            if (video.needInsert) { // データがない場合はINSERTする
               await runQuery(
                 'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'updated_time\': ?, \'notify_mode\': ?, \'privacy_status\': ?, \'is_live_streaming\': ?}',
-                [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: notifyVideoData[channelId].videos[videoId].privacyStatus }, { BOOL: notifyVideoData[channelId].videos[videoId].isLiveStreaming }]
+                [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: video.privacyStatus }, { BOOL: video.isLiveStreaming }]
               )
             } else {
               await runQuery(
                 'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET updated_time=? SET notify_mode=? SET privacy_status=? SET is_live_streaming=? WHERE channel_id=? AND video_id=?',
-                [{ S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: notifyVideoData[channelId].videos[videoId].privacyStatus }, { BOOL: notifyVideoData[channelId].videos[videoId].isLiveStreaming }, { S: channelId }, { S: videoId }]
+                [{ S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: video.privacyStatus }, { BOOL: video.isLiveStreaming }, { S: channelId }, { S: videoId }]
               )
             }
 
             // 既に配信開始している、もしくは、動画投稿から1日以上経っている場合は通知しない
-            if (
-              (notifyVideoData[channelId].videos[videoId].isLiveStreaming && startTime < now) ||
-              (!notifyVideoData[channelId].videos[videoId].isLiveStreaming && startTime < yesterday)
-            ) {
+            if ((video.isLiveStreaming && startTime < now) || (!video.isLiveStreaming && startTime < yesterday)) {
               console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime.toISOString()}`)
-              delete notifyVideoData[channelId].videos[videoId]
+              notifyVideoData[channelId].videos.delete(videoId)
             }
           }
         }
@@ -308,7 +321,7 @@ export async function handler (): Promise<void> {
 
     // 配信通知
     for (const [channelId, cd] of Object.entries(notifyVideoData)) {
-      for (const [videoId, vd] of Object.entries(cd.videos)) {
+      for (const [videoId, vd] of cd.videos) {
         await sleep(1000)
         const dayOfWeeks = ['日', '月', '火', '水', '木', '金', '土']
         const parameters: AttributeValue[] = []
