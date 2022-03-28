@@ -28,7 +28,7 @@ export const dynamoDBClient = new DynamoDBClient(dynamoDBClientConfig)
 export async function runQuery (partiQLQuery: string, parameters?: AttributeValue[]): Promise<Array<{ [key: string]: AttributeValue }>> {
   const input: ExecuteStatementCommandInput = { Statement: partiQLQuery }
 
-  if (parameters != null) {
+  if (parameters !== null) {
     input.Parameters = parameters
   }
 
