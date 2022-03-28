@@ -29,18 +29,6 @@ enum PrivacyStatus {
   Private = 'private'
 }
 
-/** 配信・動画情報 **/
-interface Video {
-  title?: string
-  startTime?: Date
-  updatedTime: Date
-  notifyMode?: string
-  needInsert: boolean
-  isUpdated: boolean
-  isLiveStreaming: boolean
-  privacyStatus: string
-}
-
 // Youtube Data APIの1日あたりの上限ユニット数
 const apiUnitLimitPerDay = 10000
 
@@ -76,7 +64,16 @@ export async function handler (): Promise<void> {
     const notifyVideoData: {
       [channelId: string]: {
         title?: string
-        videos: Map<string, Video>
+        videos: Map<string, {
+          title?: string
+          startTime?: Date
+          updatedTime: Date
+          notifyMode?: string
+          needInsert: boolean
+          isUpdated: boolean
+          isLiveStreaming: boolean
+          privacyStatus: string
+        }>
       }
     } = {}
 
@@ -116,7 +113,7 @@ export async function handler (): Promise<void> {
 
       const videoIds = []
       const needGetStartTimeVideos: Set<string> = new Set()
-      notifyVideoData[channelId] = { title: feed.title, videos: new Map<string, Video>() }
+      notifyVideoData[channelId] = { title: feed.title, videos: new Map() }
 
       for (const item of feed.items) {
         const videoId = item.id.replace(/^yt:video:/, '')
