@@ -12,4 +12,11 @@ async function devHandler (): Promise<void> {
   }
 }
 
-devHandler().then(() => {}, () => {})
+devHandler().then(
+  () => {
+    // do nothing.
+  },
+  () => {
+    // do nothing.
+  }
+)
