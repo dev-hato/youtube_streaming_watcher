@@ -7,26 +7,26 @@ import { runQuery } from '../common/dynamodb'
 import { slackApp } from '../common/slack'
 
 /** 通知状況 **/
-enum NotifyMode { // eslint-disable-line no-unused-vars
-    /** テーブル登録完了 **/
-    Registered = 'Registered', // eslint-disable-line no-unused-vars
-    /** 登録通知完了 **/
-    NotifyRegistered = 'NotifyRegistered', // eslint-disable-line no-unused-vars
-    /** リマインド通知 (配信開始1時間前) 完了 **/
-    NotifyRemind = 'NotifyRemind' // eslint-disable-line no-unused-vars
+enum NotifyMode {
+  /** テーブル登録完了 **/
+  Registered = 'Registered',
+  /** 登録通知完了 **/
+  NotifyRegistered = 'NotifyRegistered',
+  /** リマインド通知 (配信開始1時間前) 完了 **/
+  NotifyRemind = 'NotifyRemind'
 }
 
 /**
  * 配信のプライバシーステータス
  * https://developers.google.com/youtube/v3/docs/videos?hl=ja
  */
-enum PrivacyStatus { // eslint-disable-line no-unused-vars
-    /** 公開 **/
-    Public = 'public', // eslint-disable-line no-unused-vars
-    /** メンバーシップ限定・限界公開 **/
-    Unlisted = 'unlisted', // eslint-disable-line no-unused-vars
-    /** 非公開 **/
-    Private = 'private' // eslint-disable-line no-unused-vars
+enum PrivacyStatus {
+  /** 公開 **/
+  Public = 'public',
+  /** メンバーシップ限定・限界公開 **/
+  Unlisted = 'unlisted',
+  /** 非公開 **/
+  Private = 'private'
 }
 
 // Youtube Data APIの1日あたりの上限ユニット数
@@ -34,7 +34,7 @@ const apiUnitLimitPerDay = 10000
 
 const maxGetFeedRetryCnt = 10
 
-export async function handler () {
+export async function handler (): Promise<void> {
   let currentNotificationAt: string | undefined
   const currentNotificationAtItems = await runQuery('SELECT next_notification_at FROM youtube_streaming_watcher_next_notification_times')
 
@@ -62,22 +62,20 @@ export async function handler () {
 
   try {
     const notifyVideoData: {
-            [channelId: string]: {
-                title?: string,
-                videos: {
-                    [videoId: string]: {
-                        title?: string,
-                        startTime?: Date,
-                        updatedTime: Date,
-                        notifyMode?: string,
-                        needInsert: boolean,
-                        isUpdated: boolean,
-                        isLiveStreaming: boolean,
-                        privacyStatus: string
-                    }
-                }
-            }
-        } = {}
+      [channelId: string]: {
+        title?: string
+        videos: Map<string, {
+          title?: string
+          startTime?: Date
+          updatedTime: Date
+          notifyMode?: string
+          needInsert: boolean
+          isUpdated: boolean
+          isLiveStreaming: boolean
+          privacyStatus: string
+        }>
+      }
+    } = {}
 
     const channels = await runQuery('SELECT channel_id FROM youtube_streaming_watcher_channels')
 
@@ -115,18 +113,18 @@ export async function handler () {
 
       const videoIds = []
       const needGetStartTimeVideos: Set<string> = new Set()
-      notifyVideoData[channelId] = { title: feed.title, videos: {} }
+      notifyVideoData[channelId] = { title: feed.title, videos: new Map() }
 
       for (const item of feed.items) {
         const videoId = item.id.replace(/^yt:video:/, '')
-        notifyVideoData[channelId].videos[videoId] = {
+        notifyVideoData[channelId].videos.set(videoId, {
           title: item.title,
           updatedTime: new Date(item.updated),
           needInsert: true,
           isUpdated: false,
           isLiveStreaming: true,
           privacyStatus: PrivacyStatus.Public
-        }
+        })
         videoIds.push(videoId)
         needGetStartTimeVideos.add(videoId)
       }
@@ -144,12 +142,13 @@ export async function handler () {
         const videoId = item.video_id.S
 
         if (videoId === undefined) {
-          console.log(`video_id can not get: channel_id ${channelId}, video_id: ${videoId}`)
+          console.log(`video_id can not get: channel_id ${channelId}`)
           continue
         }
 
         const startTimeStr = item.start_time?.S
         const notifyMode = item.notify_mode?.S
+        const video = notifyVideoData[channelId].videos.get(videoId)
 
         // 登録通知が完了している場合
         if (startTimeStr !== undefined) {
@@ -166,21 +165,27 @@ export async function handler () {
           if (now < oneHourAgoTime || startTime < now || notifyMode === NotifyMode.NotifyRemind) {
             console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
             needGetStartTimeVideos.delete(videoId)
-            delete notifyVideoData[channelId].videos[videoId]
+            notifyVideoData[channelId].videos.delete(videoId)
             continue
-          } else if (updateTime !== undefined && new Date(updateTime) < notifyVideoData[channelId].videos[videoId].updatedTime) {
-            notifyVideoData[channelId].videos[videoId].isUpdated = true
+          } else if (updateTime !== undefined && video !== undefined && new Date(updateTime) < video.updatedTime) {
+            video.isUpdated = true
           } else {
             needGetStartTimeVideos.delete(videoId)
           }
 
-          notifyVideoData[channelId].videos[videoId].startTime = startTime
+          if (video !== undefined) {
+            video.startTime = startTime
+          }
         }
 
-        notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode || ''
-        notifyVideoData[channelId].videos[videoId].needInsert = false
-        notifyVideoData[channelId].videos[videoId].privacyStatus = item.privacy_status?.S || PrivacyStatus.Public
-        notifyVideoData[channelId].videos[videoId].isLiveStreaming = item.is_live_streaming?.BOOL || true
+        if (video === undefined) {
+          continue
+        }
+
+        video.notifyMode = notifyMode ?? ''
+        video.needInsert = false
+        video.privacyStatus = item.privacy_status?.S ?? PrivacyStatus.Public
+        video.isLiveStreaming = item.is_live_streaming?.BOOL ?? true
       }
 
       if (needGetStartTimeVideos.size === 0) {
@@ -191,7 +196,7 @@ export async function handler () {
       const needGetStartTimeVideoList = Array.from(needGetStartTimeVideos)
 
       // 配信情報取得
-      while (1) {
+      while (true) {
         await sleep(1000)
 
         const videoResultParams: youtube_v3.Params$Resource$Videos$List = { // eslint-disable-line camelcase
@@ -215,60 +220,65 @@ export async function handler () {
             }
 
             needGetStartTimeVideos.delete(videoId)
+            const video = notifyVideoData[channelId].videos.get(videoId)
             let startTimeStr = videoItem.liveStreamingDetails?.scheduledStartTime
 
             if (startTimeStr === undefined || startTimeStr === null) {
               const publishedAt = videoItem.snippet?.publishedAt
               if (publishedAt !== undefined && publishedAt !== null) {
                 startTimeStr = publishedAt
-                notifyVideoData[channelId].videos[videoId].isLiveStreaming = false
+                if (video !== undefined) {
+                  video.isLiveStreaming = false
+                }
               } else {
                 console.log(`start time can not get: channel_id ${channelId}, video_id: ${videoId}`)
-                delete notifyVideoData[channelId].videos[videoId]
+                notifyVideoData[channelId].videos.delete(videoId)
                 continue
               }
             }
 
             const startTime = new Date(startTimeStr)
             startTimeStr = startTime.toISOString()
-            notifyVideoData[channelId].videos[videoId].startTime = startTime
-            let notifyMode = notifyVideoData[channelId].videos[videoId].notifyMode
+
+            if (video === undefined) {
+              continue
+            }
+
+            video.startTime = startTime
+            let notifyMode = video.notifyMode
 
             if (notifyMode === undefined || notifyMode === '') {
               notifyMode = NotifyMode.Registered
             }
 
-            notifyVideoData[channelId].videos[videoId].notifyMode = notifyMode
+            video.notifyMode = notifyMode
             const privacyStatus = videoItem.status?.privacyStatus
 
             if (privacyStatus !== undefined && privacyStatus !== null) {
-              notifyVideoData[channelId].videos[videoId].privacyStatus = privacyStatus
+              video.privacyStatus = privacyStatus
             }
 
-            const updatedTime = notifyVideoData[channelId].videos[videoId].updatedTime.toISOString()
+            const updatedTime = video.updatedTime.toISOString()
             const now = new Date()
             const yesterday = new Date(now.getTime())
             yesterday.setDate(now.getDate() - 1)
 
-            if (notifyVideoData[channelId].videos[videoId].needInsert === true) { // データがない場合はINSERTする
+            if (video.needInsert) { // データがない場合はINSERTする
               await runQuery(
                 'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'updated_time\': ?, \'notify_mode\': ?, \'privacy_status\': ?, \'is_live_streaming\': ?}',
-                [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: notifyVideoData[channelId].videos[videoId].privacyStatus }, { BOOL: notifyVideoData[channelId].videos[videoId].isLiveStreaming }]
+                [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: video.privacyStatus }, { BOOL: video.isLiveStreaming }]
               )
             } else {
               await runQuery(
                 'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET updated_time=? SET notify_mode=? SET privacy_status=? SET is_live_streaming=? WHERE channel_id=? AND video_id=?',
-                [{ S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: notifyVideoData[channelId].videos[videoId].privacyStatus }, { BOOL: notifyVideoData[channelId].videos[videoId].isLiveStreaming }, { S: channelId }, { S: videoId }]
+                [{ S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: video.privacyStatus }, { BOOL: video.isLiveStreaming }, { S: channelId }, { S: videoId }]
               )
             }
 
             // 既に配信開始している、もしくは、動画投稿から1日以上経っている場合は通知しない
-            if (
-              (notifyVideoData[channelId].videos[videoId].isLiveStreaming && startTime < now) ||
-              (!notifyVideoData[channelId].videos[videoId].isLiveStreaming && startTime < yesterday)
-            ) {
-              console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime}`)
-              delete notifyVideoData[channelId].videos[videoId]
+            if ((video.isLiveStreaming && startTime < now) || (!video.isLiveStreaming && startTime < yesterday)) {
+              console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime.toISOString()}`)
+              notifyVideoData[channelId].videos.delete(videoId)
             }
           }
         }
@@ -283,13 +293,19 @@ export async function handler () {
       }
 
       for (const videoId of needGetStartTimeVideos) {
+        const title = notifyVideoData[channelId].title
+        let text = ':x: 配信削除\n'
+
+        if (title !== undefined) {
+          text += `チャンネル名: <https://www.youtube.com/channel/${channelId}|${title}>\n`
+        }
+
+        text += `配信URL: <https://www.youtube.com/watch?v=${videoId}>`
+
         // Slack通知
         const postMessageParams: ChatPostMessageArguments = {
           channel: slackChannel,
-          text:
-            ':x: 配信削除\n' +
-            `チャンネル名: <https://www.youtube.com/channel/${channelId}|${notifyVideoData[channelId].title}>\n` +
-            `配信URL: <https://www.youtube.com/watch?v=${videoId}>`
+          text
         }
         console.log('call app.client.chat.postMessage:', postMessageParams)
         await slackApp.client.chat.postMessage(postMessageParams)
@@ -302,42 +318,42 @@ export async function handler () {
 
     // 配信通知
     for (const [channelId, cd] of Object.entries(notifyVideoData)) {
-      for (const [videoId, vd] of Object.entries(cd.videos)) {
+      for (const [videoId, vd] of cd.videos) {
         await sleep(1000)
         const dayOfWeeks = ['日', '月', '火', '水', '木', '金', '土']
         const parameters: AttributeValue[] = []
-        let header = ''
+        let text = ''
 
         if (vd.notifyMode === NotifyMode.Registered) {
           parameters.push({ S: NotifyMode.NotifyRegistered })
-          header = ':new: 新着'
+          text = ':new: 新着'
           if (vd.isLiveStreaming) {
-            header += '配信'
+            text += '配信'
           } else {
-            header += '動画'
+            text += '動画'
           }
         } else if (vd.isUpdated) {
-          header = ':repeat: '
+          text = ':repeat: '
 
           if (vd.isLiveStreaming) {
-            header += '配信'
+            text += '配信'
           } else {
-            header += '動画'
+            text += '動画'
           }
 
-          header += '情報更新'
+          text += '情報更新'
         } else {
           parameters.push({ S: NotifyMode.NotifyRemind })
-          header = ':bell: もうすぐ'
+          text = ':bell: もうすぐ'
           if (vd.isLiveStreaming) {
-            header += '配信開始'
+            text += '配信開始'
           } else {
-            header += '公開'
+            text += '公開'
           }
         }
 
         if (vd.privacyStatus === PrivacyStatus.Unlisted) {
-          header += ' (メンバーシップ限定・限定公開)'
+          text += ' (メンバーシップ限定・限定公開)'
         }
 
         const startTime = vd.startTime
@@ -347,16 +363,24 @@ export async function handler () {
           continue
         }
 
+        text += '\n'
+
+        if (cd.title !== undefined) {
+          text += `チャンネル名: <https://www.youtube.com/channel/${channelId}|${cd.title}>\n`
+        }
+
+        if (vd.title !== undefined) {
+          text += `配信名: <https://www.youtube.com/watch?v=${videoId}|${vd.title}>\n`
+        }
+
+        text += `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
+            `(${dayOfWeeks[startTime.getDay()]}) ` +
+            `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
+
         // Slack通知
         const postMessageParams: ChatPostMessageArguments = {
           channel: slackChannel,
-          text:
-              header + '\n' +
-              `チャンネル名: <https://www.youtube.com/channel/${channelId}|${cd.title}>\n` +
-              `配信名: <https://www.youtube.com/watch?v=${videoId}|${vd.title}>\n` +
-              `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
-              `(${dayOfWeeks[startTime.getDay()]}) ` +
-              `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
+          text
         }
         console.log('call app.client.chat.postMessage:', postMessageParams)
         await slackApp.client.chat.postMessage(postMessageParams)

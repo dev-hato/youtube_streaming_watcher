@@ -51,7 +51,7 @@ export class CdkStack extends Stack {
       TZ: 'Asia/Tokyo',
       YOUTUBE_API_KEY: secrets.youtube.secretValueFromJson('youtube_api_key').toString()
     }
-    const functionDataEntities: [string, lambdaNode.NodejsFunction][] = Object.entries(functionProps).map(([key, value]) => [
+    const functionDataEntities: Array<[string, lambdaNode.NodejsFunction]> = Object.entries(functionProps).map(([key, value]) => [
       key,
       new lambdaNode.NodejsFunction(this, `Function-${key}`, Object.assign(value, {
         runtime: lambda.Runtime.NODEJS_14_X,
@@ -111,7 +111,7 @@ export class CdkStack extends Stack {
       clientIds: [oidcAud]
     })
 
-    const qualifier = this.node.tryGetContext(BOOTSTRAP_QUALIFIER_CONTEXT) ?? DefaultStackSynthesizer.DEFAULT_QUALIFIER
+    const qualifier: string = this.node.tryGetContext(BOOTSTRAP_QUALIFIER_CONTEXT) ?? DefaultStackSynthesizer.DEFAULT_QUALIFIER
     const apiArn = `arn:aws:apigateway:${this.region}::/restapis/${api.restApiId}/*`
     const managedPolicies: iam.IManagedPolicy[] = [
       'AmazonDynamoDBReadOnlyAccess',
@@ -142,7 +142,7 @@ export class CdkStack extends Stack {
           provider.openIdConnectProviderArn,
           {
             StringEquals: {
-              'token.actions.githubusercontent.com:sub': 'repo:' + (process.env.REPOSITORY || 'dev-hato/youtube_streaming_watcher') + ':' + d.oidcSub,
+              'token.actions.githubusercontent.com:sub': 'repo:' + (process.env.REPOSITORY ?? 'dev-hato/youtube_streaming_watcher') + ':' + d.oidcSub,
               'token.actions.githubusercontent.com:aud': oidcAud
             }
           },
@@ -183,6 +183,10 @@ export class CdkStack extends Stack {
     }
 
     for (const tableProp of dynamoDBTableProps) {
+      if (tableProp.tableName === undefined) {
+        continue
+      }
+
       const table = new dynamodb.Table(this, `DynamoDBTable-${tableProp.tableName}`, Object.assign(tableProp, {
         removalPolicy: RemovalPolicy.DESTROY
       }))
