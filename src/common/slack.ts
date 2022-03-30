@@ -138,19 +138,7 @@ export function setMessageEvents (): void {
       return
     }
 
-    const channelUrls: string[] = []
-
-    for (const channel of channels) {
-      const channelId = channel.channel_id.S
-
-      if (channelId === undefined) {
-        continue
-      }
-
-      channelUrls.push(`* https://www.youtube.com/channel/${channel.channel_id.S}`)
-    }
-
-    await say('以下のチャンネルを通知します\n' + channelUrls.join('\n'))
+    await say('以下のチャンネルを通知します\n' + channels.map(b => b.channel_id.S).filter(b => b).map(b => `* https://www.youtube.com/channel/${b ?? ''}`).join('\n'))
   })
 
   slackApp.message('add', async ({ message, say }): Promise<void> => {
