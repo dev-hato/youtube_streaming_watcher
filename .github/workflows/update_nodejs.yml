@@ -34,7 +34,7 @@ jobs:
           echo "${NODE_VERSION}" > .node-version
           NPM_PATTERN="s/\"npm\": \".*\"/\"npm\": \"^${NPM_VERSION}\"/g"
           sed -i -e "${NPM_PATTERN}" package.json
-      - uses: actions/setup-node@v3.0.0
+      - uses: actions/setup-node@v3.1.0
         with:
           node-version-file: .node-version
           cache: npm
