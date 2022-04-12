@@ -44,7 +44,7 @@ jobs:
           # of changed files within `super-linter`
           fetch-depth: 0
 
-      - uses: actions/setup-node@v3.1.0
+      - uses: actions/setup-node@v3.1.1
         with:
           node-version-file: .node-version
           cache: npm
