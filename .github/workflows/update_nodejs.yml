@@ -14,6 +14,17 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get Dependabot Node.js version
+        id: get_dependabot_node_version
+        run: |
+          DOCKER_CMD="node --version && npm --version"
+          mapfile -t result < <(docker run ghcr.io/dependabot/dependabot-core sh -c "${DOCKER_CMD}")
+          node_version="${result[0]//v/}"
+          npm_version=${result[1]}
+          echo "Node.js version:" "${node_version}"
+          echo "npm version:" "${npm_version}"
+          echo "::set-output name=node_version::${node_version}"
+          echo "::set-output name=npm_version::${npm_version}"
       - name: Get Node.js version
         id: get_node_version
         run: |
@@ -29,10 +40,30 @@ jobs:
           echo "::set-output name=npm_version::${npm_version}"
       - name: Update versions
         run: |
+          DEPENDABOT_NODE_VERSION="${{steps.get_dependabot_node_version.outputs.node_version}}"
+          DEPENDABOT_NPM_VERSION="${{steps.get_dependabot_node_version.outputs.npm_version}}"
           NODE_VERSION="${{steps.get_node_version.outputs.node_version}}"
           NPM_VERSION="${{steps.get_node_version.outputs.npm_version}}"
           echo "${NODE_VERSION}" > .node-version
-          NPM_PATTERN="s/\"npm\": \".*\"/\"npm\": \"^${NPM_VERSION}\"/g"
+
+          NODE_PATTERN="s/\"node\": \".*\"/\"node\": \"^${DEPENDABOT_NODE_VERSION}"
+
+          if [ "${DEPENDABOT_NODE_VERSION}" != "${NODE_VERSION}" ]
+          then
+            NODE_PATTERN+=" || ^${NODE_VERSION}"
+          fi
+
+          NODE_PATTERN+="\"/g"
+          sed -i -e "${NODE_PATTERN}" package.json
+
+          NPM_PATTERN="s/\"npm\": \".*\"/\"npm\": \"^${DEPENDABOT_NPM_VERSION}"
+
+          if [ "${DEPENDABOT_NPM_VERSION}" != "${NPM_VERSION}" ]
+          then
+            NPM_PATTERN+=" || ^${NPM_VERSION}"
+          fi
+
+          NPM_PATTERN+="\"/g"
           sed -i -e "${NPM_PATTERN}" package.json
       - uses: actions/setup-node@v3.1.1
         with:
