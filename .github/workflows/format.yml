@@ -20,7 +20,7 @@ jobs:
       - run: |
           npm_version=$(grep \"npm\" package.json \
                         | sed -e 's/ *"npm": "^\(.*\)"/\1/g')
-          npm install -g "npm@${npm_version}"
+          npm install --prefer-offline -g "npm@${npm_version}"
           npm ci --prefer-offline
       - run: npm run fix
       # 差分があったときは差分を出力する
