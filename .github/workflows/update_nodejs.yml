@@ -72,7 +72,7 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: |
           NPM_VERSION="${{steps.get_node_version.outputs.npm_version}}"
-          npm install -g "npm@${NPM_VERSION}"
+          npm install --prefer-offline -g "npm@${NPM_VERSION}"
           npm install
       # 差分があったときは差分を出力する
       - name: Show diff
