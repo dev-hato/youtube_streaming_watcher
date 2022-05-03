@@ -52,7 +52,7 @@
     "@slack/web-api": "^6.7.1",
     "@vendia/serverless-express": "^4.8.0",
     "aws-cdk-lib": "^2.20.0",
-    "axios": "^0.26.1",
+    "axios": "^0.27.2",
     "cheerio": "^1.0.0-rc.10",
     "constructs": "^10.0.127",
     "googleapis": "^100.0.0",
