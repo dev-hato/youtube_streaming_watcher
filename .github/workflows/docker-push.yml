@@ -45,8 +45,6 @@ jobs:
 
   update-version:
     runs-on: ubuntu-latest
-    env:
-      DOCKER_BUILDKIT: 1
     needs: docker-push
     if: github.event_name == 'pull_request'
     steps:
