@@ -67,6 +67,7 @@ jobs:
         env:
           HEAD_REF: ${{github.head_ref}}
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
+      - run: mv .env.example .env
       - run: docker compose pull
       - name: Get Node.js version
         id: get_node_version
