@@ -97,15 +97,11 @@ jobs:
           NODE_PATTERN+="\"/g"
           sed -i -e "${NODE_PATTERN}" package.json
 
-          NPM_PATTERN="s/\"npm\": \".*\"/\"npm\": \"^${DEPENDABOT_NPM_VERSION}"
+          NPM_PATTERN_PACKAGE="s/\"npm\": \".*\"/\"npm\": \"^${DEPENDABOT_NPM_VERSION}\"/g"
+          sed -i -e "${NPM_PATTERN_PACKAGE}" package.json
 
-          if [ "${DEPENDABOT_NPM_VERSION}" != "${NPM_VERSION}" ]
-          then
-            NPM_PATTERN+=" || ^${NPM_VERSION}"
-          fi
-
-          NPM_PATTERN+="\"/g"
-          sed -i -e "${NPM_PATTERN}" package.json
+          NPM_PATTERN_DOCKER="s/npm@[0-9.]*/npm@${DEPENDABOT_NPM_VERSION}/g"
+          sed -i -e "${NPM_PATTERN_DOCKER}" Dockerfile
       - uses: actions/setup-node@v3.1.1
         with:
           node-version-file: .node-version
