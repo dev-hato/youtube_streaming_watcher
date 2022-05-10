@@ -7,14 +7,16 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   docker-push:
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1
       COMPOSE_DOCKER_CLI_BUILD: 1
-    permissions:
-      packages: write
     if: github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name
     steps:
       - uses: actions/checkout@v3
