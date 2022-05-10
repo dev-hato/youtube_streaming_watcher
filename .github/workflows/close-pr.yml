@@ -6,6 +6,10 @@ on:
     types:
       - closed
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   # PR close時にCIが出したPRをcloseする
   close-pr:
