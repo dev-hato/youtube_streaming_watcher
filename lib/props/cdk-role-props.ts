@@ -1,6 +1,6 @@
-type CDKRoleProp = {
-    name: string;
-    oidcSub: string;
+interface CDKRoleProp {
+  name: string
+  oidcSub: string
 }
 
 export const cdkRoleProps: CDKRoleProp[] = [

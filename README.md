@@ -119,7 +119,7 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
 
 以下の2つのバージョンを使用できるようにしていますが、基本的には後者を前提として開発しています。
 * dependabotで使用しているバージョン: <https://github.com/dependabot/dependabot-core/blob/31daef5ef4c96d83003777316e96a14eecddd190/Dockerfile#L100-L105>
-* AWS LambdaのNode.jsランタイムで対応している最新バージョン: <https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/lambda-runtimes.html>
+* AWS LambdaのNode.jsランタイムで対応している最新バージョン: <!-- textlint-disable terminology --><https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/lambda-runtimes.html><!-- textlint-enable -->
 
 ### npmのバージョン
 

@@ -3,7 +3,7 @@ import { handler } from './index'
 import { createTables } from '../common/dynamodb.dev'
 import { rate } from '../../lib/props/events-rule-props'
 
-async function devHandler () {
+async function devHandler (): Promise<void> {
   await createTables()
 
   while (true) {
@@ -12,4 +12,11 @@ async function devHandler () {
   }
 }
 
-(devHandler)()
+devHandler().then(
+  () => {
+    // do nothing.
+  },
+  () => {
+    // do nothing.
+  }
+)

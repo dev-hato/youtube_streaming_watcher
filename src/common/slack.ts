@@ -33,8 +33,8 @@ async function postMessage (message: string, say: SayFn): Promise<void> {
 }
 
 interface RegisteredChannel {
-  id: string;
-  exist: boolean;
+  id: string
+  exist: boolean
 }
 
 async function isReceivedRequest (ts: string): Promise<boolean> {
@@ -125,7 +125,7 @@ async function getChannelData (
   }
 }
 
-export function setMessageEvents () {
+export function setMessageEvents (): void {
   slackApp.message('list', async ({ message, say }): Promise<void> => {
     const isReceived = await isReceivedRequest(message.ts)
 
@@ -140,7 +140,7 @@ export function setMessageEvents () {
       return
     }
 
-    await say('以下のチャンネルを通知します\n' + channels.map(b => '* https://www.youtube.com/channel/' + b.channel_id.S).join('\n'))
+    await say('以下のチャンネルを通知します\n' + channels.map(b => b.channel_id.S).filter(b => b).map(b => `* https://www.youtube.com/channel/${b ?? ''}`).join('\n'))
   })
 
   slackApp.message('add', async ({ message, say }): Promise<void> => {

@@ -22,13 +22,13 @@ jobs:
           role-to-assume: ${{ env.ROLE }}
           aws-region: ${{ secrets.AWS_REGION }}
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3.0.0
+      - uses: actions/setup-node@v3.1.1
         with:
           node-version-file: .node-version
           cache: npm
       - run: |
           npm_version=$(grep \"npm\" package.json \
                         | sed -e 's/ *"npm": "^\(.*\)"/\1/g')
-          npm install -g "npm@${npm_version}"
-          npm install
+          npm install --prefer-offline -g "npm@${npm_version}"
+          npm ci --prefer-offline
       - run: npx cdk deploy --require-approval never

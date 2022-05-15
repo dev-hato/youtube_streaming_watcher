@@ -4,6 +4,10 @@ name: update-pre-commit-config
 on:
   pull_request:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   update-pre-commit-config:
     runs-on: ubuntu-latest
@@ -12,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: actions/setup-node@v3.0.0
+      - uses: actions/setup-node@v3.1.1
         with:
           node-version-file: .node-version
           cache: npm
@@ -20,8 +24,8 @@ jobs:
         run: |
           npm_version=$(grep \"npm\" package.json \
                         | sed -e 's/ *"npm": "^\(.*\)"/\1/g')
-          npm install -g "npm@${npm_version}"
-          npm install js-yaml
+          npm install --prefer-offline -g "npm@${npm_version}"
+          npm install --prefer-offline js-yaml
       - name: Update .pre-commit-config.yaml
         uses: actions/github-script@v6
         with:

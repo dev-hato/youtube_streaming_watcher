@@ -13,6 +13,10 @@ services:
         - AWS_SECRET_ACCESS_KEY
         - DYNAMODB_ENDPOINT
         - DYNAMODB_REGION
+      x-bake:
+        platforms:
+          - linux/amd64
+          - linux/arm64
     image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME}
     env_file: .env
     depends_on:
@@ -30,6 +34,10 @@ services:
         - AWS_SECRET_ACCESS_KEY
         - DYNAMODB_ENDPOINT
         - DYNAMODB_REGION
+      x-bake:
+        platforms:
+          - linux/amd64
+          - linux/arm64
     image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME}
     env_file: .env
     ports:

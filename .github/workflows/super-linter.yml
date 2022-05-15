@@ -44,25 +44,25 @@ jobs:
           # of changed files within `super-linter`
           fetch-depth: 0
 
-      - uses: actions/setup-node@v3.0.0
+      - uses: actions/setup-node@v3.1.1
         with:
           node-version-file: .node-version
           cache: npm
       - run: |
           npm_version=$(grep \"npm\" package.json \
                         | sed -e 's/ *"npm": "^\(.*\)"/\1/g')
-          npm install -g "npm@${npm_version}"
-          npm install
+          npm install --prefer-offline -g "npm@${npm_version}"
+          npm ci --prefer-offline
 
       ################################
       # Run Linter against code base #
       ################################
       - name: Lint Code Base
-        uses: github/super-linter/slim@v4.9.0
+        uses: github/super-linter/slim@v4.9.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FILTER_REGEX_EXCLUDE: .idea/.*
           LINTER_RULES_PATH: .
           PATH: /github/workspace/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/node_modules/.bin:/venvs/ansible-lint/bin:/venvs/black/bin:/venvs/cfn-lint/bin:/venvs/cpplint/bin:/venvs/flake8/bin:/venvs/isort/bin:/venvs/mypy/bin:/venvs/pylint/bin:/venvs/snakefmt/bin:/venvs/snakemake/bin:/venvs/sqlfluff/bin:/venvs/yamllint/bin:/venvs/yq/bin:/var/cache/dotnet/tools:/usr/share/dotnet
       - name: Lint dotenv
-        uses: dotenv-linter/action-dotenv-linter@v2.15.0
+        uses: dotenv-linter/action-dotenv-linter@v2.16.0
