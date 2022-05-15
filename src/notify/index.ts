@@ -380,7 +380,7 @@ export async function handler (): Promise<void> {
               video.privacyStatus = privacyStatus
             }
 
-            const video_ = notifyVideoData[channelId].videos.get(videoId);
+            const video_ = notifyVideoData[channelId].videos.get(videoId)
 
             if (video_?.isCollab) {
               if (channelId === videoItem.snippet?.channelId) {
@@ -431,7 +431,7 @@ export async function handler (): Promise<void> {
       }
 
       for (const videoId of needGetStartTimeVideos[channelId]) {
-        const video_ = notifyVideoData[channelId].videos.get(videoId);
+        const video_ = notifyVideoData[channelId].videos.get(videoId)
         const showChannelId: string = video_?.collabChannelId || channelId
         const showChannelTitle: string = video_?.collabChannelTitle || notifyVideoData[channelId].title || '(不明)'
 
