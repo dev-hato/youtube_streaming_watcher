@@ -65,32 +65,30 @@ export async function handler (): Promise<void> {
 
   try {
     const notifyVideoData: {
-            /** チャンネルID
-             * 通常は配信のチャンネルIDが入る
-             * コラボ配信の場合は配信をツイートした配信者のチャンネルIDが入る
-             *  **/
-            [channelId: string]: {
-                title?: string,
-                videos: {
-                    [videoId: string]: {
-                        videoTitle?: string,
-                        startTime?: Date,
-                        updatedTime: Date,
-                        notifyMode?: string,
-                        needInsert: boolean,
-                        isUpdated: boolean,
-                        isLiveStreaming: boolean,
-                        privacyStatus: string,
-                        /** コラボ配信か **/
-                        isCollab: boolean,
-                        /** 配信のチャンネルID (コラボ配信の場合のみ入る) **/
-                        collabChannelId?: string,
-                        /** 配信のチャンネルタイトル (コラボ配信の場合のみ入る) **/
-                        collabChannelTitle?: string,
-                    }
-                }
-            }
-        } = {}
+      /** チャンネルID
+        * 通常は配信のチャンネルIDが入る
+        * コラボ配信の場合は配信をツイートした配信者のチャンネルIDが入る
+        * **/
+      [channelId: string]: {
+        title?: string
+        videos: Map<string, {
+          videoTitle?: string
+          startTime?: Date
+          updatedTime: Date
+          notifyMode?: string
+          needInsert: boolean
+          isUpdated: boolean
+          isLiveStreaming: boolean
+          privacyStatus: string
+          /** コラボ配信か **/
+          isCollab: boolean
+          /** 配信のチャンネルID (コラボ配信の場合のみ入る) **/
+          collabChannelId?: string
+          /** 配信のチャンネルタイトル (コラボ配信の場合のみ入る) **/
+          collabChannelTitle?: string
+        }>
+      }
+    } = {}
 
     const channels = await runQuery('SELECT channel_id, twitter_id FROM youtube_streaming_watcher_channels')
 
@@ -100,7 +98,7 @@ export async function handler (): Promise<void> {
     }
 
     const videoIds = new Set()
-    const videoIdsPerChannels: { [channelId: string]: Array<string> } = {}
+    const videoIdsPerChannels: { [channelId: string]: string[] } = {}
     const needGetStartTimeVideos: { [channelId: string]: Set<string> } = {}
 
     // 新着配信一覧取得
@@ -234,7 +232,7 @@ export async function handler (): Promise<void> {
 
           let updatedTime = new Date()
 
-          if (createdAt) {
+          if (createdAt !== undefined) {
             updatedTime = new Date(createdAt)
           }
 
@@ -386,14 +384,21 @@ export async function handler (): Promise<void> {
               video.privacyStatus = privacyStatus
             }
 
+            const video_ = notifyVideoData[channelId].videos.get(videoId)
+
+            if (video_?.isCollab === true) {
             if (notifyVideoData[channelId].videos[videoId].isCollab) {
               if (channelId === videoItem.snippet?.channelId) {
                 notifyVideoData[channelId].videos[videoId].isCollab = false
               } else {
+                if (videoItem.snippet?.channelId !== null) {
+                  video_.collabChannelId = videoItem.snippet?.channelId
                 if (videoItem.snippet?.channelId) {
                   notifyVideoData[channelId].videos[videoId].collabChannelId = videoItem.snippet?.channelId
                 }
 
+                if (videoItem.snippet?.channelTitle !== null) {
+                  video_.collabChannelTitle = videoItem.snippet?.channelTitle
                 if (videoItem.snippet?.channelTitle) {
                   notifyVideoData[channelId].videos[videoId].collabChannelTitle = videoItem.snippet?.channelTitle
                 }
@@ -435,8 +440,27 @@ export async function handler (): Promise<void> {
       }
 
       for (const videoId of needGetStartTimeVideos[channelId]) {
-        const showChannelId: string = notifyVideoData[channelId].videos[videoId].collabChannelId || channelId
-        const showChannelTitle: string = notifyVideoData[channelId].videos[videoId].collabChannelTitle || notifyVideoData[channelId].title || '(不明)'
+        const video_ = notifyVideoData[channelId].videos.get(videoId)
+        let showChannelId: string
+
+        if (video_?.collabChannelId === undefined) {
+          showChannelId = channelId
+        } else {
+          showChannelId = video_?.collabChannelId
+        }
+
+        const title_ = notifyVideoData[channelId].title
+        let showChannelTitle: string
+
+        if (video_?.collabChannelTitle !== undefined) {
+          showChannelTitle = video_?.collabChannelTitle
+        } else if (title_ !== undefined) {
+          showChannelTitle = title_
+        } else {
+          showChannelTitle = '(不明)'
+        }
+
+        const title = notifyVideoData[channelId].title
         let text = ':x: 配信削除\n'
 
         if (showChannelTitle !== undefined) {
@@ -520,16 +544,32 @@ export async function handler (): Promise<void> {
           continue
         }
 
-        const showChannelId: string = vd.collabChannelId || channelId
-        const showChannelTitle: string = vd.collabChannelTitle || cd.title || '(不明)'
+        let showChannelId: string
+
+        if (vd.collabChannelId === undefined) {
+          showChannelId = channelId
+        } else {
+          showChannelId = vd.collabChannelId
+        }
+
+        let showChannelTitle: string
+
+        if (vd.collabChannelTitle !== undefined) {
+          showChannelTitle = vd.collabChannelTitle
+        } else if (cd.title !== undefined) {
+          showChannelTitle = cd.title
+        } else {
+          showChannelTitle = '(不明)'
+        }
+
         text += '\n'
 
         if (showChannelTitle !== undefined) {
           text += `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
-        }
 
-        if (vd.isCollab) {
-          text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${cd.title}>\n`
+          if (vd.isCollab) {
+            text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${cd.title}>\n`
+          }
         }
 
         if (vd.videoTitle !== undefined) {
