@@ -569,10 +569,13 @@ export async function handler (): Promise<void> {
           }
         }
 
-        text += `配信名: <https://www.youtube.com/watch?v=${videoId}|${vd.videoTitle}>\n` +
-                `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
-                `(${dayOfWeeks[startTime.getDay()]}) ` +
-                `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
+        if (vd.videoTitle !== undefined) {
+          text += `配信名: <https://www.youtube.com/watch?v=${videoId}|${vd.videoTitle}>\n`
+        }
+
+        text += `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
+            `(${dayOfWeeks[startTime.getDay()]}) ` +
+            `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
 
         // Slack通知
         const postMessageParams: ChatPostMessageArguments = {
