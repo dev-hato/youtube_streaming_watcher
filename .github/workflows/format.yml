@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: actions/setup-node@v3.1.1
+      - uses: actions/setup-node@v3.2.0
         with:
           node-version-file: .node-version
           cache: npm

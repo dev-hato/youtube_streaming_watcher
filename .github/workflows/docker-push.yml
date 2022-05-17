@@ -104,7 +104,7 @@ jobs:
 
           NPM_PATTERN_DOCKER="s/npm@[0-9.]*/npm@${DEPENDABOT_NPM_VERSION}/g"
           sed -i -e "${NPM_PATTERN_DOCKER}" Dockerfile
-      - uses: actions/setup-node@v3.1.1
+      - uses: actions/setup-node@v3.2.0
         with:
           node-version-file: .node-version
           cache: npm
