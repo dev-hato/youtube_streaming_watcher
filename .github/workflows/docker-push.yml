@@ -80,7 +80,7 @@ jobs:
         id: get_node_version
         run: |
           DOCKER_CMD="node --version"
-          mapfile -t result < <(docker compose run -f build.docker-compose.yml build sh -c "${DOCKER_CMD}")
+          mapfile -t result < <(docker compose -f build.docker-compose.yml run build sh -c "${DOCKER_CMD}")
           node_version="${result[0]//v/}"
           echo "Node.js version:" "${node_version}"
           echo "::set-output name=node_version::${node_version}"
