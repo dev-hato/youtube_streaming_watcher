@@ -1,5 +1,7 @@
 FROM node:14.19.3-bullseye-slim AS build
 
+USER nonroot
+
 WORKDIR /usr/app
 COPY .node-version .
 COPY .npmignore .
