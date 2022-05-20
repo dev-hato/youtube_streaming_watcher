@@ -1,6 +1,6 @@
 FROM node:14.19.3-bullseye-slim AS build
 
-USER nonroot
+USER node
 
 WORKDIR /usr/app
 COPY .node-version .
