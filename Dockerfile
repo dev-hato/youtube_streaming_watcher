@@ -6,7 +6,7 @@ COPY .npmignore .
 COPY .npmrc .
 COPY package*.json .
 RUN npm install -g npm@8.5.1 \
-    && npm install
+    && npm ci
 
 USER node
 
