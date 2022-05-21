@@ -295,10 +295,10 @@ jobs:
           )
           curl -L -o dockle.deb "https://github.com/goodwithtech/dockle/releases/download/v${VERSION}/dockle_${VERSION}_Linux-64bit.deb"
           sudo dpkg -i dockle.deb
-      - run: docker compose pull
-      - run: docker compose up -d
+      - run: docker compose -f ${{matrix.docker_compose_file_name}} pull
+      - run: docker compose -f ${{matrix.docker_compose_file_name}} up -d
       - run: |
-          for image_name in $(docker compose images | awk 'OFS=":" {print $2,$3}' | tail -n +2); do
+          for image_name in $(docker compose -f ${{matrix.docker_compose_file_name}} images | awk 'OFS=":" {print $2,$3}' | tail -n +2 | grep -v amazon/dynamodb-local); do
             cmd="dockle --exit-code 1 ${image_name}"
             echo "> ${cmd}"
             eval "${cmd}"
