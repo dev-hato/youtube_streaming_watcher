@@ -1,0 +1,15 @@
+---
+version: "3.7"
+services:
+  build:
+    build:
+      context: .
+      target: build
+      cache_from:
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/build:${TAG_NAME}
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/build
+      x-bake:
+        platforms:
+          - linux/amd64
+          - linux/arm64
+    image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/build:${TAG_NAME}

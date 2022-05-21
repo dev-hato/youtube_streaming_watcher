@@ -43,7 +43,9 @@ jobs:
         with:
           push: true
           pull: true
-          files: docker-compose.yml
+          files: |
+              build.docker-compose.yml
+              docker-compose.yml
 
   update-version:
     runs-on: ubuntu-latest
@@ -73,12 +75,12 @@ jobs:
           HEAD_REF: ${{github.head_ref}}
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       - run: cp .env.example .env
-      - run: docker compose pull
+      - run: docker compose -f build.docker-compose.yml pull
       - name: Get Node.js version
         id: get_node_version
         run: |
           DOCKER_CMD="node --version"
-          mapfile -t result < <(docker compose run notify sh -c "${DOCKER_CMD}")
+          mapfile -t result < <(docker compose -f build.docker-compose.yml run build sh -c "${DOCKER_CMD}")
           node_version="${result[0]//v/}"
           echo "Node.js version:" "${node_version}"
           echo "::set-output name=node_version::${node_version}"
