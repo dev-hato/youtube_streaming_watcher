@@ -1,7 +1,5 @@
 FROM node:14.19.3-bullseye-slim AS build
 
-USER node
-
 WORKDIR /usr/app
 COPY .node-version .
 COPY .npmignore .
@@ -9,6 +7,8 @@ COPY .npmrc .
 COPY package*.json .
 RUN npm install -g npm@8.5.1 \
     && npm install
+
+USER node
 
 FROM gcr.io/distroless/nodejs:14 AS base
 
