@@ -302,7 +302,7 @@ jobs:
             cmd="dockle --exit-code 1 "
 
             if [[ "${image_name}" =~ "notify" ]] || [[ "${image_name}" =~ "reply" ]]; then
-              cmd+="--accept-key "
+              cmd+="--ak AWS_ACCESS_KEY_ID --ak AWS_SECRET_ACCESS_KEY "
             fi
 
             cmd+="${image_name}"
