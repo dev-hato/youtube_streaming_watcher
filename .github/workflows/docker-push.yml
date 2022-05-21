@@ -299,7 +299,13 @@ jobs:
       - run: docker compose -f ${{matrix.docker_compose_file_name}} up -d
       - run: |
           for image_name in $(docker compose -f ${{matrix.docker_compose_file_name}} images | awk 'OFS=":" {print $2,$3}' | tail -n +2 | grep -v amazon/dynamodb-local); do
-            cmd="dockle --exit-code 1 ${image_name}"
+            cmd="dockle --exit-code 1 "
+          
+            if [[ "${image_name}" =~ "notify" ]] || [[ "${image_name}" =~ "reply" ]]; then
+              cmd+="--accept-key "
+            fi
+          
+            cmd+="${image_name}"
             echo "> ${cmd}"
             eval "${cmd}"
           done
