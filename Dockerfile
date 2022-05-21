@@ -15,7 +15,6 @@ FROM gcr.io/distroless/nodejs:14 AS base
 COPY --from=build /etc/group /etc/group
 COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /etc/shadow /etc/shadow
-COPY --from=build /etc/master.passwd /etc/master.passwd
 USER node
 
 ARG AWS_ACCESS_KEY_ID=""
