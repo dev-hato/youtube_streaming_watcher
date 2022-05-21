@@ -58,8 +58,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    env:
-      DOCKER_CONTENT_TRUST: 1
     steps:
       - uses: actions/checkout@v3
         with:
@@ -82,8 +80,12 @@ jobs:
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       - run: cp .env.example .env
       - run: docker compose -f build.docker-compose.yml pull
+        env:
+          DOCKER_CONTENT_TRUST: 1
       - name: Get Node.js version
         id: get_node_version
+        env:
+          DOCKER_CONTENT_TRUST: 1
         run: |
           DOCKER_CMD="node --version"
           mapfile -t result < <(docker compose -f build.docker-compose.yml run build sh -c "${DOCKER_CMD}")
