@@ -8,6 +8,8 @@ services:
       cache_from:
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/build:${TAG_NAME}
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/build
+      args:
+        BUILDKIT_INLINE_CACHE: 1
       x-bake:
         platforms:
           - linux/amd64

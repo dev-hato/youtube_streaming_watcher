@@ -8,11 +8,10 @@ services:
       cache_from:
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME}
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/build:${TAG_NAME}
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/build
       args:
-        - AWS_ACCESS_KEY_ID
-        - AWS_SECRET_ACCESS_KEY
-        - DYNAMODB_ENDPOINT
-        - DYNAMODB_REGION
+        BUILDKIT_INLINE_CACHE: 1
       x-bake:
         platforms:
           - linux/amd64
@@ -29,11 +28,10 @@ services:
       cache_from:
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME}
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/build:${TAG_NAME}
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/build
       args:
-        - AWS_ACCESS_KEY_ID
-        - AWS_SECRET_ACCESS_KEY
-        - DYNAMODB_ENDPOINT
-        - DYNAMODB_REGION
+        BUILDKIT_INLINE_CACHE: 1
       x-bake:
         platforms:
           - linux/amd64
