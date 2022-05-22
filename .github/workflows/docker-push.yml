@@ -42,16 +42,20 @@ jobs:
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       # jscpd:ignore-end
       - run: mv .env.example .env
-      - name: Build and push
+      - name: Build and push (build)
         uses: docker/bake-action@v2.0.0
         env:
           DOCKER_CONTENT_TRUST: 1
         with:
           push: true
-          pull: true
-          files: |
-              build.docker-compose.yml
-              docker-compose.yml
+          files: build.docker-compose.yml
+      - name: Build and push (main)
+        uses: docker/bake-action@v2.0.0
+        env:
+          DOCKER_CONTENT_TRUST: 1
+        with:
+          push: true
+          files: docker-compose.yml
 
   update-version:
     runs-on: ubuntu-latest
