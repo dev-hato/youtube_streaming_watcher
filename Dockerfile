@@ -12,7 +12,10 @@ USER node
 
 FROM gcr.io/distroless/nodejs:14 AS base
 
-USER nonroot
+COPY --from=build /etc/group /etc/group
+COPY --from=build /etc/passwd /etc/passwd
+COPY --from=build /etc/shadow /etc/shadow
+USER node
 
 ARG AWS_ACCESS_KEY_ID=""
 ENV AWS_ACCESS_KEY_ID ${AWS_ACCESS_KEY_ID}
