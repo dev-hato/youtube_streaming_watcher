@@ -5,6 +5,7 @@ services:
     build:
       context: .
       target: notify
+      # jscpd:ignore-start
       cache_from:
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME}
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify
@@ -16,6 +17,7 @@ services:
         platforms:
           - linux/amd64
           - linux/arm64
+    # jscpd:ignore-end
     image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME}
     env_file: .env
     depends_on:
@@ -25,6 +27,7 @@ services:
     build:
       context: .
       target: reply
+      # jscpd:ignore-start
       cache_from:
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME}
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply
@@ -36,6 +39,7 @@ services:
         platforms:
           - linux/amd64
           - linux/arm64
+    # jscpd:ignore-end
     image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME}
     env_file: .env
     ports:
