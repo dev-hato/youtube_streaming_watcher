@@ -5,19 +5,15 @@ services:
     build:
       context: .
       target: notify
-      # jscpd:ignore-start
       cache_from:
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME}
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify
-        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/build:${TAG_NAME}
-        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/build
       args:
         BUILDKIT_INLINE_CACHE: 1
       x-bake:
         platforms:
           - linux/amd64
           - linux/arm64
-    # jscpd:ignore-end
     image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME}
     env_file: .env
     depends_on:
@@ -27,19 +23,15 @@ services:
     build:
       context: .
       target: reply
-      # jscpd:ignore-start
       cache_from:
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME}
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply
-        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/build:${TAG_NAME}
-        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/build
       args:
         BUILDKIT_INLINE_CACHE: 1
       x-bake:
         platforms:
           - linux/amd64
           - linux/arm64
-    # jscpd:ignore-end
     image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME}
     env_file: .env
     ports:
