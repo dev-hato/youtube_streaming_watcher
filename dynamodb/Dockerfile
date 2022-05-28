@@ -6,6 +6,7 @@ RUN yum install -y unzip \
     && curl "https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip" -o "awscliv2.zip" \
     && unzip awscliv2.zip \
     && ./aws/install \
+    && yum remove -y unzip \
     && yum clean all \
     && rm -rf awscliv2.zip aws
 
