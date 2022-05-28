@@ -298,7 +298,7 @@ jobs:
       - run: docker compose pull
       - run: docker compose up -d
       - run: |
-          for image_name in $(docker compose images | awk 'OFS=":" {print $2,$3}' | tail -n +2 | grep -v amazon/dynamodb-local); do
+          for image_name in $(docker compose images | awk 'OFS=":" {print $2,$3}' | tail -n +2); do
             cmd="dockle --exit-code 1 -i DKL-DI-0006 "
 
             if [[ "${image_name}" =~ "notify" ]] || [[ "${image_name}" =~ "reply" ]]; then
