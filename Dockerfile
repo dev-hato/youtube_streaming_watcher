@@ -1,4 +1,4 @@
-FROM node:14.19.3-bullseye-slim AS base
+FROM node:18.2.0-bullseye-slim AS base
 
 RUN npm install -g npm@8.5.1
 
