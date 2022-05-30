@@ -23,7 +23,7 @@
     "eslint": "7.32.0",
     "eslint-config-standard": "16.0.3",
     "eslint-plugin-import": "2.26.0",
-    "eslint-plugin-jsonc": "2.2.1",
+    "eslint-plugin-jsonc": "2.3.0",
     "eslint-plugin-node": "11.1.0",
     "textlint": "12.1.1",
     "textlint-filter-rule-comments": "1.2.2",
