@@ -251,6 +251,11 @@ export async function handler (): Promise<void> {
         }
       }
 
+      if (videoIds.length === 0) {
+        console.log(`videos can not be get from feed: channelId: ${channelId}`)
+        continue
+      }
+
       // 登録済み配信取得
       const postedVideos = await runQuery(
         'SELECT video_id, start_time, updated_time, notify_mode, privacy_status, is_live_streaming FROM youtube_streaming_watcher_notified_videos ' +
