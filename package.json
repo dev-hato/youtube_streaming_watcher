@@ -42,7 +42,7 @@
     "textlint-rule-preset-ja-spacing": "2.2.0",
     "textlint-rule-preset-ja-technical-writing": "7.0.0",
     "textlint-rule-preset-jtf-style": "2.3.12",
-    "textlint-rule-terminology": "3.0.0",
+    "textlint-rule-terminology": "3.0.1",
     "ts-node": "10.8.0",
     "typescript": "4.7.2"
   },
