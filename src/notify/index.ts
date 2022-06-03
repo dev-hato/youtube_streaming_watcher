@@ -251,7 +251,7 @@ export async function handler (): Promise<void> {
         }
       }
 
-      if (videoIds.length === 0) {
+      if (videoIds.size === 0) {
         console.log(`videos can not be get from feed: channelId: ${channelId}`)
         continue
       }
