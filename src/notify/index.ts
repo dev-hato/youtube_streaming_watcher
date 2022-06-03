@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, {AxiosError} from 'axios'
 import Parser from 'rss-parser'
 import sleep from 'sleep-promise'
 import { TweetV2 } from 'twitter-api-v2'
@@ -181,6 +181,11 @@ export async function handler (): Promise<void> {
                 const response = await axios.get(tweetUrl)
                 url = response.request.res.responseUrl
               } catch (e) {
+                if(e instanceof AxiosError && e.response !== undefined) {
+                  console.log(tweetUrl, e.response.statusText)
+                  continue
+                }
+
                 console.log(e)
                 continue
               }
@@ -246,6 +251,11 @@ export async function handler (): Promise<void> {
           }
           videoIds.add(videoId)
           videoIdsPerChannels[channelId].push(videoId)
+
+          if(needGetStartTimeVideos[channelId]===undefined){
+              needGetStartTimeVideos[channelId]=new Set<string>()
+          }
+
           needGetStartTimeVideos[channelId].add(videoId)
         }
       }
