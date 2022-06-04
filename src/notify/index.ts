@@ -517,43 +517,31 @@ export async function handler (): Promise<void> {
         if (vd.notifyMode === NotifyMode.Registered) {
           parameters.push({ S: NotifyMode.NotifyRegistered })
           text = ':new: 新着'
-
-          if (vd.isCollab) {
-            text += 'コラボ'
-          }
-
-          if (vd.isLiveStreaming) {
-            text += '配信'
-          } else {
-            text += '動画'
-          }
         } else if (vd.isUpdated) {
           text = ':repeat: '
-
-          if (vd.isCollab) {
-            text += 'コラボ'
-          }
-
-          if (vd.isLiveStreaming) {
-            text += '配信'
-          } else {
-            text += '動画'
-          }
-
-          text += '情報更新'
-        } else {
+        }else{
           parameters.push({ S: NotifyMode.NotifyRemind })
           text = ':bell: もうすぐ'
+        }
 
-          if (vd.isCollab) {
-            text += 'コラボ'
-          }
+        if (vd.isCollab) {
+          text += 'コラボ'
+        }
 
-          if (vd.isLiveStreaming) {
-            text += '配信開始'
-          } else {
-            text += '動画公開'
-          }
+        if (vd.isLiveStreaming) {
+          text += '配信'
+        } else {
+          text += '動画'
+        }
+
+        if(vd.notifyMode !== NotifyMode.Registered){
+          if (vd.isUpdated) {
+            text += '情報更新'
+          }else if (vd.isLiveStreaming) {
+              text += '開始'
+            } else {
+              text += '公開'
+            }
         }
 
         if (vd.privacyStatus === PrivacyStatus.Unlisted) {
