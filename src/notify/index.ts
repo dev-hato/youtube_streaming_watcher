@@ -465,7 +465,6 @@ export async function handler (): Promise<void> {
           showChannelTitle = '(不明)'
         }
 
-        const title = notifyVideoData[channelId].title
         let text = ':x: 配信削除\n'
 
         if (showChannelTitle !== undefined) {
@@ -569,7 +568,7 @@ export async function handler (): Promise<void> {
 
         text += '\n'
 
-        if (showChannelTitle !== undefined) {
+        if (cd.title !== undefined) {
           text += `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
 
           if (vd.isCollab) {
