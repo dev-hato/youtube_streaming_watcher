@@ -49,7 +49,7 @@ interface Video {
     collabChannelTitle?: string
 }
 
-function generatePostText(channelId: string, videoId: string, video: Video, title?: string) {
+function generatePostText(channelId: string, videoId: string, video: Video, title?: string): string {
     let showChannelId: string
 
     if (video.collabChannelId === undefined) {
