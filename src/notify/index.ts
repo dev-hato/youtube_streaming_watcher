@@ -301,7 +301,7 @@ export async function handler (): Promise<void> {
           if (now < oneHourAgoTime || startTime < now || notifyMode === NotifyMode.NotifyRemind) {
             console.log(`skip: channel_id ${channelId}, video_id: ${videoId}`)
             needGetStartTimeVideos[channelId].delete(videoId)
-            delete notifyVideoData[channelId].videos[videoId]
+            notifyVideoData[channelId].videos.delete(videoId)
             continue
           } else if (updateTime !== undefined && video !== undefined && new Date(updateTime) < video.updatedTime) {
             video.isUpdated = true
@@ -356,6 +356,7 @@ export async function handler (): Promise<void> {
             }
 
             needGetStartTimeVideos[channelId].delete(videoId)
+            const video = notifyVideoData[channelId].videos.get(videoId)
             let startTimeStr = videoItem.liveStreamingDetails?.scheduledStartTime
 
             if (startTimeStr === undefined || startTimeStr === null) {
@@ -476,10 +477,7 @@ export async function handler (): Promise<void> {
         // Slack通知
         const postMessageParams: ChatPostMessageArguments = {
           channel: slackChannel,
-          text:
-            ':x: 配信削除\n' +
-            `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n` +
-            `配信URL: <https://www.youtube.com/watch?v=${videoId}>`
+          text
         }
         console.log('call app.client.chat.postMessage:', postMessageParams)
         await slackApp.client.chat.postMessage(postMessageParams)
