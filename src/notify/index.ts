@@ -608,6 +608,9 @@ export async function handler (): Promise<void> {
         )
       }
     }
+  }catch(e){
+      console.error(e)
+      throw e
   } finally { // 次回実行時刻設定
     // APIリクエストの消費ユニット数 * 24時間 * 60分 * 60秒 / 1日あたりの上限ユニット数 + 1秒
     const sleepSeconds = Math.ceil((apiUnit * 24 * 60 * 60) / apiUnitLimitPerDay + 1)
