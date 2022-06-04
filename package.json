@@ -57,7 +57,8 @@
     "constructs": "10.1.26",
     "googleapis": "100.0.0",
     "rss-parser": "3.12.0",
-    "sleep-promise": "9.1.0"
+    "sleep-promise": "9.1.0",
+    "twitter-api-v2": "^1.11.1"
   },
   "engines": {
     "node": "^16.15.0 || ^14.19.3",
