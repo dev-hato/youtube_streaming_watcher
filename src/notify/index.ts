@@ -491,10 +491,10 @@ export async function handler (): Promise<void> {
           channel: slackChannel,
           text: ':x: 配信削除\n' +
                 generatePostText(
-                    channelId,
-                    videoId,
-                    notifyVideoData[channelId].videos.get(videoId),
-                    notifyVideoData[channelId].title
+                  channelId,
+                  videoId,
+                  notifyVideoData[channelId].videos.get(videoId),
+                  notifyVideoData[channelId].title
                 )
         }
         console.log('call app.client.chat.postMessage:', postMessageParams)
