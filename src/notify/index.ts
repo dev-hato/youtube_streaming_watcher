@@ -32,6 +32,64 @@ enum PrivacyStatus {
   Private = 'private'
 }
 
+interface Video {
+    videoTitle?: string
+    startTime?: Date
+    updatedTime: Date
+    notifyMode?: string
+    needInsert: boolean
+    isUpdated: boolean
+    isLiveStreaming: boolean
+    privacyStatus: string
+    /** コラボ配信か **/
+    isCollab: boolean
+    /** 配信のチャンネルID (コラボ配信の場合のみ入る) **/
+    collabChannelId?: string
+    /** 配信のチャンネルタイトル (コラボ配信の場合のみ入る) **/
+    collabChannelTitle?: string
+}
+
+function generatePostText(channelId: string, videoId: string, video: Video, title?: string) {
+    let showChannelId: string
+
+    if (video.collabChannelId === undefined) {
+        showChannelId = channelId
+    } else {
+        showChannelId = video.collabChannelId
+    }
+
+    let showChannelTitle: string
+
+    if (video.collabChannelTitle !== undefined) {
+        showChannelTitle = video.collabChannelTitle
+    } else if (title !== undefined) {
+        showChannelTitle = title
+    } else {
+        showChannelTitle = '(不明)'
+    }
+
+    let text = `\n` +
+        `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
+
+    if (title !== undefined && video.isCollab) {
+        text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${title}>\n`
+    }
+
+    if (video.videoTitle === undefined) {
+        text += `配信URL`
+    } else {
+        text += `配信名`
+    }
+
+    text += `: <https://www.youtube.com/watch?v=${videoId}`
+
+    if (video.videoTitle !== undefined) {
+        text += `|${video.videoTitle}`
+    }
+
+    return text + '>'
+}
+
 // Youtube Data APIの1日あたりの上限ユニット数
 const apiUnitLimitPerDay = 10000
 
@@ -71,22 +129,7 @@ export async function handler (): Promise<void> {
         * **/
       [channelId: string]: {
         title?: string
-        videos: Map<string, {
-          videoTitle?: string
-          startTime?: Date
-          updatedTime: Date
-          notifyMode?: string
-          needInsert: boolean
-          isUpdated: boolean
-          isLiveStreaming: boolean
-          privacyStatus: string
-          /** コラボ配信か **/
-          isCollab: boolean
-          /** 配信のチャンネルID (コラボ配信の場合のみ入る) **/
-          collabChannelId?: string
-          /** 配信のチャンネルタイトル (コラボ配信の場合のみ入る) **/
-          collabChannelTitle?: string
-        }>
+        videos: Map<string, Video>
       }
     } = {}
 
@@ -441,39 +484,11 @@ export async function handler (): Promise<void> {
       }
 
       for (const videoId of needGetStartTimeVideos[channelId]) {
-        const video = notifyVideoData[channelId].videos.get(videoId)
-        let showChannelId: string
-
-        if (video?.collabChannelId === undefined) {
-          showChannelId = channelId
-        } else {
-          showChannelId = video.collabChannelId
-        }
-
-        const title = notifyVideoData[channelId].title
-        let showChannelTitle: string
-
-        if (video?.collabChannelTitle !== undefined) {
-          showChannelTitle = video.collabChannelTitle
-        } else if (title !== undefined) {
-          showChannelTitle = title
-        } else {
-          showChannelTitle = '(不明)'
-        }
-
-        let text = ':x: 配信削除\n' +
-                   `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
-
-        if (title !== undefined && video.isCollab) {
-          text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${title}>\n`
-        }
-
-        text += `配信URL: <https://www.youtube.com/watch?v=${videoId}>`
-
         // Slack通知
         const postMessageParams: ChatPostMessageArguments = {
           channel: slackChannel,
-          text
+          text: ':x: 配信削除\n' +
+                generatePostText(channelId, videoId, notifyVideoData[channelId].videos.get(videoId), notifyVideoData[channelId].title)
         }
         console.log('call app.client.chat.postMessage:', postMessageParams)
         await slackApp.client.chat.postMessage(postMessageParams)
@@ -545,36 +560,8 @@ export async function handler (): Promise<void> {
           continue
         }
 
-        let showChannelId: string
-
-        if (vd.collabChannelId === undefined) {
-          showChannelId = channelId
-        } else {
-          showChannelId = vd.collabChannelId
-        }
-
-        let showChannelTitle: string
-
-        if (vd.collabChannelTitle !== undefined) {
-          showChannelTitle = vd.collabChannelTitle
-        } else if (cd.title !== undefined) {
-          showChannelTitle = cd.title
-        } else {
-          showChannelTitle = '(不明)'
-        }
-
-        text += '\n' +
-                `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
-
-        if (cd.title !== undefined && vd.isCollab) {
-          text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${cd.title}>\n`
-        }
-
-        if (vd.videoTitle !== undefined) {
-          text += `配信名: <https://www.youtube.com/watch?v=${videoId}|${vd.videoTitle}>\n`
-        }
-
-        text += `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
+        text += generatePostText(channelId, videoId, vd, cd.title) + `\n` +
+            `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
             `(${dayOfWeeks[startTime.getDay()]}) ` +
             `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
 
