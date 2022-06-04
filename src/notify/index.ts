@@ -49,45 +49,45 @@ interface Video {
     collabChannelTitle?: string
 }
 
-function generatePostText(channelId: string, videoId: string, video: Video, title?: string): string {
-    let showChannelId: string
+function generatePostText (channelId: string, videoId: string, video: Video, title?: string): string {
+  let showChannelId: string
 
-    if (video.collabChannelId === undefined) {
-        showChannelId = channelId
-    } else {
-        showChannelId = video.collabChannelId
-    }
+  if (video.collabChannelId === undefined) {
+    showChannelId = channelId
+  } else {
+    showChannelId = video.collabChannelId
+  }
 
-    let showChannelTitle: string
+  let showChannelTitle: string
 
-    if (video.collabChannelTitle !== undefined) {
-        showChannelTitle = video.collabChannelTitle
-    } else if (title !== undefined) {
-        showChannelTitle = title
-    } else {
-        showChannelTitle = '(不明)'
-    }
+  if (video.collabChannelTitle !== undefined) {
+    showChannelTitle = video.collabChannelTitle
+  } else if (title !== undefined) {
+    showChannelTitle = title
+  } else {
+    showChannelTitle = '(不明)'
+  }
 
-    let text = `\n` +
+  let text = '\n' +
         `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
 
-    if (title !== undefined && video.isCollab) {
-        text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${title}>\n`
-    }
+  if (title !== undefined && video.isCollab) {
+    text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${title}>\n`
+  }
 
-    if (video.videoTitle === undefined) {
-        text += `配信URL`
-    } else {
-        text += `配信名`
-    }
+  if (video.videoTitle === undefined) {
+    text += '配信URL'
+  } else {
+    text += '配信名'
+  }
 
-    text += `: <https://www.youtube.com/watch?v=${videoId}`
+  text += `: <https://www.youtube.com/watch?v=${videoId}`
 
-    if (video.videoTitle !== undefined) {
-        text += `|${video.videoTitle}`
-    }
+  if (video.videoTitle !== undefined) {
+    text += `|${video.videoTitle}`
+  }
 
-    return text + '>'
+  return text + '>'
 }
 
 // Youtube Data APIの1日あたりの上限ユニット数
@@ -560,7 +560,7 @@ export async function handler (): Promise<void> {
           continue
         }
 
-        text += generatePostText(channelId, videoId, vd, cd.title) + `\n` +
+        text += generatePostText(channelId, videoId, vd, cd.title) + '\n' +
             `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
             `(${dayOfWeeks[startTime.getDay()]}) ` +
             `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
