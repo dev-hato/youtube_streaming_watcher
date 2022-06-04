@@ -139,12 +139,12 @@ export function setMessageEvents (): void {
     }
 
     await say(
-        '以下のチャンネルを通知します\n' +
+      '以下のチャンネルを通知します\n' +
         channels
-            .map(b => b.channel_id.S)
-            .filter(b => b)
-            .map(b => `* https://www.youtube.com/channel/${b ?? ''}`)
-            .join('\n')
+          .map(b => b.channel_id.S)
+          .filter(b => b)
+          .map(b => `* https://www.youtube.com/channel/${b ?? ''}`)
+          .join('\n')
     )
   })
 
@@ -197,8 +197,8 @@ export function setMessageEvents (): void {
     }
 
     await runQuery(
-        'DELETE FROM youtube_streaming_watcher_channels WHERE channel_id=?',
-        [{ S: channel.id }]
+      'DELETE FROM youtube_streaming_watcher_channels WHERE channel_id=?',
+      [{ S: channel.id }]
     )
     await postMessage(
             `このチャンネルを通知対象から削除しました: https://www.youtube.com/channel/${channel.id}`,
