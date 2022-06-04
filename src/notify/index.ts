@@ -153,12 +153,12 @@ export async function handler (): Promise<void> {
     }
 
     for (const channel of channels) {
-      const channelId = channel.channel_id?.S
-      const twitterId = channel.twitter_id?.S
-
-      if (channelId === undefined) {
+      if (channel.channel_id?.S === undefined) {
         continue
       }
+
+      const channelId = channel.channel_id.S
+      const twitterId = channel.twitter_id?.S
 
       if (twitterId !== undefined) {
         await sleep(1000)
@@ -171,7 +171,7 @@ export async function handler (): Promise<void> {
           const tweetIds: string[] = []
 
           for (const tweet of tweets) {
-            for (const shortUrl of tweet.text.matchAll(/https:\/\/t\.co\/[a-zA-Z0-9]+/g)) {
+            for (const shortUrl of tweet.text.matchAll(/https:\/\/t\.co\/[a-zA-Z\d]+/g)) {
               const tweetUrl = shortUrl[0]
               let url
 
@@ -392,18 +392,16 @@ export async function handler (): Promise<void> {
               video.privacyStatus = privacyStatus
             }
 
-            const video_ = notifyVideoData[channelId].videos.get(videoId)
-
-            if (video_?.isCollab === true) {
+            if (video?.isCollab === true) {
               if (channelId === videoItem.snippet?.channelId) {
-                video_.isCollab = false
+                video.isCollab = false
               } else {
                 if (videoItem.snippet?.channelId !== null) {
-                  video_.collabChannelId = videoItem.snippet?.channelId
+                  video.collabChannelId = videoItem.snippet?.channelId
                 }
 
                 if (videoItem.snippet?.channelTitle !== null) {
-                  video_.collabChannelTitle = videoItem.snippet?.channelTitle
+                  video.collabChannelTitle = videoItem.snippet?.channelTitle
                 }
               }
             }
@@ -443,22 +441,22 @@ export async function handler (): Promise<void> {
       }
 
       for (const videoId of needGetStartTimeVideos[channelId]) {
-        const video_ = notifyVideoData[channelId].videos.get(videoId)
+        const video = notifyVideoData[channelId].videos.get(videoId)
         let showChannelId: string
 
-        if (video_?.collabChannelId === undefined) {
+        if (video?.collabChannelId === undefined) {
           showChannelId = channelId
         } else {
-          showChannelId = video_?.collabChannelId
+          showChannelId = video.collabChannelId
         }
 
-        const title_ = notifyVideoData[channelId].title
+        const title = notifyVideoData[channelId].title
         let showChannelTitle: string
 
-        if (video_?.collabChannelTitle !== undefined) {
-          showChannelTitle = video_?.collabChannelTitle
-        } else if (title_ !== undefined) {
-          showChannelTitle = title_
+        if (video?.collabChannelTitle !== undefined) {
+          showChannelTitle = video.collabChannelTitle
+        } else if (title !== undefined) {
+          showChannelTitle = title
         } else {
           showChannelTitle = '(不明)'
         }
