@@ -150,7 +150,9 @@ export async function handler (): Promise<void> {
         continue
       }
 
-      const feedParser = new Parser<Record<string, never>, { id: string, updated: string }>({ customFields: { item: ['id', 'updated'] } })
+      const feedParser = new Parser<Record<string, never>, { id: string, updated: string }>({
+        customFields: { item: ['id', 'updated'] }
+      })
       const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
       let feed
 
@@ -488,7 +490,12 @@ export async function handler (): Promise<void> {
         const postMessageParams: ChatPostMessageArguments = {
           channel: slackChannel,
           text: ':x: 配信削除\n' +
-                generatePostText(channelId, videoId, notifyVideoData[channelId].videos.get(videoId), notifyVideoData[channelId].title)
+                generatePostText(
+                    channelId,
+                    videoId,
+                    notifyVideoData[channelId].videos.get(videoId),
+                    notifyVideoData[channelId].title
+                )
         }
         console.log('call app.client.chat.postMessage:', postMessageParams)
         await slackApp.client.chat.postMessage(postMessageParams)
