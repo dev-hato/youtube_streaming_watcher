@@ -519,7 +519,7 @@ export async function handler (): Promise<void> {
           text = ':new: 新着'
         } else if (vd.isUpdated) {
           text = ':repeat: '
-        }else{
+        } else {
           parameters.push({ S: NotifyMode.NotifyRemind })
           text = ':bell: もうすぐ'
         }
@@ -534,14 +534,14 @@ export async function handler (): Promise<void> {
           text += '動画'
         }
 
-        if(vd.notifyMode !== NotifyMode.Registered){
+        if (vd.notifyMode !== NotifyMode.Registered) {
           if (vd.isUpdated) {
             text += '情報更新'
-          }else if (vd.isLiveStreaming) {
-              text += '開始'
-            } else {
-              text += '公開'
-            }
+          } else if (vd.isLiveStreaming) {
+            text += '開始'
+          } else {
+            text += '公開'
+          }
         }
 
         if (vd.privacyStatus === PrivacyStatus.Unlisted) {
