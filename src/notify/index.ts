@@ -461,7 +461,7 @@ export async function handler (): Promise<void> {
           showChannelTitle = '(不明)'
         }
 
-        let text = ':x: 配信削除\n'+
+        let text = ':x: 配信削除\n' +
                    `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
 
         if (title !== undefined && video.isCollab) {
@@ -566,7 +566,7 @@ export async function handler (): Promise<void> {
         text += '\n' +
                 `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
 
-        if (cd.title !==undefined && vd.isCollab) {
+        if (cd.title !== undefined && vd.isCollab) {
           text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${cd.title}>\n`
         }
 
