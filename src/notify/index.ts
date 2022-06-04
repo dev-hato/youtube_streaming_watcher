@@ -461,10 +461,11 @@ export async function handler (): Promise<void> {
           showChannelTitle = '(不明)'
         }
 
-        let text = ':x: 配信削除\n'
+        let text = ':x: 配信削除\n'+
+                   `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
 
-        if (showChannelTitle !== undefined) {
-          text += `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
+        if (title !== undefined && video.isCollab) {
+          text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${title}>\n`
         }
 
         text += `配信URL: <https://www.youtube.com/watch?v=${videoId}>`
@@ -562,14 +563,11 @@ export async function handler (): Promise<void> {
           showChannelTitle = '(不明)'
         }
 
-        text += '\n'
+        text += '\n' +
+                `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
 
-        if (cd.title !== undefined) {
-          text += `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
-
-          if (vd.isCollab) {
-            text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${cd.title}>\n`
-          }
+        if (cd.title !==undefined && vd.isCollab) {
+          text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${cd.title}>\n`
         }
 
         if (vd.videoTitle !== undefined) {
