@@ -199,11 +199,9 @@ export async function handler (): Promise<void> {
 
               const tweetId = twitterIdPattern[1]
 
-              if (tweet.id === tweetId) {
-                continue
+              if (tweet.id !== tweetId) {
+                tweetIds.push(tweetId)
               }
-
-              tweetIds.push(tweetId)
             }
           }
 
