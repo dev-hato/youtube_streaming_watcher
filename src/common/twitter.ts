@@ -1,5 +1,5 @@
-import { TwitterApiReadOnly } from 'twitter-api-v2'
 import sleep from 'sleep-promise'
+import { TwitterApiReadOnly } from 'twitter-api-v2'
 
 if (process.env.TWITTER_BEARER_TOKEN === undefined) {
   throw new Error('TWITTER_BEARER_TOKEN must be set.')
