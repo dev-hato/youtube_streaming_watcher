@@ -33,20 +33,20 @@ enum PrivacyStatus {
 }
 
 interface Video {
-    videoTitle?: string
-    startTime?: Date
-    updatedTime: Date
-    notifyMode?: string
-    needInsert: boolean
-    isUpdated: boolean
-    isLiveStreaming: boolean
-    privacyStatus: string
-    /** コラボ配信か **/
-    isCollab: boolean
-    /** 配信のチャンネルID (コラボ配信の場合のみ入る) **/
-    collabChannelId?: string
-    /** 配信のチャンネルタイトル (コラボ配信の場合のみ入る) **/
-    collabChannelTitle?: string
+  videoTitle?: string
+  startTime?: Date
+  updatedTime: Date
+  notifyMode?: string
+  needInsert: boolean
+  isUpdated: boolean
+  isLiveStreaming: boolean
+  privacyStatus: string
+  /** コラボ配信か **/
+  isCollab: boolean
+  /** 配信のチャンネルID (コラボ配信の場合のみ入る) **/
+  collabChannelId?: string
+  /** 配信のチャンネルタイトル (コラボ配信の場合のみ入る) **/
+  collabChannelTitle?: string
 }
 
 function generatePostText (channelId: string, videoId: string, video: Video, title?: string): string {
@@ -437,7 +437,7 @@ export async function handler (): Promise<void> {
               video.privacyStatus = privacyStatus
             }
 
-            if (video?.isCollab === true) {
+            if (video?.isCollab) {
               if (channelId === videoItem.snippet?.channelId) {
                 video.isCollab = false
               } else {
