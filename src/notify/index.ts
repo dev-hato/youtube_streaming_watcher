@@ -133,11 +133,11 @@ export async function handler (): Promise<void> {
 
       videoIdsPerChannels[channelId] = []
       needGetStartTimeVideos[channelId] = new Set()
-      notifyVideoData[channelId] = { title: feed.title, videos: {} }
+      notifyVideoData[channelId] = { title: feed.title, videos: new Map() }
 
       for (const item of feed.items) {
         const videoId = item.id.replace(/^yt:video:/, '')
-        notifyVideoData[channelId].videos[videoId] = {
+        notifyVideoData[channelId].videos.set(videoId, {
           videoTitle: item.title,
           updatedTime: new Date(item.updated),
           needInsert: true,
@@ -145,7 +145,7 @@ export async function handler (): Promise<void> {
           isLiveStreaming: true,
           privacyStatus: PrivacyStatus.Public,
           isCollab: false
-        }
+        })
         videoIds.add(videoId)
         videoIdsPerChannels[channelId].push(videoId)
         needGetStartTimeVideos[channelId].add(videoId)
@@ -241,14 +241,14 @@ export async function handler (): Promise<void> {
             updatedTime = new Date(createdAt)
           }
 
-          notifyVideoData[channelId].videos[videoId] = {
+          notifyVideoData[channelId].videos.set(videoId, {
             updatedTime,
             needInsert: true,
             isUpdated: false,
             isLiveStreaming: true,
             privacyStatus: PrivacyStatus.Public,
             isCollab: true
-          }
+          })
           videoIds.add(videoId)
           videoIdsPerChannels[channelId].push(videoId)
 
@@ -397,20 +397,15 @@ export async function handler (): Promise<void> {
             const video_ = notifyVideoData[channelId].videos.get(videoId)
 
             if (video_?.isCollab === true) {
-            if (notifyVideoData[channelId].videos[videoId].isCollab) {
               if (channelId === videoItem.snippet?.channelId) {
-                notifyVideoData[channelId].videos[videoId].isCollab = false
+                video_.isCollab = false
               } else {
                 if (videoItem.snippet?.channelId !== null) {
                   video_.collabChannelId = videoItem.snippet?.channelId
-                if (videoItem.snippet?.channelId) {
-                  notifyVideoData[channelId].videos[videoId].collabChannelId = videoItem.snippet?.channelId
                 }
 
                 if (videoItem.snippet?.channelTitle !== null) {
                   video_.collabChannelTitle = videoItem.snippet?.channelTitle
-                if (videoItem.snippet?.channelTitle) {
-                  notifyVideoData[channelId].videos[videoId].collabChannelTitle = videoItem.snippet?.channelTitle
                 }
               }
             }
