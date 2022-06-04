@@ -1,4 +1,4 @@
-import axios, {AxiosError} from 'axios'
+import axios, { AxiosError } from 'axios'
 import Parser from 'rss-parser'
 import sleep from 'sleep-promise'
 import { TweetV2 } from 'twitter-api-v2'
@@ -181,7 +181,7 @@ export async function handler (): Promise<void> {
                 const response = await axios.get(tweetUrl)
                 url = response.request.res.responseUrl
               } catch (e) {
-                if(e instanceof AxiosError && e.response !== undefined) {
+                if (e instanceof AxiosError && e.response !== undefined) {
                   console.log(tweetUrl, e.response.statusText)
                   continue
                 }
@@ -252,8 +252,8 @@ export async function handler (): Promise<void> {
           videoIds.add(videoId)
           videoIdsPerChannels[channelId].push(videoId)
 
-          if(needGetStartTimeVideos[channelId]===undefined){
-              needGetStartTimeVideos[channelId]=new Set<string>()
+          if (needGetStartTimeVideos[channelId] === undefined) {
+            needGetStartTimeVideos[channelId] = new Set<string>()
           }
 
           needGetStartTimeVideos[channelId].add(videoId)
@@ -605,9 +605,9 @@ export async function handler (): Promise<void> {
         )
       }
     }
-  }catch(e){
-      console.error(e)
-      throw e
+  } catch (e) {
+    console.error(e)
+    throw e
   } finally { // 次回実行時刻設定
     // APIリクエストの消費ユニット数 * 24時間 * 60分 * 60秒 / 1日あたりの上限ユニット数 + 1秒
     const sleepSeconds = Math.ceil((apiUnit * 24 * 60 * 60) / apiUnitLimitPerDay + 1)
