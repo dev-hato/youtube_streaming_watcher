@@ -71,7 +71,7 @@ function generatePostText (channelId: string, videoId: string, title?: string, v
   let text = '\n' +
         `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
 
-  if (title !== undefined && video?.isCollab) {
+  if (title !== undefined && video?.isCollab === true) {
     text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${title}>\n`
   }
 
