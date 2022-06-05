@@ -222,16 +222,16 @@ export async function handler (): Promise<void> {
 
               try {
                 await sleep(1000)
-                console.log('get:', tweetUrl)
                 const response = await axios.get(tweetUrl)
                 url = response.request.res.responseUrl
+                console.log('get:', tweetUrl,'->',url, response.statusText)
               } catch (e) {
                 if (e instanceof AxiosError && e.response !== undefined) {
-                  console.log(tweetUrl, e.response.statusText)
+                  console.log('get:', tweetUrl, e.response.statusText)
                   continue
                 }
 
-                console.log(e)
+                console.log('get:', tweetUrl, e)
                 continue
               }
 
