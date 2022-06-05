@@ -49,10 +49,10 @@ interface Video {
   collabChannelTitle?: string
 }
 
-function generatePostText (channelId: string, videoId: string, video: Video, title?: string): string {
+function generatePostText (channelId: string, videoId: string, title?: string, video?: Video): string {
   let showChannelId: string
 
-  if (video.collabChannelId === undefined) {
+  if (video?.collabChannelId === undefined) {
     showChannelId = channelId
   } else {
     showChannelId = video.collabChannelId
@@ -60,7 +60,7 @@ function generatePostText (channelId: string, videoId: string, video: Video, tit
 
   let showChannelTitle: string
 
-  if (video.collabChannelTitle !== undefined) {
+  if (video?.collabChannelTitle !== undefined) {
     showChannelTitle = video.collabChannelTitle
   } else if (title !== undefined) {
     showChannelTitle = title
@@ -71,11 +71,11 @@ function generatePostText (channelId: string, videoId: string, video: Video, tit
   let text = '\n' +
         `チャンネル名: <https://www.youtube.com/channel/${showChannelId}|${showChannelTitle}>\n`
 
-  if (title !== undefined && video.isCollab) {
+  if (title !== undefined && video?.isCollab) {
     text += `チャンネル名 (コラボ相手): <https://www.youtube.com/channel/${channelId}|${title}>\n`
   }
 
-  if (video.videoTitle === undefined) {
+  if (video?.videoTitle === undefined) {
     text += '配信URL'
   } else {
     text += '配信名'
@@ -83,7 +83,7 @@ function generatePostText (channelId: string, videoId: string, video: Video, tit
 
   text += `: <https://www.youtube.com/watch?v=${videoId}`
 
-  if (video.videoTitle !== undefined) {
+  if (video?.videoTitle !== undefined) {
     text += `|${video.videoTitle}`
   }
 
@@ -493,8 +493,8 @@ export async function handler (): Promise<void> {
                 generatePostText(
                   channelId,
                   videoId,
-                  notifyVideoData[channelId].videos.get(videoId),
-                  notifyVideoData[channelId].title
+                  notifyVideoData[channelId].title,
+                  notifyVideoData[channelId].videos.get(videoId)
                 )
         }
         console.log('call app.client.chat.postMessage:', postMessageParams)
@@ -555,7 +555,7 @@ export async function handler (): Promise<void> {
           continue
         }
 
-        text += generatePostText(channelId, videoId, vd, cd.title) + '\n' +
+        text += generatePostText(channelId, videoId, cd.title, vd) + '\n' +
             `開始時刻: ${startTime.getFullYear()}年${startTime.getMonth() + 1}月${startTime.getDate()}日 ` +
             `(${dayOfWeeks[startTime.getDay()]}) ` +
             `${startTime.getHours()}時${startTime.getMinutes()}分${startTime.getSeconds()}秒`
