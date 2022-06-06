@@ -3,6 +3,7 @@
   "extends": [
     "config:base",
     "group:linters",
+    "group:definitelyTyped",
     ":timezone(Asia/Tokyo)"
   ],
   "automerge": true,
