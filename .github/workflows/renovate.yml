@@ -1,5 +1,5 @@
 ---
-name: renovate
+name: renovate-config-validator
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   pull_request:
 
 jobs:
-  validator:
+  renovate-config-validator:
     runs-on: ubuntu-latest
 
     steps:
