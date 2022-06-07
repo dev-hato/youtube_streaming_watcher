@@ -17,5 +17,5 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
-      - run: npm ci
+      - run: npm ci --prefer-offline
       - run: npx renovate-config-validator
