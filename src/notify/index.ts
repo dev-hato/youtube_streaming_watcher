@@ -36,7 +36,9 @@ const maxGetFeedRetryCnt = 10
 
 export async function handler (): Promise<void> {
   let currentNotificationAt: string | undefined
-  const currentNotificationAtItems = await runQuery('SELECT next_notification_at FROM youtube_streaming_watcher_next_notification_times')
+  const currentNotificationAtItems = await runQuery(
+    'SELECT next_notification_at FROM youtube_streaming_watcher_next_notification_times'
+  )
 
   if (currentNotificationAtItems.length > 0) {
     currentNotificationAt = currentNotificationAtItems[0].next_notification_at.S
@@ -271,18 +273,38 @@ export async function handler (): Promise<void> {
             if (video.needInsert) { // データがない場合はINSERTする
               await runQuery(
                 'INSERT INTO youtube_streaming_watcher_notified_videos VALUE {\'channel_id\': ?, \'video_id\': ?, \'created_at\': ?, \'start_time\': ?, \'updated_time\': ?, \'notify_mode\': ?, \'privacy_status\': ?, \'is_live_streaming\': ?}',
-                [{ S: channelId }, { S: videoId }, { S: now.toISOString() }, { S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: video.privacyStatus }, { BOOL: video.isLiveStreaming }]
+                [
+                  { S: channelId },
+                  { S: videoId },
+                  { S: now.toISOString() },
+                  { S: startTimeStr },
+                  { S: updatedTime },
+                  { S: notifyMode },
+                  { S: video.privacyStatus },
+                  { BOOL: video.isLiveStreaming }
+                ]
               )
             } else {
               await runQuery(
                 'UPDATE youtube_streaming_watcher_notified_videos SET start_time=? SET updated_time=? SET notify_mode=? SET privacy_status=? SET is_live_streaming=? WHERE channel_id=? AND video_id=?',
-                [{ S: startTimeStr }, { S: updatedTime }, { S: notifyMode }, { S: video.privacyStatus }, { BOOL: video.isLiveStreaming }, { S: channelId }, { S: videoId }]
+                [
+                  { S: startTimeStr },
+                  { S: updatedTime },
+                  { S: notifyMode },
+                  { S: video.privacyStatus },
+                  { BOOL: video.isLiveStreaming },
+                  { S: channelId },
+                  { S: videoId }
+                ]
               )
             }
 
             // 既に配信開始している、もしくは、動画投稿から1日以上経っている場合は通知しない
             if ((video.isLiveStreaming && startTime < now) || (!video.isLiveStreaming && startTime < yesterday)) {
-              console.log(`start time has passed: channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime.toISOString()}`)
+              console.log(
+                'start time has passed:',
+                  `channel_id ${channelId}, video_id: ${videoId}, start_time: ${startTime.toISOString()}`
+              )
               notifyVideoData[channelId].videos.delete(videoId)
             }
           }
