@@ -1,0 +1,25 @@
+---
+name: renovate-config-validator
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  renovate-config-validator:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3.3.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: |
+          npm_version=$(grep \"npm\" package.json \
+                        | sed -e 's/ *"npm": "^\(.*\)"/\1/g')
+          npm install --prefer-offline -g "npm@${npm_version}"
+          npm ci --prefer-offline
+      - run: npx renovate-config-validator
