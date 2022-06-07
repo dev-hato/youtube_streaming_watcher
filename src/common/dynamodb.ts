@@ -16,7 +16,9 @@ if (process.env.DYNAMODB_ENDPOINT !== undefined) {
   dynamoDBClientConfig.endpoint = process.env.DYNAMODB_ENDPOINT
 }
 
-if (process.env.NODE_ENV === 'development' && process.env.AWS_ACCESS_KEY_ID !== undefined && process.env.AWS_SECRET_ACCESS_KEY !== undefined) {
+if (process.env.NODE_ENV === 'development' &&
+    process.env.AWS_ACCESS_KEY_ID !== undefined &&
+    process.env.AWS_SECRET_ACCESS_KEY !== undefined) {
   dynamoDBClientConfig.credentials = {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
@@ -25,7 +27,9 @@ if (process.env.NODE_ENV === 'development' && process.env.AWS_ACCESS_KEY_ID !== 
 
 export const dynamoDBClient = new DynamoDBClient(dynamoDBClientConfig)
 
-export async function runQuery (partiQLQuery: string, parameters?: AttributeValue[]): Promise<Array<{ [key: string]: AttributeValue }>> {
+export async function runQuery (partiQLQuery: string, parameters?: AttributeValue[]): Promise<Array<{
+  [key: string]: AttributeValue
+}>> {
   const input: ExecuteStatementCommandInput = { Statement: partiQLQuery }
 
   if (parameters !== undefined) {

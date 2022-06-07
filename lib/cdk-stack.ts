@@ -52,14 +52,16 @@ export class CdkStack extends Stack {
       TZ: 'Asia/Tokyo',
       YOUTUBE_API_KEY: secrets.youtube.secretValueFromJson('youtube_api_key').toString()
     }
-    const functionDataEntities: Array<[string, lambdaNode.NodejsFunction]> = Object.entries(functionProps).map(([key, value]) => [
-      key,
-      new lambdaNode.NodejsFunction(this, `Function-${key}`, Object.assign(value, {
-        runtime: lambda.Runtime.NODEJS_14_X,
-        bundling: { minify: true, sourceMap: true },
-        environment
-      }))
-    ])
+    const functionDataEntities: Array<[string, lambdaNode.NodejsFunction]> = Object.entries(functionProps).map(
+      ([key, value]) => [
+        key,
+        new lambdaNode.NodejsFunction(this, `Function-${key}`, Object.assign(value, {
+          runtime: lambda.Runtime.NODEJS_14_X,
+          bundling: { minify: true, sourceMap: true },
+          environment
+        }))
+      ]
+    )
     const functionData = Object.fromEntries(functionDataEntities)
     const lambdaSNSTopic = new sns.Topic(this, 'SNSTopic-lambda')
     const lambdaSNSTopicAction = new cloudwatchActions.SnsAction(lambdaSNSTopic)
@@ -81,12 +83,16 @@ export class CdkStack extends Stack {
       alarmArns.push(alarm.alarmArn)
     }
 
-    const chatbotSlackChannelConfig = new chatbot.SlackChannelConfiguration(this, 'ChatbotSlackChannelConfig-default', {
-      slackChannelConfigurationName: 'youtube_streaming_watcher_slack',
-      slackWorkspaceId: secrets.slackAlert.secretValueFromJson('workspace_id').toString(),
-      slackChannelId: secrets.slackAlert.secretValueFromJson('channel_id').toString(),
-      notificationTopics: [lambdaSNSTopic]
-    })
+    const chatbotSlackChannelConfig = new chatbot.SlackChannelConfiguration(
+      this,
+      'ChatbotSlackChannelConfig-default',
+      {
+        slackChannelConfigurationName: 'youtube_streaming_watcher_slack',
+        slackWorkspaceId: secrets.slackAlert.secretValueFromJson('workspace_id').toString(),
+        slackChannelId: secrets.slackAlert.secretValueFromJson('channel_id').toString(),
+        notificationTopics: [lambdaSNSTopic]
+      }
+    )
     const rule = new events.Rule(this, 'EventsRule-notify', {
       schedule: events.Schedule.rate(rate),
       targets: [new targets.LambdaFunction(functionData.notify)]
@@ -135,23 +141,26 @@ export class CdkStack extends Stack {
       })
     ])
 
-    const cdkRoles = Object.fromEntries(cdkRoleProps.map(d => [
-      d.name,
-      new iam.Role(this, `Role-cdk_${d.name}`, {
-        roleName: `youtube_streaming_watcher_cdk_${d.name}`,
-        assumedBy: new iam.FederatedPrincipal(
-          provider.openIdConnectProviderArn,
-          {
-            StringEquals: {
-              'token.actions.githubusercontent.com:sub': 'repo:' + (process.env.REPOSITORY ?? 'dev-hato/youtube_streaming_watcher') + ':' + d.oidcSub,
-              'token.actions.githubusercontent.com:aud': oidcAud
-            }
-          },
-          'sts:AssumeRoleWithWebIdentity'
-        ),
-        managedPolicies
-      })
-    ]))
+    const cdkRoles = Object.fromEntries(cdkRoleProps.map(d => {
+      const oidcSub = (process.env.REPOSITORY ?? 'dev-hato/youtube_streaming_watcher') + ':' + d.oidcSub
+      return [
+        d.name,
+        new iam.Role(this, `Role-cdk_${d.name}`, {
+          roleName: `youtube_streaming_watcher_cdk_${d.name}`,
+          assumedBy: new iam.FederatedPrincipal(
+            provider.openIdConnectProviderArn,
+            {
+              StringEquals: {
+                'token.actions.githubusercontent.com:sub': 'repo:' + oidcSub,
+                'token.actions.githubusercontent.com:aud': oidcAud
+              }
+            },
+            'sts:AssumeRoleWithWebIdentity'
+          ),
+          managedPolicies
+        })
+      ]
+    }))
 
     const iamRoleDeployPolicy = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
@@ -188,9 +197,11 @@ export class CdkStack extends Stack {
         continue
       }
 
-      const table = new dynamodb.Table(this, `DynamoDBTable-${tableProp.tableName}`, Object.assign(tableProp, {
-        removalPolicy: RemovalPolicy.DESTROY
-      }))
+      const table = new dynamodb.Table(
+        this,
+          `DynamoDBTable-${tableProp.tableName}`,
+          Object.assign(tableProp, { removalPolicy: RemovalPolicy.DESTROY })
+      )
 
       for (const func of functions) {
         table.grant(
@@ -209,16 +220,32 @@ export class CdkStack extends Stack {
       }
     }
 
-    s3.Bucket.fromBucketName(this, 'Bucket-cdk_default', `cdk-${qualifier}-assets-${this.account}-${this.region}`).grantPut(cdkRoles.deploy)
+    s3.Bucket.fromBucketName(
+      this,
+      'Bucket-cdk_default',
+        `cdk-${qualifier}-assets-${this.account}-${this.region}`
+    ).grantPut(cdkRoles.deploy)
     apiAccessLogGroup.grant(
       cdkRoles.deploy,
       'logs:CreateLogGroup',
       'logs:PutRetentionPolicy',
       'logs:DeleteLogGroup'
     )
-    const cdkBootstrapParam = ssm.StringParameter.fromStringParameterName(this, 'SSMParameter-cdk_bootstrap', `/cdk-bootstrap/${qualifier}/version`)
-    iam.Role.fromRoleName(this, 'Role-cdk_default_file_publishing_role', `cdk-${qualifier}-file-publishing-role-${this.account}-${this.region}`).grant(cdkRoles.deploy, 'sts:AssumeRole')
-    const cdkDefaultRoles = ['lookup', 'deploy'].map(s => iam.Role.fromRoleName(this, `Role-cdk_default_${s}`, `cdk-${qualifier}-${s}-role-${this.account}-${this.region}`))
+    const cdkBootstrapParam = ssm.StringParameter.fromStringParameterName(
+      this,
+      'SSMParameter-cdk_bootstrap',
+        `/cdk-bootstrap/${qualifier}/version`
+    )
+    iam.Role.fromRoleName(
+      this,
+      'Role-cdk_default_file_publishing_role',
+        `cdk-${qualifier}-file-publishing-role-${this.account}-${this.region}`
+    ).grant(cdkRoles.deploy, 'sts:AssumeRole')
+    const cdkDefaultRoles = ['lookup', 'deploy'].map(s => iam.Role.fromRoleName(
+      this,
+            `Role-cdk_default_${s}`,
+            `cdk-${qualifier}-${s}-role-${this.account}-${this.region}`
+    ))
 
     for (const role of Object.values(cdkRoles)) {
       cdkBootstrapParam.grantRead(role)

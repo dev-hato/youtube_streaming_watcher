@@ -140,7 +140,14 @@ export function setMessageEvents (): void {
       return
     }
 
-    await say('以下のチャンネルを通知します\n' + channels.map(b => b.channel_id.S).filter(b => b).map(b => `* https://www.youtube.com/channel/${b ?? ''}`).join('\n'))
+    await say(
+      '以下のチャンネルを通知します\n' +
+        channels
+          .map(b => b.channel_id.S)
+          .filter(b => b)
+          .map(b => `* https://www.youtube.com/channel/${b ?? ''}`)
+          .join('\n')
+    )
   })
 
   slackApp.message('add', async ({ message, say }): Promise<void> => {
@@ -209,7 +216,10 @@ export function setMessageEvents (): void {
       return
     }
 
-    await runQuery('DELETE FROM youtube_streaming_watcher_channels WHERE channel_id=?', [{ S: channel.id }])
+    await runQuery(
+      'DELETE FROM youtube_streaming_watcher_channels WHERE channel_id=?',
+      [{ S: channel.id }]
+    )
     await postMessage(
             `このチャンネルを通知対象から削除しました: https://www.youtube.com/channel/${channel.id}`,
             say
