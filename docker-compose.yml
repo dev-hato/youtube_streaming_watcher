@@ -14,6 +14,7 @@ services:
         platforms:
           - linux/amd64
           - linux/arm64
+    # jscpd:ignore-start
     image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME}
     environment:
       NODE_OPTIONS: ${NODE_OPTIONS}
@@ -24,6 +25,7 @@ services:
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
       DB_PORT: ${DB_PORT}
       LAMBDA_PORT: ${LAMBDA_PORT}
+    # jscpd:ignore-end
     depends_on:
       db:
         condition: service_healthy
@@ -41,6 +43,7 @@ services:
         platforms:
           - linux/amd64
           - linux/arm64
+    # jscpd:ignore-start
     image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME}
     environment:
       NODE_OPTIONS: ${NODE_OPTIONS}
@@ -51,6 +54,7 @@ services:
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
       DB_PORT: ${DB_PORT}
       LAMBDA_PORT: ${LAMBDA_PORT}
+    # jscpd:ignore-end
     ports:
       - ${LAMBDA_PORT}:${LAMBDA_PORT}
     depends_on:
