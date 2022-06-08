@@ -43,6 +43,6 @@ ENV AWS_SECRET_ACCESS_KEY ${AWS_SECRET_ACCESS_KEY}
 ARG AWS_REGION="ap-northeast-1"
 ENV AWS_REGION ${AWS_REGION}
 
-COPY dynamodb/healthcheck.sh .
+COPY dynamodb/healthcheck.sh /
 
 HEALTHCHECK --interval=5s --retries=20 CMD ["./healthcheck.sh"]
