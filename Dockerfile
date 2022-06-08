@@ -1,6 +1,8 @@
 FROM node:14.19.3-bullseye-slim AS base
 
-RUN npm install -g npm@8.5.1 \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && npm install -g npm@8.5.1 \
     && chmod u-s /sbin/unix_chkpwd \
     && chmod g-s /sbin/unix_chkpwd \
     && chmod u-s /usr/bin/chfn \
@@ -25,7 +27,7 @@ RUN npm install -g npm@8.5.1 \
     && chmod g-s /usr/bin/newgrp \
     && chmod u-s /usr/bin/gpasswd \
     && chmod g-s /usr/bin/gpasswd \
-    && rm -rf /root/.npm /tmp
+    && rm -rf /root/.npm /tmp /var/lib/apt/lists
 
 USER node
 
@@ -35,7 +37,10 @@ ENV AWS_ACCESS_KEY_ID ${AWS_ACCESS_KEY_ID}
 ARG AWS_SECRET_ACCESS_KEY=""
 ENV AWS_SECRET_ACCESS_KEY ${AWS_SECRET_ACCESS_KEY}
 
-ARG DYNAMODB_ENDPOINT=http://db:8000
+ARG DB_HOST=8000
+ENV DB_HOST ${DB_HOST}
+
+ARG DYNAMODB_ENDPOINT=http://db:${DB_HOST}
 ENV DYNAMODB_ENDPOINT ${DYNAMODB_ENDPOINT}
 
 ARG DYNAMODB_REGION=ap-northeast-1
@@ -51,6 +56,9 @@ RUN npm ci \
 COPY tsconfig.json .
 COPY lib/props/ lib/props/
 COPY src/common/ src/common/
+COPY healthcheck.sh .
+
+HEALTHCHECK --interval=5s --retries=20 CMD ["./healthcheck.sh"]
 
 FROM base AS notify
 
