@@ -301,6 +301,8 @@ jobs:
 
             if [[ "${image_name}" =~ "db" ]]; then
               cmd+="-i CIS-DI-0009 "
+            elif [[ "${image_name}" =~ "reply" ]] || [[ "${image_name}" =~ "notify" ]]; then
+              cmd+="-i DKL-LI-0003 "
             fi
 
             cmd+="${image_name}"
