@@ -39,7 +39,7 @@ jobs:
         if: ${{ github.event_name == 'push' }}
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       # jscpd:ignore-end
-      - run: mv .env.example .env
+      - run: cat .env.example >> "$GITHUB_ENV"
       - name: Build and push (main)
         uses: docker/bake-action@v2.0.0
         env:
