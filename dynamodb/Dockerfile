@@ -8,7 +8,29 @@ RUN yum install -y unzip \
     && ./aws/install \
     && yum remove -y unzip \
     && yum clean all \
-    && rm -rf awscliv2.zip aws
+    && rm -rf awscliv2.zip aws \
+    && chmod u-s /usr/bin/umount \
+    && chmod g-s /usr/bin/umount \
+    && chmod u-s /usr/bin/mount \
+    && chmod g-s /usr/bin/mount \
+    && chmod u-s /usr/libexec/dbus-1/dbus-daemon-launch-helper \
+    && chmod g-s /usr/libexec/dbus-1/dbus-daemon-launch-helper \
+    && chmod u-s /usr/bin/write \
+    && chmod g-s /usr/bin/write \
+    && chmod u-s /usr/bin/gpasswd \
+    && chmod g-s /usr/bin/gpasswd \
+    && chmod u-s /usr/bin/newgrp \
+    && chmod g-s /usr/bin/newgrp \
+    && chmod u-s /usr/sbin/unix_chkpwd \
+    && chmod g-s /usr/sbin/unix_chkpwd \
+    && chmod u-s /usr/libexec/utempter/utempter \
+    && chmod g-s /usr/libexec/utempter/utempter \
+    && chmod u-s /usr/bin/su \
+    && chmod g-s /usr/bin/su \
+    && chmod u-s /usr/sbin/pam_timestamp_check \
+    && chmod g-s /usr/sbin/pam_timestamp_check \
+    && chmod u-s /usr/bin/chage \
+    && chmod g-s /usr/bin/chage
 
 USER dynamodblocal
 
