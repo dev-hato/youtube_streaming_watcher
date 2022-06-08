@@ -3,7 +3,7 @@ import axios from 'axios'
 import cheerio from 'cheerio'
 import Parser from 'rss-parser'
 import { runQuery } from './dynamodb'
-import {pingHandler, pingPath, port} from "./server.dev";
+import { pingHandler, pingPath, port } from './server.dev'
 
 if (process.env.SLACK_SIGNING_SECRET === undefined) {
   throw new Error('SLACK_SIGNING_SECRET must be set.')
@@ -19,9 +19,9 @@ export const expressReceiver = new ExpressReceiver({
 })
 
 if (process.env.NODE_ENV === 'development') {
-  appOptions.port=port
+  appOptions.port = port
   appOptions.signingSecret = process.env.SLACK_SIGNING_SECRET
-  appOptions.customRoutes= [{path: pingPath, method: ['GET'], handler: pingHandler}]
+  appOptions.customRoutes = [{ path: pingPath, method: ['GET'], handler: pingHandler }]
 } else {
   appOptions.receiver = expressReceiver
 }
