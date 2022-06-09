@@ -1,6 +1,7 @@
 FROM node:14.19.3-bullseye-slim AS base
 
 RUN apt-get update \
+    # hadolint ignore=DL3008
     && apt-get install -y --no-install-recommends curl \
     && npm install -g npm@8.5.1 \
     && chmod u-s /sbin/unix_chkpwd \
