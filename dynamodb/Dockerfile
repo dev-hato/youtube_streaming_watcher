@@ -45,4 +45,4 @@ ENV AWS_REGION ${AWS_REGION}
 
 COPY dynamodb/healthcheck.sh /
 
-HEALTHCHECK --interval=5s --retries=20 CMD ["./healthcheck.sh"]
+HEALTHCHECK --interval=5s --retries=20 CMD ["/healthcheck.sh"]
