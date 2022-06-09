@@ -39,7 +39,8 @@ jobs:
         if: ${{ github.event_name == 'push' }}
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       # jscpd:ignore-end
-      - run: cat .env.example >> "$GITHUB_ENV"
+      - run: mv .env.example .env
+      - run: cat .env >> "$GITHUB_ENV"
       - name: Build and push (main)
         uses: docker/bake-action@v2.0.0
         env:
@@ -75,7 +76,8 @@ jobs:
         env:
           HEAD_REF: ${{github.head_ref}}
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
-      - run: cat .env.example >> "$GITHUB_ENV"
+      - run: mv .env.example .env
+      - run: cat .env >> "$GITHUB_ENV"
       - run: docker compose pull
         env:
           DOCKER_CONTENT_TRUST: 1
@@ -275,7 +277,8 @@ jobs:
       DOCKER_CONTENT_TRUST: 1
     steps:
       - uses: actions/checkout@v3
-      - run: cat .env.example >> "$GITHUB_ENV"
+      - run: mv .env.example .env
+      - run: cat .env >> "$GITHUB_ENV"
       # jscpd:ignore-start
       - run: echo "TAG_NAME=${HEAD_REF//\//-}" >> "$GITHUB_ENV"
         env:
