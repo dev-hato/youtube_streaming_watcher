@@ -3,21 +3,8 @@
   "extends": [
     "config:base",
     "group:linters",
+    "group:definitelyTyped",
     ":timezone(Asia/Tokyo)"
-  ],
-  "packageRules": [
-    {
-      "groupName": "definitelyTyped",
-      "matchPackagePrefixes": [
-        "@types/"
-      ],
-      "matchUpdateTypes": [
-        "digest",
-        "patch",
-        "minor",
-        "major"
-      ]
-    }
   ],
   "automerge": true,
   "platformAutomerge": true
