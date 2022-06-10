@@ -50,7 +50,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "3.105.0",
     "@slack/bolt": "3.11.1",
-    "@slack/web-api": "6.7.1",
+    "@slack/web-api": "6.7.2",
     "@vendia/serverless-express": "4.8.2",
     "aws-cdk-lib": "2.27.0",
     "axios": "0.27.2",
