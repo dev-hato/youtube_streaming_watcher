@@ -9,7 +9,7 @@ export async function getTwitterUserName (youtubeChannelId: string): Promise<str
 
   for (const pattern of [/twitter.com%2F(\w{1,50})"/, /twitter.com\/(\w{1,50})/]) {
     const userNames = response.data.match(pattern)
-    if (userNames !== null && 1 < userNames.length) {
+    if (userNames !== null && userNames.length > 1) {
       return userNames[1]
     }
   }
