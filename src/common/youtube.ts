@@ -8,7 +8,7 @@ export async function getTwitterUserName (youtubeChannelId: string): Promise<str
   const response = await axios.get(url)
   const userNames = response.data.match(/twitter.com%2F([^"]*)"/)
 
-  if (userNames.length < 2) {
+  if (userNames === null || userNames.length < 2) {
     throw new Error(`Twitter ID can not be found on YouTube about page: ${youtubeChannelId}`)
   }
 
