@@ -1,1 +1,1 @@
-export const secretProps = ['slack', 'slackAlert', 'twitter', 'youtube']
+export const secretProps = ['slack', 'slackAlert', 'youtube']
