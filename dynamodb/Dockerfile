@@ -8,7 +8,9 @@ RUN yum install -y unzip \
     && ./aws/install \
     && yum remove -y unzip \
     && yum clean all \
-    && rm -rf awscliv2.zip aws
+    && rm -rf awscliv2.zip aws \
+    && find / -type f -perm /u+s -ignore_readdir_race -exec chmod u-s {} \; \
+    && find / -type f -perm /g+s -ignore_readdir_race -exec chmod g-s {} \;
 
 USER dynamodblocal
 
@@ -21,4 +23,6 @@ ENV AWS_SECRET_ACCESS_KEY ${AWS_SECRET_ACCESS_KEY}
 ARG AWS_REGION="ap-northeast-1"
 ENV AWS_REGION ${AWS_REGION}
 
-HEALTHCHECK --interval=5s --retries=20 CMD ["aws", "dynamodb", "list-tables", "--endpoint-url", "http://localhost:8000"]
+COPY dynamodb/healthcheck.sh /
+
+HEALTHCHECK --interval=5s --retries=20 CMD ["/healthcheck.sh"]
