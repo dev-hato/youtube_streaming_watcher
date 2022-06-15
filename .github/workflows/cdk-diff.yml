@@ -21,7 +21,7 @@ jobs:
         with:
           role-to-assume: ${{ env.ROLE }}
           aws-region: ${{ secrets.AWS_REGION }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.0.2
       - uses: actions/setup-node@v3.3.0
         with:
           node-version-file: .node-version
@@ -46,7 +46,7 @@ jobs:
           echo "::set-output name=result::${result}"
           exit ${exit_code}
       - name: Comment
-        uses: actions/github-script@v6
+        uses: actions/github-script@v6.1.0
         env:
           RESULT: ${{steps.diff.outputs.result}}
         with:
