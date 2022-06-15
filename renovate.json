@@ -1,11 +1,6 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
-    "group:linters",
-    "group:definitelyTyped",
-    ":timezone(Asia/Tokyo)"
-  ],
-  "automerge": true,
-  "platformAutomerge": true
+    "github>dev-hato/renovate-config",
+    "config:base"
+  ]
 }
