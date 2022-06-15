@@ -57,7 +57,7 @@
     "axios": "0.27.2",
     "cheerio": "1.0.0-rc.11",
     "constructs": "10.1.41",
-    "express": "^4.16.4",
+    "express": "4.17.2",
     "googleapis": "102.0.0",
     "rss-parser": "3.12.0",
     "sleep-promise": "9.1.0"
