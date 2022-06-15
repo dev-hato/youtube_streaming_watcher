@@ -39,7 +39,8 @@ jobs:
         if: ${{ github.event_name == 'push' }}
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       # jscpd:ignore-end
-      - run: mv .env.example .env
+      - run: cp .env.example .env
+      - run: cat .env >> "$GITHUB_ENV"
       - name: Build and push (main)
         uses: docker/bake-action@v2.0.0
         env:
@@ -76,6 +77,7 @@ jobs:
           HEAD_REF: ${{github.head_ref}}
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       - run: cp .env.example .env
+      - run: cat .env >> "$GITHUB_ENV"
       - run: docker compose pull
         env:
           DOCKER_CONTENT_TRUST: 1
@@ -275,7 +277,8 @@ jobs:
       DOCKER_CONTENT_TRUST: 1
     steps:
       - uses: actions/checkout@v3
-      - run: mv .env.example .env
+      - run: cp .env.example .env
+      - run: cat .env >> "$GITHUB_ENV"
       # jscpd:ignore-start
       - run: echo "TAG_NAME=${HEAD_REF//\//-}" >> "$GITHUB_ENV"
         env:
@@ -297,10 +300,12 @@ jobs:
       - run: docker compose up -d
       - run: |
           for image_name in $(docker compose images | awk 'OFS=":" {print $2,$3}' | tail -n +2); do
-            cmd="dockle --exit-code 1 -i DKL-DI-0006 --ak AWS_ACCESS_KEY_ID --ak AWS_SECRET_ACCESS_KEY "
+            cmd="dockle --exit-code 1 --ak AWS_ACCESS_KEY_ID --ak AWS_SECRET_ACCESS_KEY "
 
             if [[ "${image_name}" =~ "db" ]]; then
               cmd+="-i CIS-DI-0009 "
+            elif [[ "${image_name}" =~ "reply" ]] || [[ "${image_name}" =~ "notify" ]]; then
+              cmd+="-i DKL-LI-0003 "
             fi
 
             cmd+="${image_name}"

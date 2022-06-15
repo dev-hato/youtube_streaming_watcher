@@ -34,9 +34,17 @@ services:
           - linux/amd64
           - linux/arm64
     image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME}
-    env_file: .env
+    environment:
+      NODE_OPTIONS: ${NODE_OPTIONS}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
+      SLACK_CHANNEL: ${SLACK_CHANNEL}
+      SLACK_SIGNING_SECRET: ${SLACK_SIGNING_SECRET}
+      TZ: ${TZ}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
+      DB_PORT: ${DB_PORT}
+      LAMBDA_PORT: ${LAMBDA_PORT}
     ports:
-      - 3000:3000
+      - ${LAMBDA_PORT}:${LAMBDA_PORT}
     depends_on:
       db:
         condition: service_healthy
@@ -54,3 +62,4 @@ services:
           - linux/amd64
           - linux/arm64
     image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/db:${TAG_NAME}
+    env_file: .env
