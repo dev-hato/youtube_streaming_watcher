@@ -32,9 +32,9 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           result-encoding: string
           script: |
-            const axios = require("axios");
-            const cheerio = require("cheerio");
-            const {Text} = require('domhandler');
+            const axios = require('axios')
+            const cheerio = require('cheerio')
+            const {Text} = require('domhandler')
 
             const response = await axios.get('https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/lambda-runtimes.html')
             const $ = cheerio.load(response.data)
