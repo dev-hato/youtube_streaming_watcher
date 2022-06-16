@@ -58,7 +58,7 @@
     "cheerio": "1.0.0-rc.11",
     "constructs": "10.1.42",
     "express": "4.18.1",
-    "googleapis": "102.0.0",
+    "googleapis": "103.0.0",
     "rss-parser": "3.12.0",
     "sleep-promise": "9.1.0"
   },
