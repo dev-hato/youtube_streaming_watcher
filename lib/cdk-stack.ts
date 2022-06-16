@@ -54,7 +54,7 @@ export class CdkStack extends Stack {
     }
     const functionDataEntities: Array<[string, lambdaNode.NodejsFunction]> = Object.entries(functionProps).map(
       ([key, value]) => {
-        const runtime = lambda.Runtime.NODEJS_14_X
+        const runtime = lambda.Runtime.NODEJS_16_X
         const runtimeVersion = runtime.name.match('[0-9]+')
 
         if (runtimeVersion !== null && fs.readFileSync('.node-version').toString().match('^' + runtimeVersion[0]) === null) {
