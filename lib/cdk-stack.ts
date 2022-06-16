@@ -58,7 +58,7 @@ export class CdkStack extends Stack {
         const runtimeVersion = runtime.name.match('[0-9]+')
 
         if (runtimeVersion !== null && fs.readFileSync('.node-version').toString().match('^' + runtimeVersion[0]) === null) {
-          throw Error(`Lambda関数 ${value.functionName} のランタイムのバージョンが .node-version と一致していません。`)
+          throw Error(`Lambda関数 ${value.functionName ?? ''} のランタイムのバージョンが .node-version と一致していません。`)
         }
 
         return [
