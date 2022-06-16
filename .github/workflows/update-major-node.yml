@@ -50,6 +50,10 @@ jobs:
             }
 
             return Math.max(...versions)
+      - run: |
+          if grep '^${{steps.get_latest_lambda_support_version.outputs.result}}' .node-version; then
+            exit 0
+          fi
       - uses: actions/setup-node@v3.3.0
         with:
           node-version: ${{steps.get_latest_lambda_support_version.outputs.result}}
