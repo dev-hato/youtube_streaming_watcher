@@ -53,7 +53,7 @@ jobs:
       - uses: actions/setup-node@v3.3.0
         with:
           node-version: ${{steps.get_latest_lambda_support_version.outputs.result}}
-      - run: sed -i -e "s/\(FROM node:\)[0-9.]*\(-.*\)/\1$(node --version)\2/g" Dockerfile
+      - run: sed -i -e "s/\(FROM node:\)[0-9.]*\(-.*\)/\1$(node --version | sed -e 's/v//g')\2/g" Dockerfile
       # 差分があったときは差分を出力する
       - name: Show diff
         id: diff
