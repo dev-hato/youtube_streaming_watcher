@@ -22,7 +22,7 @@ import {
   aws_sns as sns,
   aws_ssm as ssm
 } from 'aws-cdk-lib'
-import * as fs from "fs"
+import * as fs from 'fs'
 import { dynamoDBTableProps } from './props/dynamodb-table-props'
 import { rate } from './props/events-rule-props'
 import { functionProps } from './props/function-props'
