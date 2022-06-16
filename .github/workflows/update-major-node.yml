@@ -124,7 +124,7 @@ jobs:
           script: |
             const HEAD_REF = process.env["HEAD_REF"]
             const number = "#${{github.event.pull_request.number}}"
-            let title = "nodeアップデート "
+            let title = "nodeメジャーアップデート "
             title += number
             const pulls_create_params = {
               owner: context.repo.owner,
@@ -132,7 +132,7 @@ jobs:
               head: "${{steps.set_org_name.outputs.result}}:update-major-node-" + HEAD_REF,
               base: HEAD_REF,
               title,
-              body: number + " のnodeをアップデートします。"
+              body: number + " のnodeをメジャーアップデートします。"
             }
             console.log("call pulls.create:", pulls_create_params)
             const create_pull_res = await github.rest.pulls.create(
