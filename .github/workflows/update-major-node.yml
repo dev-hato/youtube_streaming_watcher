@@ -5,6 +5,7 @@ on:
   pull_request:
 
 jobs:
+  # AWS Lambdaのランタイムのページをスクレイピングし、そこに記述されているNode.jsランタイムのバージョンがアップデートされていたらDockerイメージをアップデートする
   update-major-node:
     runs-on: ubuntu-latest
     permissions:
