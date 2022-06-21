@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import Parser from 'rss-parser'
 import sleep from 'sleep-promise'
-import { TweetV2 } from 'twitter-api-v2'
+import { TweetV2, TweetV2UserTimelineParams } from 'twitter-api-v2'
 import { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { ChatPostMessageArguments } from '@slack/web-api'
 import { google, youtube_v3 } from 'googleapis' // eslint-disable-line camelcase
@@ -30,6 +30,12 @@ enum PrivacyStatus {
   Unlisted = 'unlisted',
   /** 非公開 **/
   Private = 'private'
+}
+
+enum NextNotificationTimeName {
+  YoutubeDataApiUnitLimitPerDay = 'YoutubeDataApiUnitLimitPerDay',
+  TwitterApiGetTweetLimitPerMonth = 'TwitterApiGetTweetLimitPerMonth',
+  TwitterApiRequestLimitPerMinutes = 'TwitterApiRequestLimitPerMinutes'
 }
 
 interface Video {
@@ -91,19 +97,35 @@ function generatePostText (channelId: string, videoId: string, title?: string, v
 }
 
 // Youtube Data APIの1日あたりの上限ユニット数
-const apiUnitLimitPerDay = 10000
+const youtubeDataApiUnitLimitPerDay = 10000
+
+// Twitter APIの1ヶ月あたりの上限取得ツイート数
+const twitterApiGetTweetLimitPerMonth = 500000
+
+// Twitter APIの15分あたりの上限リクエスト数
+const twitterApiRequestLimitPerMinutes = 900
 
 const maxGetFeedRetryCnt = 10
 
 export async function handler (): Promise<void> {
-  let currentNotificationAt: string | undefined
+  const currentNotificationTimes: { [name: string]: Date } = {}
   const currentNotificationAtItems = await runQuery(
-    'SELECT next_notification_at FROM youtube_streaming_watcher_next_notification_times'
+    'SELECT name, next_notification_at FROM youtube_streaming_watcher_next_notification_times'
   )
+  const currentTime = new Date()
 
-  if (currentNotificationAtItems.length > 0) {
-    currentNotificationAt = currentNotificationAtItems[0].next_notification_at.S
-    if (currentNotificationAt !== undefined && new Date() < new Date(currentNotificationAt)) {
+  for (const currentNotificationAtItem of currentNotificationAtItems) {
+    const name = currentNotificationAtItem.name.S
+    const currentNotificationAt = currentNotificationAtItem.next_notification_at.S
+
+    if (name === undefined || currentNotificationAt === undefined) {
+      continue
+    }
+
+    currentNotificationTimes[name] = new Date(currentNotificationAt)
+
+    if (name !== NextNotificationTimeName.YoutubeDataApiUnitLimitPerDay &&
+        currentTime < currentNotificationTimes[name]) {
       console.log('next notification time has not come yet.')
       return
     }
@@ -121,7 +143,13 @@ export async function handler (): Promise<void> {
 
   // Youtube Data APIの消費ユニット数
   // APIごとの消費コスト: https://developers.google.com/youtube/v3/determine_quota_cost
-  let apiUnit = 0
+  let youtubeDataApiUnitNum = 0
+
+  // Twitter APIでの取得ツイート数
+  let twitterApiGetTweetNum = 0
+
+  // Twitter APIへのリクエスト数
+  let twitterApiRequestNum = 0
 
   try {
     const notifyVideoData: {
@@ -208,100 +236,182 @@ export async function handler (): Promise<void> {
       const twitterId = channel.twitter_id?.S
 
       if (twitterId !== undefined) {
-        await sleep(1000)
-        console.log('get twitter user timeline:', twitterId)
-        const timeLine = await twitterApiReadOnly.v2.userTimeline(twitterId, { max_results: 10 })
-        const tweetDataList: Array<{ url: string, createdAt: string | undefined }> = []
-        let tweets: TweetV2[] = timeLine.tweets
+        const tweetDatas: Array<{ tweetId: string, videoId: string, updatedTime: Date }> = []
+        let sinceTweetId: string | null = null
+        const tweetIdResults = await runQuery(
+          'SELECT tweet_id FROM youtube_streaming_watcher_tweets WHERE twitter_id = ?',
+          [{ S: twitterId }]
+        )
 
-        for (let i = 0; i < 10 && tweets.length > 0; i++) {
-          const tweetIds: string[] = []
+        if (tweetIdResults.length > 0) {
+          const tweetIds: AttributeValue[] = []
 
-          for (const tweet of tweets) {
-            for (const shortUrl of tweet.text.matchAll(/https:\/\/t\.co\/[a-zA-Z\d]+/g)) {
-              const tweetUrl = shortUrl[0]
-              let url
+          for (const tweetIdResult of tweetIdResults) {
+            if (tweetIdResult.tweet_id?.S === undefined) {
+              continue
+            }
 
-              try {
-                await sleep(1000)
-                const response = await axios.get(tweetUrl)
-                url = response.request.res.responseUrl
-                console.log('get:', tweetUrl, '->', url, response.statusText)
-              } catch (e) {
-                if (e instanceof AxiosError && e.response !== undefined) {
-                  console.log('get:', tweetUrl, e.response.statusText)
-                  continue
-                }
+            tweetIds.push({ S: tweetIdResult.tweet_id.S })
 
-                console.log('get:', tweetUrl, e)
-                continue
-              }
-
-              const twitterIdPattern = url.match(/https:\/\/twitter\.com\/[^/]+\/status\/([^/]+)/)
-
-              if (twitterIdPattern === null || twitterIdPattern.length < 2) {
-                tweetDataList.push({ url, createdAt: tweet.created_at })
-                continue
-              }
-
-              const tweetId = twitterIdPattern[1]
-
-              if (tweet.id !== tweetId) {
-                tweetIds.push(tweetId)
-              }
+            if (sinceTweetId === null || Number(sinceTweetId) < Number(tweetIdResult.tweet_id.S)) {
+              sinceTweetId = tweetIdResult.tweet_id.S
             }
           }
 
-          if (tweetIds.length === 0) {
-            break
-          }
+          const tweetDataResults = await runQuery(
+            'SELECT tweet_id, video_id, updated_time FROM youtube_streaming_watcher_tweet_videos ' +
+            'WHERE tweet_id IN (' + tweetIds.map(() => '?').join(', ') + ')',
+            tweetIds
+          )
 
-          await sleep(1000)
-          console.log('get tweets:', tweetIds)
-          const tweetsResult = await twitterApiReadOnly.v2.tweets(tweetIds)
-          tweets = tweetsResult.data
+          for (const tweetDataResult of tweetDataResults) {
+            if (tweetDataResult.tweet_id.S !== undefined &&
+                tweetDataResult.video_id.S !== undefined &&
+                tweetDataResult.updated_time.S !== undefined) {
+              tweetDatas.push({
+                tweetId: tweetDataResult.tweet_id.S,
+                videoId: tweetDataResult.video_id.S,
+                updatedTime: new Date(tweetDataResult.updated_time.S)
+              })
+            }
+          }
         }
 
-        for (const { url, createdAt } of tweetDataList) {
-          const videoIdsPattern = url.match(/https:\/\/www\.youtube\.com\/watch\?v=([^&]+)/)
-
-          if (videoIdsPattern === null || videoIdsPattern.length < 2) {
-            continue
+        if ((currentNotificationTimes[NextNotificationTimeName.TwitterApiRequestLimitPerMinutes] === undefined ||
+            currentNotificationTimes[NextNotificationTimeName.TwitterApiRequestLimitPerMinutes] <= currentTime) &&
+            (currentNotificationTimes[NextNotificationTimeName.TwitterApiGetTweetLimitPerMonth] === undefined ||
+            currentNotificationTimes[NextNotificationTimeName.TwitterApiGetTweetLimitPerMonth] <= currentTime)) {
+          await sleep(1000)
+          console.log('get twitter user timeline:', twitterId)
+          const userTimelineOptions:TweetV2UserTimelineParams = {
+            max_results: 10,
+            exclude: 'replies'
           }
 
-          const videoId = videoIdsPattern[1]
-
-          if (videoId.length > 11) {
-            console.log('video id maybe invalid:', videoId)
-            continue
+          if (sinceTweetId !== null) {
+            userTimelineOptions.since_id = sinceTweetId
           }
 
-          if (videoIds.has(videoId)) {
-            continue
+          const timeLine = await twitterApiReadOnly.v2.userTimeline(twitterId, userTimelineOptions)
+          twitterApiRequestNum++
+          const tweetDataList: Array<{
+                        twitterId: string,
+                        tweetId: string,
+                        url: string | undefined,
+                        createdAt: string | undefined
+                    }> = []
+          let tweets: TweetV2[] = timeLine.tweets
+          twitterApiGetTweetNum += tweets.length
+          const maxGetTweetCount = 2
+
+          for (let i = 0; i < maxGetTweetCount && tweets.length > 0; i++) {
+            const tweetIds: string[] = []
+
+            for (const tweet of tweets) {
+              for (const shortUrl of tweet.text.matchAll(/https:\/\/t\.co\/[a-zA-Z\d]+/g)) {
+                const tweetUrl = shortUrl[0]
+                let url
+
+                try {
+                  await sleep(1000)
+                  const response = await axios.get(tweetUrl)
+                  url = response.request.res.responseUrl
+                  console.log('get:', tweetUrl, '->', url, response.statusText)
+                } catch (e) {
+                  if (e instanceof AxiosError && e.response !== undefined) {
+                    console.log('get:', tweetUrl, e.response.statusText)
+                    continue
+                  }
+
+                  console.log('get:', tweetUrl, e)
+                  continue
+                }
+
+                const twitterIdPattern = url.match(/https:\/\/twitter\.com\/[^/]+\/status\/([^/]+)/)
+
+                if ((twitterIdPattern === null || twitterIdPattern.length < 2) && twitterId !== undefined) {
+                  tweetDataList.push({ twitterId, tweetId: tweet.id, url, createdAt: tweet.created_at })
+                  continue
+                }
+
+                const tweetId = twitterIdPattern[1]
+
+                if (tweet.id !== tweetId) {
+                  tweetIds.push(tweetId)
+                }
+              }
+            }
+
+            if (tweetIds.length === 0 || i === maxGetTweetCount - 1) {
+              break
+            }
+
+            await sleep(1000)
+            console.log('get tweets:', tweetIds)
+            const tweetsResult = await twitterApiReadOnly.v2.tweets(tweetIds)
+            twitterApiRequestNum++
+            tweets = tweetsResult.data
+            twitterApiGetTweetNum += tweets.length
           }
 
-          let updatedTime = new Date()
+          for (const { twitterId, tweetId, url, createdAt } of tweetDataList) {
+            await runQuery(
+              'INSERT INTO youtube_streaming_watcher_tweets VALUE {\'twitter_id\': ?, \'tweet_id\': ?}',
+              [{ S: twitterId }, { S: tweetId }]
+            )
 
-          if (createdAt !== undefined) {
-            updatedTime = new Date(createdAt)
+            if (url === undefined) {
+              continue
+            }
+
+            const videoIdsPattern = url.match(/https:\/\/www\.youtube\.com\/watch\?v=([^&]+)/)
+
+            if (videoIdsPattern === null || videoIdsPattern.length < 2) {
+              continue
+            }
+
+            const videoId = videoIdsPattern[1]
+
+            if (videoId.length > 11) {
+              console.log('video id maybe invalid:', videoId)
+              continue
+            }
+
+            if (videoIds.has(videoId)) {
+              continue
+            }
+
+            let updatedTime = new Date()
+
+            if (createdAt !== undefined) {
+              updatedTime = new Date(createdAt)
+            }
+
+            await runQuery(
+              'INSERT INTO youtube_streaming_watcher_tweet_videos VALUE {\'tweet_id\': ?, \'video_id\': ?, \'updated_time\': ?}',
+              [{ S: tweetId }, { S: videoId }, { S: updatedTime.toISOString() }]
+            )
+            tweetDatas.push({ tweetId, videoId, updatedTime })
           }
+        }
 
-          notifyVideoData[channelId].videos.set(videoId, {
-            updatedTime,
+        for (const tweetData of tweetDatas) {
+          notifyVideoData[channelId].videos.set(tweetData.videoId, {
+            updatedTime: tweetData.updatedTime,
             needInsert: true,
             isUpdated: false,
             isLiveStreaming: true,
             privacyStatus: PrivacyStatus.Public,
             isCollab: true
           })
-          videoIds.add(videoId)
-          videoIdsPerChannels[channelId].push(videoId)
+          videoIds.add(tweetData.videoId)
+          videoIdsPerChannels[channelId].push(tweetData.videoId)
 
           if (needGetStartTimeVideos[channelId] === undefined) {
             needGetStartTimeVideos[channelId] = new Set<string>()
           }
 
-          needGetStartTimeVideos[channelId].add(videoId)
+          needGetStartTimeVideos[channelId].add(tweetData.videoId)
         }
       }
 
@@ -387,7 +497,7 @@ export async function handler (): Promise<void> {
         }
         console.log('call youtubeApi.videos.list:', videoResultParams)
         const videoResult = await api.videos.list(videoResultParams)
-        apiUnit++
+        youtubeDataApiUnitNum++
 
         const items = videoResult.data.items
 
@@ -604,22 +714,38 @@ export async function handler (): Promise<void> {
     console.error(e)
     throw e
   } finally { // 次回実行時刻設定
-    // APIリクエストの消費ユニット数 * 24時間 * 60分 * 60秒 / 1日あたりの上限ユニット数 + 1秒
-    const sleepSeconds = Math.ceil((apiUnit * 24 * 60 * 60) / apiUnitLimitPerDay + 1)
+    const sleepSeconds: { [name: string]: number } = {}
 
-    if (currentNotificationAt !== undefined) {
+    // Youtube Data API: APIリクエストの消費ユニット数 * 24時間 * 60分 * 60秒 / 1日あたりの上限ユニット数
+    sleepSeconds[NextNotificationTimeName.YoutubeDataApiUnitLimitPerDay] = Math.ceil(youtubeDataApiUnitNum * 24 * 60 * 60 / youtubeDataApiUnitLimitPerDay + 1)
+
+    // Twitter API: 取得ツイート数 * 1ヶ月 (31日) * 24時間 * 60分 * 60秒 / 1ヶ月あたりの上限取得ツイート数
+    sleepSeconds[NextNotificationTimeName.TwitterApiGetTweetLimitPerMonth] = Math.ceil(twitterApiGetTweetNum * 31 * 24 * 60 * 60 / twitterApiGetTweetLimitPerMonth + 1)
+
+    // Twitter API: 取得ツイート数 * 15分 * 60秒 / 15分あたりの上限リクエスト数
+    sleepSeconds[NextNotificationTimeName.TwitterApiRequestLimitPerMinutes] = Math.ceil(twitterApiRequestNum * 15 * 60 / twitterApiRequestLimitPerMinutes + 1)
+
+    const nextNotificationAtBase = new Date()
+
+    for (const name in currentNotificationTimes) {
+      if (currentNotificationTimes[name] !== undefined && currentTime < currentNotificationTimes[name]) {
+        break
+      }
+
       await runQuery(
-        'DELETE FROM youtube_streaming_watcher_next_notification_times WHERE next_notification_at=?',
-        [{ S: currentNotificationAt }]
+        'DELETE FROM youtube_streaming_watcher_next_notification_times WHERE name=? and next_notification_at=?',
+        [{ S: name }, { S: currentNotificationTimes[name].toISOString() }]
       )
-    }
+      const nextNotificationAt = new Date(nextNotificationAtBase)
+      nextNotificationAt.setSeconds(nextNotificationAtBase.getSeconds() + sleepSeconds[NextNotificationTimeName.YoutubeDataApiUnitLimitPerDay])
+      await runQuery(
+        'INSERT INTO youtube_streaming_watcher_next_notification_times VALUE {\'name\': ?, \'next_notification_at\': ?}',
+        [{ S: name }, { S: nextNotificationAt.toISOString() }]
+      )
 
-    const nextNotificationAt = new Date()
-    nextNotificationAt.setSeconds(nextNotificationAt.getSeconds() + sleepSeconds)
-    await runQuery(
-      'INSERT INTO youtube_streaming_watcher_next_notification_times VALUE {\'next_notification_at\': ?}',
-      [{ S: nextNotificationAt.toISOString() }]
-    )
-    console.log('next notify at ', nextNotificationAt)
+      if (name === NextNotificationTimeName.YoutubeDataApiUnitLimitPerDay) {
+        console.log('next notify at ', nextNotificationAt)
+      }
+    }
   }
 }
