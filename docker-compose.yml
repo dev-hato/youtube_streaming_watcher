@@ -43,6 +43,7 @@ services:
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
       DB_PORT: ${DB_PORT}
       LAMBDA_PORT: ${LAMBDA_PORT}
+      TWITTER_BEARER_TOKEN: ${TWITTER_BEARER_TOKEN}
     ports:
       - ${LAMBDA_PORT}:${LAMBDA_PORT}
     depends_on:
