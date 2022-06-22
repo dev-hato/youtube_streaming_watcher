@@ -295,10 +295,10 @@ export async function handler (): Promise<void> {
           const timeLine = await twitterApiReadOnly.v2.userTimeline(twitterId, userTimelineOptions)
           twitterApiRequestNum++
           const tweetDataList: Array<{
-            twitterId: string;
-            tweetId: string;
-            url: string | undefined;
-            createdAt: string | undefined;
+            twitterId: string
+            tweetId: string
+            url: string | undefined
+            createdAt: string | undefined
           }> = []
           let tweets: TweetV2[] = timeLine.tweets
           twitterApiGetTweetNum += tweets.length
