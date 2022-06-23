@@ -98,7 +98,7 @@ export class CdkStack extends Stack {
     })
     const apiAccessLogGroup = new logs.LogGroup(this, 'Log-apigateway_reply', {
       logGroupName: '/aws/apigateway/youtube_streaming_watcher_reply_api/access_log',
-      removalPolicy: RemovalPolicy.SNAPSHOT
+      removalPolicy: RemovalPolicy.RETAIN
     })
     const api = new apigateway.LambdaRestApi(this, 'APIGateway-reply', {
       restApiName: 'youtube_streaming_watcher_reply_api',
