@@ -55,7 +55,7 @@
     "@vendia/serverless-express": "4.8.2",
     "aws-cdk-lib": "2.29.1",
     "axios": "0.27.2",
-    "cheerio": "1.0.0-rc.11",
+    "cheerio": "1.0.0-rc.12",
     "constructs": "10.1.42",
     "express": "4.18.1",
     "googleapis": "104.0.0",
