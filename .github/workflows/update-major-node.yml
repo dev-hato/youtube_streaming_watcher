@@ -3,9 +3,6 @@ name: update-major-node
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
 
 jobs:
   # AWS Lambdaのランタイムのページをスクレイピングし、そこに記述されているNode.jsランタイムのバージョンがアップデートされていたらDockerイメージをアップデートする
