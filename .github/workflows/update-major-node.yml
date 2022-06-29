@@ -3,9 +3,6 @@ name: update-major-node
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
 
 jobs:
   # AWS Lambdaのランタイムのページをスクレイピングし、そこに記述されているNode.jsランタイムのバージョンがアップデートされていたらDockerイメージをアップデートする
@@ -68,8 +65,7 @@ jobs:
         run: |
           result=$(git diff)
           echo "::set-output name=result::$result"
-      - if: github.event_name == 'pull_request'
-        run: |
+      - run: |
           REPO_NAME="${{ github.event.pull_request.head.repo.full_name }}"
           echo "REPO_NAME=${REPO_NAME}" >> "${GITHUB_ENV}"
       # 差分があったときは、コミットを作りpushする
@@ -77,8 +73,7 @@ jobs:
         env:
           HEAD_REF: ${{github.event.pull_request.head.ref}}
         if: ${{ env.REPO_NAME == github.repository
-          && steps.diff.outputs.result != ''
-          && github.event_name == 'pull_request' }}
+          && steps.diff.outputs.result != '' }}
         run: |
           git config user.name "github-actions[bot]"
           EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
@@ -93,7 +88,6 @@ jobs:
       - name: Set org name
         uses: actions/github-script@v6.1.0
         if: env.REPO_NAME == github.repository
-          && github.event_name == 'pull_request'
         id: set_org_name
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -104,8 +98,7 @@ jobs:
         env:
           HEAD_REF: ${{github.event.pull_request.head.ref}}
         if: ${{ env.REPO_NAME == github.repository
-          && steps.diff.outputs.result != ''
-          && github.event_name == 'pull_request' }}
+          && steps.diff.outputs.result != '' }}
         id: get_pull_requests
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -129,8 +122,7 @@ jobs:
           HEAD_REF: ${{github.event.pull_request.head.ref}}
         if: ${{ env.REPO_NAME == github.repository
           && steps.diff.outputs.result != ''
-          && steps.get_pull_requests.outputs.result == 0
-          && github.event_name == 'pull_request' }}
+          && steps.get_pull_requests.outputs.result == 0 }}
         id: create_pull_request
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -158,8 +150,7 @@ jobs:
           && steps.diff.outputs.result != ''
           && steps.get_pull_requests.outputs.result == 0
           && github.event.pull_request.user.login != 'dependabot[bot]'
-          && github.event.pull_request.user.login != 'renovate[bot]'
-          && github.event_name == 'pull_request' }}
+          && github.event.pull_request.user.login != 'renovate[bot]' }}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
@@ -178,8 +169,7 @@ jobs:
         env:
           HEAD_REF: ${{github.event.pull_request.head.ref}}
         if: ${{ env.REPO_NAME == github.repository
-          && steps.diff.outputs.result == ''
-          && github.event_name == 'pull_request' }}
+          && steps.diff.outputs.result == '' }}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
