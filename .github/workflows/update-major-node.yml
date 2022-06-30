@@ -64,4 +64,4 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: update-major-node
           pr-title-prefix: nodeをメジャーアップデートしてあげたよ！
-          repo-name: ${{ github.event.pull_request.head.repo.full_name }}
+          repo-name: dev-hato/youtube_streaming_watcher
