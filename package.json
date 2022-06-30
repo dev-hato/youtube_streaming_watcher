@@ -20,7 +20,7 @@
     "@typescript-eslint/parser": "5.30.0",
     "aws-cdk": "2.29.1",
     "domhandler": "5.0.3",
-    "esbuild": "0.14.47",
+    "esbuild": "0.14.48",
     "eslint": "8.18.0",
     "eslint-config-standard": "17.0.0",
     "eslint-plugin-import": "2.26.0",
