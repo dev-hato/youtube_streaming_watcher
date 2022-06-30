@@ -127,6 +127,7 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: fix-version
           pr-title-prefix: nodeをアップデートしてあげたよ！
+          repo-name: ${{ github.event.pull_request.head.repo.full_name }}
 
   dockle:
     runs-on: ubuntu-latest
