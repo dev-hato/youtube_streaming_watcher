@@ -122,7 +122,7 @@ jobs:
           DEPENDABOT_NPM_VERSION="${{steps.get_dependabot_node_version.outputs.npm_version}}"
           npm install --prefer-offline -g "npm@${DEPENDABOT_NPM_VERSION}"
           npm install
-      - uses: dev-hato/actions-diff-pr-management@composite_test
+      - uses: dev-hato/actions-diff-pr-management@main
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: fix-version
