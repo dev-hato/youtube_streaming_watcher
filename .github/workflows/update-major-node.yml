@@ -2,7 +2,8 @@
 name: update-major-node
 
 on:
-  pull_request:
+  schedule:
+    - cron: '0 21 * * *' # 06:00 JST
 
 jobs:
   # AWS Lambdaのランタイムのページをスクレイピングし、そこに記述されているNode.jsランタイムのバージョンがアップデートされていたらDockerイメージをアップデートする
@@ -15,7 +16,6 @@ jobs:
       - uses: actions/checkout@v3.0.2
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-node@v3.3.0
         with:
           node-version-file: .node-version
@@ -63,4 +63,4 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: update-major-node
           pr-title-prefix: nodeをメジャーアップデートしてあげたよ！
-          repo-name: ${{ github.event.pull_request.head.repo.full_name }}
+          repo-name: dev-hato/youtube_streaming_watcher
