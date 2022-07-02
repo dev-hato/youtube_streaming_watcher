@@ -119,7 +119,7 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: |
           DEPENDABOT_NPM_VERSION="${{steps.get_dependabot_node_version.outputs.npm_version}}"
-          npm install --prefer-offline -g "npm@${DEPENDABOT_NPM_VERSION}"
+          npm install --prefer-offline --location=global "npm@${DEPENDABOT_NPM_VERSION}"
           npm install
       - uses: dev-hato/actions-diff-pr-management@main
         with:
