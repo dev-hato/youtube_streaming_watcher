@@ -35,8 +35,6 @@ jobs:
         env:
           HEAD_REF: ${{github.head_ref}}
         if: ${{ github.event_name == 'pull_request' }}
-      - run: echo 'TAG_NAME=latest' >> "$GITHUB_ENV"
-        if: ${{ github.event_name == 'push' }}
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       # jscpd:ignore-end
       - run: cp .env.example .env
@@ -75,8 +73,6 @@ jobs:
         env:
           HEAD_REF: ${{github.head_ref}}
         if: github.event_name == 'pull_request'
-      - run: echo 'TAG_NAME=latest' >> "$GITHUB_ENV"
-        if: github.event_name == 'push'
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       - run: cp .env.example .env
       - run: cat .env >> "$GITHUB_ENV"
@@ -145,8 +141,6 @@ jobs:
         env:
           HEAD_REF: ${{github.head_ref}}
         if: ${{ github.event_name == 'pull_request' }}
-      - run: echo 'TAG_NAME=latest' >> "$GITHUB_ENV"
-        if: ${{ github.event_name == 'push' }}
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       # jscpd:ignore-end
       - run: |
