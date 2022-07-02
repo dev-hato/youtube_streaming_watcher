@@ -46,7 +46,7 @@
     "textlint-rule-preset-ja-technical-writing": "7.0.0",
     "textlint-rule-preset-jtf-style": "2.3.13",
     "textlint-rule-terminology": "3.0.2",
-    "ts-node": "10.8.1",
+    "ts-node": "10.8.2",
     "typescript": "4.7.4"
   },
   "dependencies": {
