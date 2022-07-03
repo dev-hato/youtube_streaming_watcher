@@ -35,7 +35,6 @@ jobs:
 
             for (const head_name of ["fix-format-" + HEAD_REF,
                                      "fix-version-" + HEAD_REF,
-                                     "update-major-node-" + HEAD_REF,
                                      "fix-version-pre-commit-config-" + HEAD_REF]) {
               let head = "${{github.event.pull_request.head.repo.owner.login}}:"
               head += head_name
