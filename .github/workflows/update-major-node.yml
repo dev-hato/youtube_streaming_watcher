@@ -81,6 +81,8 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
+            const fs = require('fs')
+
             const renovate = require('./renovate.json')
 
             for (const rule of renovate.packageRules) {

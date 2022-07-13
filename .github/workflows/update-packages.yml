@@ -68,6 +68,8 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
+            const fs = require('fs')
+
             const renovate = require('./renovate.json')
 
             for (const rule of renovate.packageRules) {
@@ -95,6 +97,8 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
+            const fs = require('fs')
+
             const package = require('./package.json')
 
             package.dependencies.express = '~${{ steps.get_types_express_version.outputs.result }}'
