@@ -47,9 +47,97 @@ jobs:
           push: true
           files: docker-compose.yml
 
-  update-version:
+  update-node:
     runs-on: ubuntu-latest
     needs: docker-push
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get @types/node version
+        uses: actions/github-script@v6.1.0
+        id: get_types_node_version
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          result-encoding: string
+          script: |
+            const package = require('package.json')
+
+            const version = package.devDependencies['@types/node'].split('.')
+            return [version[0], version[1]].join('.')
+      - uses: actions/setup-node@v3.4.0
+        with:
+          node-version: ${{ steps.get_types_node_version.outputs.result }}
+      - name: Get Node.js version
+        id: get_node_version
+        run: echo "::set-output name=node_version::$(node --version | sed -e 's/v//g')"
+      - uses: actions/setup-node@v3.4.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: |
+          npm_version=$(jq -r '.engines.npm | ltrimstr("^")' package.json)
+          npm install --prefer-offline --location=global "npm@${npm_version}"
+          npm ci --prefer-offline
+      - uses: actions/github-script@v6.1.0
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs')
+            const yaml = require('js-yaml')
+
+            const config_filename = '.github/dependabot.yml'
+            const config = yaml.load(fs.readFileSync(config_filename, 'utf8'))
+
+            for (const update of config.updates) {
+              if (update['package-ecosystem'] === 'docker') {
+                for (const ignore of update.ignore) {
+                  if (ignore['dependency-name'] === 'node') {
+                    ignore.versions[0] = '>${{steps.get_node_version.outputs.node_version}}a'
+                  }
+                }
+              }
+            }
+
+            try {
+              fs.writeFileSync(config_filename, content, 'utf8')
+            } catch (err) {
+              console.error(err.message)
+              process.exit(1)
+            }
+      - uses: actions/github-script@v6.1.0
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const renovate = require('./renovate.json')
+
+            for (const rule of renovate.packageRules) {
+              if (rule.matchPackageNames.includes('node')) {
+                rule.allowedVersions = '<=${{steps.get_node_version.outputs.node_version}}a'
+              }
+            }
+
+            try {
+              fs.writeFileSync('./renovate.json', JSON.stringify(renovate, null, "  "), 'utf8')
+            } catch (err) {
+              console.error(err.message)
+              process.exit(1)
+            }
+      - run: sed -i -e "s/\(FROM node:\)[0-9.]*\(-.*\)/\1${{steps.get_node_version.outputs.node_version}}\2/g" Dockerfile
+      - uses: dev-hato/actions-diff-pr-management@v0.0.8
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          branch-name-prefix: update-node
+          pr-title-prefix: nodeをアップデートしてあげたよ！
+          repo-name: ${{ github.event.pull_request.head.repo.full_name }}
+
+  update-version:
+    runs-on: ubuntu-latest
+    needs: update-node
     permissions:
       contents: write
       pull-requests: write

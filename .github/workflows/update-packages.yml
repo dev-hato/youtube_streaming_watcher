@@ -1,0 +1,115 @@
+---
+name: update-packages
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-packages:
+    runs-on: ubuntu-latest
+    needs: docker-push
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v3.4.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Get @types/express version
+        uses: actions/github-script@v6.1.0
+        id: get_types_express_version
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          result-encoding: string
+          script: |
+            const package = require('package.json')
+
+            const version = package.devDependencies['@types/express'].split('.')
+            return [version[0], version[1]].join('.')
+      - run: |
+          npm_version=$(jq -r '.engines.npm | ltrimstr("^")' package.json)
+          npm install --prefer-offline --location=global "npm@${npm_version}"
+          npm ci --prefer-offline
+      - uses: actions/github-script@v6.1.0
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs')
+            const yaml = require('js-yaml')
+
+            const config_filename = '.github/dependabot.yml'
+            const config = yaml.load(fs.readFileSync(config_filename, 'utf8'))
+
+            for (const update of config.updates) {
+              if (update['package-ecosystem'] === 'npm') {
+                for (const ignore of update.ignore) {
+                  if (ignore['dependency-name'] === 'express') {
+                    ignore.versions[0] = '>${{ steps.get_types_express_version.outputs.result }}a'
+                  }
+                }
+              }
+            }
+
+            try {
+              fs.writeFileSync(config_filename, content, 'utf8')
+            } catch (err) {
+              console.error(err.message)
+              process.exit(1)
+            }
+      - uses: actions/github-script@v6.1.0
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const renovate = require('./renovate.json')
+
+            for (const rule of renovate.packageRules) {
+              if (rule.matchPackageNames.includes('express')) {
+                rule.allowedVersions = '<=${{ steps.get_types_express_version.outputs.result }}a'
+              }
+            }
+
+            try {
+              fs.writeFileSync('./renovate.json', JSON.stringify(renovate, null, "  "), 'utf8')
+            } catch (err) {
+              console.error(err.message)
+              process.exit(1)
+            }
+      - name: Check needs update
+        id: check_needs_update
+        run: |
+          if [[ "$(jq -r '.dependencies.express' package.json)" =~ '${{ steps.get_types_express_version.outputs.result }}' ]]; then
+            echo "::set-output name=needs_update::false"
+          else
+            echo "::set-output name=needs_update::true"
+          fi
+      - uses: actions/github-script@v6.1.0
+        if: steps.check_needs_update.outputs.needs_update == 'true'
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const package = require('./package.json')
+
+            package.dependencies.express = '~${{ steps.get_types_express_version.outputs.result }}'
+
+            try {
+              fs.writeFileSync('./package.json', JSON.stringify(package, null, "  "), 'utf8')
+            } catch (err) {
+              console.error(err.message)
+              process.exit(1)
+            }
+      - if: steps.check_needs_update.outputs.needs_update == 'true'
+        run: npm install
+      - uses: dev-hato/actions-diff-pr-management@v0.0.8
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          branch-name-prefix: update-packages
+          pr-title-prefix: expressをアップデートしてあげたよ！
+          repo-name: ${{ github.event.pull_request.head.repo.full_name }}

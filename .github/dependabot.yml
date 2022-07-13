@@ -14,13 +14,20 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "@types/node"
+        versions:
+          - ">16"
+      - dependency-name: "express"
+        versions:
+          - ">4.17"
     open-pull-requests-limit: 1
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "daily"
     ignore:
-      - dependency-name: "*"
-        update-types:
-          - "version-update:semver-major"
+      - dependency-name: "node"
+        versions:
+          - ">16"
     open-pull-requests-limit: 1

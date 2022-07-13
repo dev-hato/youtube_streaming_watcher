@@ -2,5 +2,19 @@
   "extends": [
     "github>dev-hato/renovate-config",
     "config:base"
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["express"],
+      "allowedVersions": "<=4.17"
+    },
+    {
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "<=16"
+    },
+    {
+      "matchPackageNames": ["node"],
+      "allowedVersions": "<=16"
+    }
   ]
 }
