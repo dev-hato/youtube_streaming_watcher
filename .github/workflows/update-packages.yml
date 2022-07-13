@@ -29,7 +29,7 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           result-encoding: string
           script: |
-            const package = require('package.json')
+            const package = require('./package.json')
 
             const version = package.devDependencies['@types/express'].split('.')
             return [version[0], version[1]].join('.')
