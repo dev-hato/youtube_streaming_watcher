@@ -108,5 +108,5 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: update-major-node
-          pr-title-prefix: @types/nodeのアップデート条件を修正してあげたよ！
+          pr-title-prefix: "@types/nodeのアップデート条件を修正してあげたよ！"
           repo-name: dev-hato/youtube_streaming_watcher
