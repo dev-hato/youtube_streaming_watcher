@@ -51,7 +51,7 @@ jobs:
               if (update['package-ecosystem'] === 'npm') {
                 for (const ignore of update.ignore) {
                   if (ignore['dependency-name'] === 'express') {
-                    ignore.versions[0] = '>${{ steps.get_types_express_version.outputs.result }}a'
+                    ignore.versions[0] = '>${{ steps.get_types_express_version.outputs.result }}'
                   }
                 }
               }
@@ -73,7 +73,7 @@ jobs:
 
             for (const rule of renovate.packageRules) {
               if (rule.matchPackageNames.includes('express')) {
-                rule.allowedVersions = '<=${{ steps.get_types_express_version.outputs.result }}a'
+                rule.allowedVersions = '<=${{ steps.get_types_express_version.outputs.result }}'
               }
             }
 
