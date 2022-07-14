@@ -5,15 +5,21 @@
   ],
   "packageRules": [
     {
-      "matchPackageNames": ["express"],
+      "matchPackageNames": [
+        "express"
+      ],
       "allowedVersions": "<=4.17"
     },
     {
-      "matchPackageNames": ["@types/node"],
+      "matchPackageNames": [
+        "@types/node"
+      ],
       "allowedVersions": "<=16"
     },
     {
-      "matchPackageNames": ["node"],
+      "matchPackageNames": [
+        "node"
+      ],
       "allowedVersions": "<=16"
     }
   ]
