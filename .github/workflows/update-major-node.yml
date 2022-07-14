@@ -4,7 +4,6 @@ name: update-major-node
 on:
   schedule:
     - cron: '0 21 * * *' # 06:00 JST
-  pull_request:
 
 jobs:
   # AWS Lambdaのランタイムのページをスクレイピングし、そこに記述されているNode.jsランタイムのバージョンがアップデートされていたらDockerイメージをアップデートする
