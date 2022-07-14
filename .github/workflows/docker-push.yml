@@ -72,9 +72,6 @@ jobs:
       - uses: actions/setup-node@v3.4.0
         with:
           node-version: ${{ steps.get_types_node_version.outputs.result }}
-      - name: Get Node.js version
-        id: get_node_version
-        run: echo "::set-output name=node_version::$(node --version | sed -e 's/v//g')"
       - uses: actions/setup-node@v3.4.0
         with:
           node-version-file: .node-version
@@ -97,7 +94,7 @@ jobs:
               if (update['package-ecosystem'] === 'docker') {
                 for (const ignore of update.ignore) {
                   if (ignore['dependency-name'] === 'node') {
-                    ignore.versions[0] = '>${{steps.get_node_version.outputs.node_version}}a'
+                    ignore.versions[0] = '>${{ steps.get_types_node_version.outputs.result }}'
                   }
                 }
               }
@@ -119,7 +116,7 @@ jobs:
 
             for (const rule of renovate.packageRules) {
               if (rule.matchPackageNames.includes('node')) {
-                rule.allowedVersions = '<=${{steps.get_node_version.outputs.node_version}}a'
+                rule.allowedVersions = '<=${{ steps.get_types_node_version.outputs.result }}'
               }
             }
 
@@ -129,6 +126,9 @@ jobs:
               console.error(err.message)
               process.exit(1)
             }
+      - name: Get Node.js version
+        id: get_node_version
+        run: echo "::set-output name=node_version::$(node --version | sed -e 's/v//g')"
       - run: sed -i -e "s/\(FROM node:\)[0-9.]*\(-.*\)/\1${{steps.get_node_version.outputs.node_version}}\2/g" Dockerfile
       - uses: dev-hato/actions-diff-pr-management@v0.0.8
         with:
