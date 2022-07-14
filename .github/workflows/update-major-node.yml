@@ -72,7 +72,7 @@ jobs:
             }
 
             try {
-              fs.writeFileSync(config_filename, "---\n" + yaml.dump(content), 'utf8')
+              fs.writeFileSync(config_filename, "---\n" + yaml.dump(config), 'utf8')
             } catch (err) {
               console.error(err.message)
               process.exit(1)
