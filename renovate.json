@@ -20,7 +20,7 @@
       "matchPackageNames": [
         "node"
       ],
-      "allowedVersions": "<=16"
+      "allowedVersions": "<=16.11"
     }
   ]
 }
