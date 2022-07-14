@@ -92,7 +92,7 @@ jobs:
             }
 
             try {
-              fs.writeFileSync('./renovate.json', JSON.stringify(renovate, null, "  "), 'utf8')
+              fs.writeFileSync('./renovate.json', JSON.stringify(renovate, null, "  ") + "\n", 'utf8')
             } catch (err) {
               console.error(err.message)
               process.exit(1)

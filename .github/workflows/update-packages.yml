@@ -78,7 +78,7 @@ jobs:
             }
 
             try {
-              fs.writeFileSync('./renovate.json', JSON.stringify(renovate, null, "  "), 'utf8')
+              fs.writeFileSync('./renovate.json', JSON.stringify(renovate, null, "  ") + "\n", 'utf8')
             } catch (err) {
               console.error(err.message)
               process.exit(1)
@@ -103,7 +103,7 @@ jobs:
             package.dependencies.express = '~${{ steps.get_types_express_version.outputs.result }}'
 
             try {
-              fs.writeFileSync('./package.json', JSON.stringify(package, null, "  "), 'utf8')
+              fs.writeFileSync('./package.json', JSON.stringify(package, null, "  ") + "\n", 'utf8')
             } catch (err) {
               console.error(err.message)
               process.exit(1)
