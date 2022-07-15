@@ -6,7 +6,7 @@ services:
       context: .
       target: notify
       cache_from:
-        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME}
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME:-latest}
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify
       args:
         BUILDKIT_INLINE_CACHE: 1
@@ -14,7 +14,7 @@ services:
         platforms:
           - linux/amd64
           - linux/arm64
-    image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME}
+    image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME:-latest}
     env_file: .env
     depends_on:
       db:
@@ -25,7 +25,7 @@ services:
       context: .
       target: reply
       cache_from:
-        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME}
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME:-latest}
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply
       args:
         BUILDKIT_INLINE_CACHE: 1
@@ -33,7 +33,7 @@ services:
         platforms:
           - linux/amd64
           - linux/arm64
-    image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME}
+    image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME:-latest}
     environment:
       NODE_OPTIONS: ${NODE_OPTIONS}
       SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
@@ -54,7 +54,7 @@ services:
     build:
       dockerfile: dynamodb/Dockerfile
       cache_from:
-        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/db:${TAG_NAME}
+        - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/db:${TAG_NAME:-latest}
         - ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/db
       args:
         BUILDKIT_INLINE_CACHE: 1
@@ -62,5 +62,5 @@ services:
         platforms:
           - linux/amd64
           - linux/arm64
-    image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/db:${TAG_NAME}
+    image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/db:${TAG_NAME:-latest}
     env_file: .env

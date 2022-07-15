@@ -1,0 +1,112 @@
+---
+name: update-major-node
+
+on:
+  schedule:
+    - cron: '0 21 * * *' # 06:00 JST
+
+jobs:
+  # AWS Lambdaのランタイムのページをスクレイピングし、そこに記述されているNode.jsランタイムのバージョンがアップデートされていたらDockerイメージをアップデートする
+  update-major-node:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v3.4.1
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: |
+          npm_version=$(jq -r '.engines.npm | ltrimstr("^")' package.json)
+          npm install --prefer-offline --location=global "npm@${npm_version}"
+          npm ci --prefer-offline
+      - name: Get latest Lambda support version
+        id: get_latest_lambda_support_version
+        uses: actions/github-script@v6.1.0
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          result-encoding: string
+          script: |
+            const axios = require('axios')
+            const cheerio = require('cheerio')
+            const {Text} = require('domhandler')
+
+            const response = await axios.get('https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/lambda-runtimes.html')
+            const $ = cheerio.load(response.data)
+            const versions = []
+
+            for (const element of $('table tbody tr:first-child td:first-child p').get()) {
+                const textElement = element.children[0]
+                if (textElement instanceof Text && textElement.data.startsWith('Node')) {
+                    const texts = textElement.data.split(' ')
+                    if (1 < texts.length) {
+                        versions.push(Number(texts[1]))
+                    }
+                }
+            }
+
+            return Math.max(...versions)
+      - uses: actions/github-script@v6.1.0
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs')
+            const yaml = require('js-yaml')
+
+            const config_filename = '.github/dependabot.yml'
+            const config = yaml.load(fs.readFileSync(config_filename, 'utf8'))
+
+            for (const update of config.updates) {
+              if (update['package-ecosystem'] === 'npm') {
+                for (const ignore of update.ignore) {
+                  if (ignore['dependency-name'] === '@types/node') {
+                    ignore.versions[0] = '>${{steps.get_latest_lambda_support_version.outputs.result}}'
+                  }
+                }
+              }
+            }
+
+            try {
+              fs.writeFileSync(config_filename, "---\n" + yaml.dump(config), 'utf8')
+            } catch (err) {
+              console.error(err.message)
+              process.exit(1)
+            }
+      - uses: actions/github-script@v6.1.0
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs')
+
+            const renovate = require('./renovate.json')
+
+            for (const rule of renovate.packageRules) {
+              if (rule.matchPackageNames.includes('@types/node')) {
+                rule.allowedVersions = '<=${{steps.get_latest_lambda_support_version.outputs.result}}'
+              }
+            }
+
+            try {
+              fs.writeFileSync('./renovate.json', JSON.stringify(renovate, null, "  ") + "\n", 'utf8')
+            } catch (err) {
+              console.error(err.message)
+              process.exit(1)
+            }
+      - run: |
+          if grep '^${{steps.get_latest_lambda_support_version.outputs.result}}' .node-version; then
+            exit 0
+          fi
+      - uses: actions/setup-node@v3.4.1
+        with:
+          node-version: ${{steps.get_latest_lambda_support_version.outputs.result}}
+      - uses: dev-hato/actions-diff-pr-management@v0.0.8
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          branch-name-prefix: update-major-node
+          pr-title-prefix: "@types/nodeのアップデート条件を修正してあげたよ！"
+          repo-name: dev-hato/youtube_streaming_watcher

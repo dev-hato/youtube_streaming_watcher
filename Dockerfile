@@ -1,9 +1,9 @@
-FROM node:14.19.3-bullseye-slim AS base
+FROM node:16.16.0-bullseye-slim AS base
 
 RUN apt-get update \
     # hadolint ignore=DL3008
     && apt-get install -y --no-install-recommends curl \
-    && npm install -g npm@8.5.1 \
+    && npm install --location=global npm@8.5.1 \
     && find / -type f -perm /u+s -ignore_readdir_race -exec chmod u-s {} \; \
     && find / -type f -perm /g+s -ignore_readdir_race -exec chmod g-s {} \; \
     && rm -rf /root/.npm /tmp /var/lib/apt/lists

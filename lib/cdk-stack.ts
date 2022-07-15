@@ -22,6 +22,7 @@ import {
   aws_sns as sns,
   aws_ssm as ssm
 } from 'aws-cdk-lib'
+import * as fs from 'fs'
 import { dynamoDBTableProps } from './props/dynamodb-table-props'
 import { rate } from './props/events-rule-props'
 import { functionProps } from './props/function-props'
@@ -53,14 +54,23 @@ export class CdkStack extends Stack {
       YOUTUBE_API_KEY: secrets.youtube.secretValueFromJson('youtube_api_key').toString()
     }
     const functionDataEntities: Array<[string, lambdaNode.NodejsFunction]> = Object.entries(functionProps).map(
-      ([key, value]) => [
-        key,
-        new lambdaNode.NodejsFunction(this, `Function-${key}`, Object.assign(value, {
-          runtime: lambda.Runtime.NODEJS_14_X,
-          bundling: { minify: true, sourceMap: true },
-          environment
-        }))
-      ]
+      ([key, value]) => {
+        const runtime = lambda.Runtime.NODEJS_16_X
+        const runtimeVersion = runtime.name.match('[0-9]+')
+
+        if (runtimeVersion !== null && fs.readFileSync('.node-version').toString().match('^' + runtimeVersion[0]) === null) {
+          throw Error(`Lambda関数 ${value.functionName ?? ''} のランタイムのバージョンが .node-version と一致していません。`)
+        }
+
+        return [
+          key,
+          new lambdaNode.NodejsFunction(this, `Function-${key}`, Object.assign(value, {
+            runtime,
+            bundling: { minify: true, sourceMap: true },
+            environment
+          }))
+        ]
+      }
     )
     const functionData = Object.fromEntries(functionDataEntities)
     const lambdaSNSTopic = new sns.Topic(this, 'SNSTopic-lambda')
