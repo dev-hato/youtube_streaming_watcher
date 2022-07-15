@@ -9,7 +9,8 @@ export const dynamoDBTableProps: dynamodb.TableProps[] = [
   },
   {
     tableName: 'youtube_streaming_watcher_next_notification_times',
-    partitionKey: { name: 'next_notification_at', type: dynamodb.AttributeType.STRING },
+    partitionKey: { name: 'name', type: dynamodb.AttributeType.STRING },
+    sortKey: { name: 'next_notification_at', type: dynamodb.AttributeType.STRING },
     readCapacity: 1,
     writeCapacity: 1
   },
@@ -23,6 +24,20 @@ export const dynamoDBTableProps: dynamodb.TableProps[] = [
   {
     tableName: 'youtube_streaming_watcher_received_slack_requests',
     partitionKey: { name: 'ts', type: dynamodb.AttributeType.STRING },
+    readCapacity: 1,
+    writeCapacity: 1
+  },
+  {
+    tableName: 'youtube_streaming_watcher_tweets',
+    partitionKey: { name: 'twitter_id', type: dynamodb.AttributeType.STRING },
+    sortKey: { name: 'tweet_id', type: dynamodb.AttributeType.STRING },
+    readCapacity: 1,
+    writeCapacity: 1
+  },
+  {
+    tableName: 'youtube_streaming_watcher_tweet_videos',
+    partitionKey: { name: 'tweet_id', type: dynamodb.AttributeType.STRING },
+    sortKey: { name: 'video_id', type: dynamodb.AttributeType.STRING },
     readCapacity: 1,
     writeCapacity: 1
   }
