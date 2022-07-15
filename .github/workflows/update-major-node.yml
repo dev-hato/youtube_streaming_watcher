@@ -16,6 +16,7 @@ jobs:
       - uses: actions/checkout@v3.0.2
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-node@v3.4.1
         with:
           node-version-file: .node-version
@@ -50,6 +51,52 @@ jobs:
             }
 
             return Math.max(...versions)
+      - uses: actions/github-script@v6.1.0
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs')
+            const yaml = require('js-yaml')
+
+            const config_filename = '.github/dependabot.yml'
+            const config = yaml.load(fs.readFileSync(config_filename, 'utf8'))
+
+            for (const update of config.updates) {
+              if (update['package-ecosystem'] === 'npm') {
+                for (const ignore of update.ignore) {
+                  if (ignore['dependency-name'] === '@types/node') {
+                    ignore.versions[0] = '>${{steps.get_latest_lambda_support_version.outputs.result}}'
+                  }
+                }
+              }
+            }
+
+            try {
+              fs.writeFileSync(config_filename, "---\n" + yaml.dump(config), 'utf8')
+            } catch (err) {
+              console.error(err.message)
+              process.exit(1)
+            }
+      - uses: actions/github-script@v6.1.0
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs')
+
+            const renovate = require('./renovate.json')
+
+            for (const rule of renovate.packageRules) {
+              if (rule.matchPackageNames.includes('@types/node')) {
+                rule.allowedVersions = '<=${{steps.get_latest_lambda_support_version.outputs.result}}'
+              }
+            }
+
+            try {
+              fs.writeFileSync('./renovate.json', JSON.stringify(renovate, null, "  ") + "\n", 'utf8')
+            } catch (err) {
+              console.error(err.message)
+              process.exit(1)
+            }
       - run: |
           if grep '^${{steps.get_latest_lambda_support_version.outputs.result}}' .node-version; then
             exit 0
@@ -57,10 +104,9 @@ jobs:
       - uses: actions/setup-node@v3.4.1
         with:
           node-version: ${{steps.get_latest_lambda_support_version.outputs.result}}
-      - run: sed -i -e "s/\(FROM node:\)[0-9.]*\(-.*\)/\1$(node --version | sed -e 's/v//g')\2/g" Dockerfile
       - uses: dev-hato/actions-diff-pr-management@v0.0.8
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: update-major-node
-          pr-title-prefix: nodeをメジャーアップデートしてあげたよ！
+          pr-title-prefix: "@types/nodeのアップデート条件を修正してあげたよ！"
           repo-name: dev-hato/youtube_streaming_watcher
