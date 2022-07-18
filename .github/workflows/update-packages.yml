@@ -92,9 +92,7 @@ jobs:
             echo "::set-output name=needs_update::true"
           fi
       - if: steps.check_needs_update.outputs.needs_update == 'true'
-        run: |
-          jq '.dependencies.express|="~${{ steps.get_types_express_version.outputs.result }}"' package.json > tmpfile
-          mv tmpfile package.json
+        run: yq -i -o json '.dependencies.express|="~${{ steps.get_types_express_version.outputs.result }}"' package.json
       - if: steps.check_needs_update.outputs.needs_update == 'true'
         run: npm install
       - uses: dev-hato/actions-diff-pr-management@v0.0.10
