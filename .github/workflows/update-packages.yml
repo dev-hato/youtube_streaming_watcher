@@ -91,23 +91,8 @@ jobs:
           else
             echo "::set-output name=needs_update::true"
           fi
-      - uses: actions/github-script@v6.1.0
-        if: steps.check_needs_update.outputs.needs_update == 'true'
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            const fs = require('fs')
-
-            const package = require('./package.json')
-
-            package.dependencies.express = '~${{ steps.get_types_express_version.outputs.result }}'
-
-            try {
-              fs.writeFileSync('./package.json', JSON.stringify(package, null, "  ") + "\n", 'utf8')
-            } catch (err) {
-              console.error(err.message)
-              process.exit(1)
-            }
+      - if: steps.check_needs_update.outputs.needs_update == 'true'
+        run: jq '.dependencies.express|="~${{ steps.get_types_express_version.outputs.result }}"' package.json > package.json
       - if: steps.check_needs_update.outputs.needs_update == 'true'
         run: npm install
       - uses: dev-hato/actions-diff-pr-management@v0.0.10
