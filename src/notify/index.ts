@@ -110,7 +110,7 @@ const maxGetFeedRetryCnt = 10
 export async function handler (): Promise<void> {
   const currentNotificationTimes: { [name: string]: Date } = {}
   const currentNotificationAtItems = await runQuery(
-    'SELECT name, next_notification_at FROM youtube_streaming_watcher_next_notification_times'
+    'SELECT name, next_notification_at FROM youtube_streaming_watcher_next_notification_times2'
   )
   const currentTime = new Date()
 
@@ -733,13 +733,13 @@ export async function handler (): Promise<void> {
       }
 
       await runQuery(
-        'DELETE FROM youtube_streaming_watcher_next_notification_times WHERE name=? and next_notification_at=?',
+        'DELETE FROM youtube_streaming_watcher_next_notification_times2 WHERE name=? and next_notification_at=?',
         [{ S: name }, { S: currentNotificationTimes[name].toISOString() }]
       )
       const nextNotificationAt = new Date(nextNotificationAtBase)
       nextNotificationAt.setSeconds(nextNotificationAtBase.getSeconds() + sleepSeconds[NextNotificationTimeName.YoutubeDataApiUnitLimitPerDay])
       await runQuery(
-        'INSERT INTO youtube_streaming_watcher_next_notification_times VALUE {\'name\': ?, \'next_notification_at\': ?}',
+        'INSERT INTO youtube_streaming_watcher_next_notification_times2 VALUE {\'name\': ?, \'next_notification_at\': ?}',
         [{ S: name }, { S: nextNotificationAt.toISOString() }]
       )
 
