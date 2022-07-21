@@ -4,7 +4,7 @@ YouTubeの配信通知をSlackに流すbotです。
 
 ## 通知される条件
 
-以下の場合に通知されます。
+次の場合に通知されます。
 
 * 配信枠が作成されたとき
 * 配信1時間前
@@ -70,7 +70,7 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
    ```sh
    cdk bootstrap
    ```
-4. AWSコンソールのSecret Manager上で以下のSecretを作成します。
+4. AWSコンソールのSecret Manager上で次のSecretを作成します。
     * `youtube_streaming_watcher_slack`: 配信通知関連 (Slack)
         * `slack_bot_token`: Slackのbotトークン
         * `slack_signing_secret`: SlackのSigning Secret
@@ -105,7 +105,7 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
 
 ### forkしたリポジトリでCI/CDを動かす方法
 
-以下のRepository secretsを設定します。
+次のRepository secretsを設定します。
 
 * `AWS_ACCOUNT`: AWSアカウントID
 * `AWS_REGION`: AWSのリージョン
@@ -114,7 +114,7 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
 
 ### Node.jsのバージョン
 
-以下の2つのバージョンを使用できるようにしていますが、基本的には後者を前提として開発しています。
+次の2つのバージョンを使用できるようにしていますが、基本的には後者を前提として開発しています。
 * dependabotで使用しているバージョン: <https://github.com/dependabot/dependabot-core/blob/31daef5ef4c96d83003777316e96a14eecddd190/Dockerfile#L100-L105>
 * AWS LambdaのNode.jsランタイムで対応している最新バージョン: <!-- textlint-disable terminology --><https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/lambda-runtimes.html><!-- textlint-enable -->
 
