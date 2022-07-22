@@ -165,7 +165,7 @@ export async function handler (): Promise<void> {
           const updateTime = item.updated_time?.S
           const now = new Date()
 
-          // 以下のいずれかを満たしている場合は通知しない
+          // 次のいずれかを満たしている場合は通知しない
           // * 配信開始の1時間以上前
           // * 既に配信開始済み
           // * 配信開始まで1時間以内でリマインド通知が完了している
