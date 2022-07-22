@@ -49,6 +49,7 @@ export class CdkStack extends Stack {
       SLACK_BOT_TOKEN: secrets.slack.secretValueFromJson('slack_bot_token').toString(),
       SLACK_CHANNEL: secrets.slack.secretValueFromJson('slack_channel').toString(),
       SLACK_SIGNING_SECRET: secrets.slack.secretValueFromJson('slack_signing_secret').toString(),
+      TWITTER_BEARER_TOKEN: secrets.twitter.secretValueFromJson('twitter_bearer_token').toString(),
       TZ: 'Asia/Tokyo',
       YOUTUBE_API_KEY: secrets.youtube.secretValueFromJson('youtube_api_key').toString()
     }

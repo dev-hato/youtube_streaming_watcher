@@ -4,6 +4,8 @@ import cheerio from 'cheerio'
 import Parser from 'rss-parser'
 import { runQuery } from './dynamodb'
 import { pingHandler, pingPath, port } from './server.dev'
+import { getTwitterUserId } from './twitter'
+import { getTwitterUserName } from './youtube'
 
 if (process.env.SLACK_SIGNING_SECRET === undefined) {
   throw new Error('SLACK_SIGNING_SECRET must be set.')
@@ -170,10 +172,28 @@ export function setMessageEvents (): void {
       return
     }
 
-    await runQuery(
-      'INSERT INTO youtube_streaming_watcher_channels VALUE {\'channel_id\': ?, \'created_at\': ?}',
-      [{ S: channel.id }, { S: (new Date()).toISOString() }]
-    )
+    let twitterId
+
+    try {
+      twitterId = await getTwitterUserId(await getTwitterUserName(channel.id))
+    } catch (e) {
+      console.log(e)
+    }
+
+    const createdAt = (new Date()).toISOString()
+
+    if (twitterId === undefined) {
+      await runQuery(
+        'INSERT INTO youtube_streaming_watcher_channels VALUE {\'channel_id\': ?, \'created_at\': ?}',
+        [{ S: channel.id }, { S: createdAt }]
+      )
+    } else {
+      await runQuery(
+        'INSERT INTO youtube_streaming_watcher_channels VALUE {\'channel_id\': ?, \'twitter_id\': ?, \'created_at\': ?}',
+        [{ S: channel.id }, { S: twitterId }, { S: createdAt }]
+      )
+    }
+
     await postMessage(
             `このチャンネルを通知対象に追加しました: https://www.youtube.com/channel/${channel.id}`,
             say
