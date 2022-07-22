@@ -144,7 +144,7 @@ export function setMessageEvents (): void {
     }
 
     await say(
-      '以下のチャンネルを通知します\n' +
+      '次のチャンネルを通知します\n' +
         channels
           .map(b => b.channel_id.S)
           .filter(b => b)
