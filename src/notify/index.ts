@@ -300,7 +300,7 @@ export async function handler (): Promise<void> {
             url: string | undefined
             createdAt: string | undefined
           }> = []
-          const tweetIdSet: Set<string>=new Set()
+          const tweetIdSet: Set<string> = new Set()
           let tweets: TweetV2[] = timeLine.tweets
           twitterApiGetTweetNum += tweets.length
           const maxGetTweetCount = 2
@@ -331,11 +331,11 @@ export async function handler (): Promise<void> {
                 const twitterIdPattern = url.match(/https:\/\/twitter\.com\/[^/]+\/status\/([^/]+)/)
 
                 if ((twitterIdPattern === null || twitterIdPattern.length < 2) && twitterId !== undefined) {
-                  const tweetId=tweet.id
+                  const tweetId = tweet.id
 
                   if (!tweetIdSet.has(tweetId)) {
                     tweetIdSet.add(tweetId)
-                    tweetDataList.push({twitterId, tweetId, url, createdAt: tweet.created_at})
+                    tweetDataList.push({ twitterId, tweetId, url, createdAt: tweet.created_at })
                   }
 
                   continue
