@@ -420,7 +420,7 @@ export async function handler (): Promise<void> {
         continue
       }
 
-      const videoIdList=Array.from(videoIdsPerChannels[channelId])
+      const videoIdList = Array.from(videoIdsPerChannels[channelId])
 
       // 登録済み配信取得
       const postedVideos = await runQuery(
