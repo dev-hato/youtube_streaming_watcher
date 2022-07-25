@@ -292,5 +292,5 @@ jobs:
     steps:
       - if: needs.update-version.result == 'success' && needs.dockle.result == 'success'
         run: exit 0
-      - if: !(needs.update-version.result == 'success' && needs.dockle.result == 'success')
+      - if: ${{ !(needs.update-version.result == 'success' && needs.dockle.result == 'success') }}
         run: exit 1
