@@ -282,3 +282,15 @@ jobs:
             echo "> ${cmd}"
             eval "${cmd}"
           done
+
+  docker-push-complete:
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - update-version
+      - dockle
+    steps:
+      - if: needs.update-version.result == 'success' && needs.dockle.result == 'success'
+        run: exit 0
+      - if: ${{ !(needs.update-version.result == 'success' && needs.dockle.result == 'success') }}
+        run: exit 1
