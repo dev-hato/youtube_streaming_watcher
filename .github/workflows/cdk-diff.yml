@@ -17,7 +17,7 @@ jobs:
           ROLE+=":role/youtube_streaming_watcher_cdk_diff"
           echo "ROLE=${ROLE}" >> "${GITHUB_ENV}"
           echo "REPOSITORY=${{github.repository}}" >> "${GITHUB_ENV}"
-      - uses: aws-actions/configure-aws-credentials@v1.6.1
+      - uses: aws-actions/configure-aws-credentials@v1.7.0
         with:
           role-to-assume: ${{ env.ROLE }}
           aws-region: ${{ secrets.AWS_REGION }}
