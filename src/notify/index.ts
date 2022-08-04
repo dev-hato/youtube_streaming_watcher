@@ -171,7 +171,7 @@ export async function handler (): Promise<void> {
     }
 
     const videoIds = new Set()
-    const videoIdsPerChannels: { [channelId: string]: string[] } = {}
+    const videoIdsPerChannels: { [channelId: string]: Set<string> } = {}
     const needGetStartTimeVideos: { [channelId: string]: Set<string> } = {}
 
     // 新着配信一覧取得
@@ -222,7 +222,7 @@ export async function handler (): Promise<void> {
           isCollab: false
         })
         videoIds.add(videoId)
-        videoIdsPerChannels[channelId].push(videoId)
+        videoIdsPerChannels[channelId].add(videoId)
         needGetStartTimeVideos[channelId].add(videoId)
       }
     }
@@ -405,7 +405,7 @@ export async function handler (): Promise<void> {
             isCollab: true
           })
           videoIds.add(tweetData.videoId)
-          videoIdsPerChannels[channelId].push(tweetData.videoId)
+          videoIdsPerChannels[channelId].add(tweetData.videoId)
 
           if (needGetStartTimeVideos[channelId] === undefined) {
             needGetStartTimeVideos[channelId] = new Set<string>()
@@ -420,11 +420,13 @@ export async function handler (): Promise<void> {
         continue
       }
 
+      const videoIdList = Array.from(videoIdsPerChannels[channelId])
+
       // 登録済み配信取得
       const postedVideos = await runQuery(
         'SELECT video_id, start_time, updated_time, notify_mode, privacy_status, is_live_streaming FROM youtube_streaming_watcher_notified_videos ' +
-                'WHERE channel_id=? AND video_id IN (' + videoIdsPerChannels[channelId].map(() => '?').join(', ') + ')',
-        [{ S: channelId }].concat(videoIdsPerChannels[channelId].map(v => {
+                'WHERE channel_id=? AND video_id IN (' + videoIdList.map(() => '?').join(', ') + ')',
+        [{ S: channelId }].concat(videoIdList.map(v => {
           return { S: v }
         }))
       )
