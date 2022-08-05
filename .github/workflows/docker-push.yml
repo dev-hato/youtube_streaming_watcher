@@ -3,6 +3,11 @@ name: docker-push
 
 on:
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
   push:
     branches:
       - main
@@ -106,7 +111,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    if: github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed' && github.repository == github.event.pull_request.head.repo.full_name)
     steps:
       - uses: actions/checkout@v3.0.2
       - name: Login to GitHub Container Registry
@@ -140,6 +145,7 @@ jobs:
   update-version:
     runs-on: ubuntu-latest
     needs: docker-push
+    if: always() && (needs.docker-push.result == 'success' || (github.event_name == 'pull_request' && github.event.action == 'closed'))
     permissions:
       contents: write
       pull-requests: write
@@ -149,6 +155,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Get Dependabot Node.js version
+        if: github.event_name != 'pull_request' || github.event.action != 'closed'
         id: get_dependabot_node_version
         run: |
           DOCKER_CMD="node --version && npm --version"
@@ -167,10 +174,12 @@ jobs:
       - run: cp .env.example .env
       - run: cat .env >> "$GITHUB_ENV"
       - run: docker compose pull
+        if: github.event_name != 'pull_request' || github.event.action != 'closed'
         env:
           DOCKER_CONTENT_TRUST: 1
       - name: Get Node.js version
         id: get_node_version
+        if: github.event_name != 'pull_request' || github.event.action != 'closed'
         env:
           DOCKER_CONTENT_TRUST: 1
         run: |
@@ -180,6 +189,7 @@ jobs:
           echo "Node.js version:" "${node_version}"
           echo "::set-output name=node_version::${node_version}"
       - name: Update versions
+        if: github.event_name != 'pull_request' || github.event.action != 'closed'
         run: |
           DEPENDABOT_NODE_VERSION="${{steps.get_dependabot_node_version.outputs.node_version}}"
           DEPENDABOT_NPM_VERSION="${{steps.get_dependabot_node_version.outputs.npm_version}}"
@@ -202,11 +212,13 @@ jobs:
           NPM_PATTERN_DOCKER="s/npm@[0-9.]*/npm@${DEPENDABOT_NPM_VERSION}/g"
           sed -i -e "${NPM_PATTERN_DOCKER}" Dockerfile
       - uses: actions/setup-node@v3.4.1
+        if: github.event_name != 'pull_request' || github.event.action != 'closed'
         with:
           node-version-file: .node-version
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: |
+      - if: github.event_name != 'pull_request' || github.event.action != 'closed'
+        run: |
           DEPENDABOT_NPM_VERSION="${{steps.get_dependabot_node_version.outputs.npm_version}}"
           npm install --prefer-offline --location=global "npm@${DEPENDABOT_NPM_VERSION}"
           npm install
@@ -270,7 +282,7 @@ jobs:
 
   docker-push-complete:
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && (github.event_name != 'pull_request' || github.event.action != 'closed')
     needs:
       - update-version
       - dockle
