@@ -19,7 +19,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
   reply:
     build:
       context: .
@@ -49,7 +48,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
   db:
     build:
       dockerfile: dynamodb/Dockerfile

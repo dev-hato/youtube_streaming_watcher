@@ -14,37 +14,31 @@ extends:
   - standard
   - eslint:recommended
   - plugin:@typescript-eslint/recommended
-
 ###############
 # Global Vars #
 ###############
 globals:
   Atomics: readonly
   SharedArrayBuffer: readonly
-
 ###############
 # Parser vars #
 ###############
 parser: '@typescript-eslint/parser'
 parserOptions:
   project: ./tsconfig.json
-
 ###########
 # Plugins #
 ###########
 plugins:
   - '@typescript-eslint'
-
 #########
 # Rules #
 #########
-rules: { }
-
+rules: {}
 ##############################
 # Overrides for JSON parsing #
 ##############################
 overrides:
-
   # JSON files
   - files:
       - "*.json"
@@ -53,7 +47,6 @@ overrides:
     parser: jsonc-eslint-parser
     parserOptions:
       jsonSyntax: JSON
-
   # JSONC files
   - files:
       - "*.jsonc"
@@ -62,7 +55,6 @@ overrides:
     parser: jsonc-eslint-parser
     parserOptions:
       jsonSyntax: JSONC
-
   # JSON5 files
   - files:
       - "*.json5"
