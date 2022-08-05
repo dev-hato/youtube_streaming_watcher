@@ -206,7 +206,7 @@ export async function handler (): Promise<void> {
         continue
       }
 
-      videoIdsPerChannels[channelId] = []
+      videoIdsPerChannels[channelId] = new Set()
       needGetStartTimeVideos[channelId] = new Set()
       notifyVideoData[channelId] = { title: feed.title, videos: new Map() }
 
