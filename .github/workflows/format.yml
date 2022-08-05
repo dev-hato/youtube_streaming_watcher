@@ -29,7 +29,7 @@ jobs:
           npm install --prefer-offline --location=global "npm@${npm_version}"
           npm install
       - run: npm run fix
-      - uses: dev-hato/actions-diff-pr-management@v1.0.1
+      - uses: dev-hato/actions-diff-pr-management@v1.0.2
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: fix-format
