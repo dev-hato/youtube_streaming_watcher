@@ -238,6 +238,7 @@ export async function handler (): Promise<void> {
       if (twitterId !== undefined) {
         const tweetDatas: Array<{ tweetId: string, videoId: string, updatedTime: Date }> = []
         let sinceTweetId: string | null = null
+        const tweetIdSet: Set<string> = new Set()
         const tweetIdResults = await runQuery(
           'SELECT tweet_id FROM youtube_streaming_watcher_tweets WHERE twitter_id = ?',
           [{ S: twitterId }]
@@ -251,6 +252,7 @@ export async function handler (): Promise<void> {
               continue
             }
 
+            tweetIdSet.add(tweetIdResult.tweet_id.S)
             tweetIds.push({ S: tweetIdResult.tweet_id.S })
 
             if (sinceTweetId === null || Number(sinceTweetId) < Number(tweetIdResult.tweet_id.S)) {
@@ -300,7 +302,6 @@ export async function handler (): Promise<void> {
             url: string | undefined
             createdAt: string | undefined
           }> = []
-          const tweetIdSet: Set<string> = new Set()
           let tweets: TweetV2[] = timeLine.tweets
           twitterApiGetTweetNum += tweets.length
           const maxGetTweetCount = 2
