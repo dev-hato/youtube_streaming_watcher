@@ -1,14 +1,13 @@
 import axios, { AxiosError } from 'axios'
 import Parser from 'rss-parser'
 import sleep from 'sleep-promise'
-import { TweetV2, TweetV2UserTimelineParams } from 'twitter-api-v2'
+import { TweetV2, TweetV2UserTimelineParams, ApiResponseError } from 'twitter-api-v2'
 import { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { ChatPostMessageArguments } from '@slack/web-api'
 import { google, youtube_v3 } from 'googleapis' // eslint-disable-line camelcase
 import { runQuery } from '../common/dynamodb'
 import { slackApp } from '../common/slack'
 import { twitterApiReadOnly } from '../common/twitter'
-import { ApiResponseError } from 'twitter-api-v2'
 
 /** 通知状況 **/
 enum NotifyMode {
@@ -303,10 +302,10 @@ export async function handler (): Promise<void> {
             twitterApiRequestNum++
             tweets = timeLine.tweets
             twitterApiGetTweetNum += tweets.length
-          }catch (e) {
-            if (e instanceof ApiResponseError && e.rateLimitError){
+          } catch (e) {
+            if (e instanceof ApiResponseError && e.rateLimitError) {
               console.error(e)
-            }else{
+            } else {
               throw e
             }
           }
@@ -376,8 +375,8 @@ export async function handler (): Promise<void> {
               twitterApiRequestNum++
               tweets = tweetsResult.data
               twitterApiGetTweetNum += tweets.length
-            }catch (e){
-              if (e instanceof ApiResponseError && e.rateLimitError){
+            } catch (e) {
+              if (e instanceof ApiResponseError && e.rateLimitError) {
                 console.error(e)
                 break
               }
