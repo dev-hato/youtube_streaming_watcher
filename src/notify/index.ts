@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import Parser from 'rss-parser'
 import sleep from 'sleep-promise'
-import { TweetV2, TweetV2UserTimelineParams } from 'twitter-api-v2'
+import { TweetV2, TweetV2UserTimelineParams, ApiResponseError } from 'twitter-api-v2'
 import { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { ChatPostMessageArguments } from '@slack/web-api'
 import { google, youtube_v3 } from 'googleapis' // eslint-disable-line camelcase
@@ -294,16 +294,28 @@ export async function handler (): Promise<void> {
             userTimelineOptions.since_id = sinceTweetId
           }
 
-          const timeLine = await twitterApiReadOnly.v2.userTimeline(twitterId, userTimelineOptions)
-          twitterApiRequestNum++
+          let timeLine
+          let tweets: TweetV2[] = []
+
+          try {
+            timeLine = await twitterApiReadOnly.v2.userTimeline(twitterId, userTimelineOptions)
+            twitterApiRequestNum++
+            tweets = timeLine.tweets
+            twitterApiGetTweetNum += tweets.length
+          } catch (e) {
+            if (e instanceof ApiResponseError && e.rateLimitError) {
+              console.error(e)
+            } else {
+              throw e
+            }
+          }
+
           const tweetDataList: Array<{
             twitterId: string
             tweetId: string
             url: string | undefined
             createdAt: string | undefined
           }> = []
-          let tweets: TweetV2[] = timeLine.tweets
-          twitterApiGetTweetNum += tweets.length
           const maxGetTweetCount = 2
 
           for (let i = 0; i < maxGetTweetCount && tweets.length > 0; i++) {
@@ -356,10 +368,21 @@ export async function handler (): Promise<void> {
 
             await sleep(1000)
             console.log('get tweets:', tweetIds)
-            const tweetsResult = await twitterApiReadOnly.v2.tweets(tweetIds)
-            twitterApiRequestNum++
-            tweets = tweetsResult.data
-            twitterApiGetTweetNum += tweets.length
+            let tweetsResult
+
+            try {
+              tweetsResult = await twitterApiReadOnly.v2.tweets(tweetIds)
+              twitterApiRequestNum++
+              tweets = tweetsResult.data
+              twitterApiGetTweetNum += tweets.length
+            } catch (e) {
+              if (e instanceof ApiResponseError && e.rateLimitError) {
+                console.error(e)
+                break
+              }
+
+              throw e
+            }
           }
 
           for (const { twitterId, tweetId, url, createdAt } of tweetDataList) {
@@ -732,7 +755,7 @@ export async function handler (): Promise<void> {
     // Twitter API: 取得ツイート数 * 1ヶ月 (31日) * 24時間 * 60分 * 60秒 / 1ヶ月あたりの上限取得ツイート数
     sleepSeconds[NextNotificationTimeName.TwitterApiGetTweetLimitPerMonth] = Math.ceil(twitterApiGetTweetNum * 31 * 24 * 60 * 60 / twitterApiGetTweetLimitPerMonth + 1)
 
-    // Twitter API: 取得ツイート数 * 15分 * 60秒 / 15分あたりの上限リクエスト数
+    // Twitter API: APIリクエスト回数 * 15分 * 60秒 / 15分あたりの上限リクエスト数
     sleepSeconds[NextNotificationTimeName.TwitterApiRequestLimitPerMinutes] = Math.ceil(twitterApiRequestNum * 15 * 60 / twitterApiRequestLimitPerMinutes + 1)
 
     const nextNotificationAtBase = new Date()
