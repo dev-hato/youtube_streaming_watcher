@@ -1,7 +1,6 @@
 {
   "extends": [
-    "github>dev-hato/renovate-config",
-    "config:base"
+    "github>dev-hato/renovate-config"
   ],
   "packageRules": [
     {
