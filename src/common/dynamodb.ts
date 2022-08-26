@@ -25,6 +25,7 @@ if (process.env.NODE_ENV === 'development' &&
   }
 }
 
+export const maxWhereInNum=50
 export const dynamoDBClient = new DynamoDBClient(dynamoDBClientConfig)
 
 export async function runQuery (partiQLQuery: string, parameters?: AttributeValue[]): Promise<Array<{
