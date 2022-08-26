@@ -264,7 +264,7 @@ export async function handler (): Promise<void> {
             [key: string]: AttributeValue
           }> = []
 
-          for (let i=0; i<Math.ceil(tweetIds.length / maxWhereInNum); i++)　{
+          for (let i=0; i<Math.ceil(tweetIds.length / maxWhereInNum); i++) {
             const tweetIdsPart=tweetIds.slice(i * maxWhereInNum, (i + 1) * maxWhereInNum)
             tweetDataResults=tweetDataResults.concat(await runQuery(
                 'SELECT tweet_id, video_id, updated_time FROM youtube_streaming_watcher_tweet_videos ' +
@@ -465,7 +465,7 @@ export async function handler (): Promise<void> {
       }> =[]
 
       // 登録済み配信取得
-      for (let i=0; i<Math.ceil(videoIdList.length / maxWhereInNum); i++)　{
+      for (let i=0; i<Math.ceil(videoIdList.length / maxWhereInNum); i++) {
         const videoIdPartList=videoIdList.slice(i * maxWhereInNum, (i + 1) * maxWhereInNum)
         postedVideos=postedVideos.concat(await runQuery(
             'SELECT video_id, start_time, updated_time, notify_mode, privacy_status, is_live_streaming FROM youtube_streaming_watcher_notified_videos ' +
