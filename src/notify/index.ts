@@ -5,7 +5,7 @@ import { TweetV2, TweetV2UserTimelineParams, ApiResponseError } from 'twitter-ap
 import { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { ChatPostMessageArguments } from '@slack/web-api'
 import { google, youtube_v3 } from 'googleapis' // eslint-disable-line camelcase
-import {maxWhereInNum, runQuery} from '../common/dynamodb'
+import { maxWhereInNum, runQuery } from '../common/dynamodb'
 import { slackApp } from '../common/slack'
 import { twitterApiReadOnly } from '../common/twitter'
 
@@ -264,15 +264,14 @@ export async function handler (): Promise<void> {
             [key: string]: AttributeValue
           }> = []
 
-          for (let i=0; i<Math.ceil(tweetIds.length / maxWhereInNum); i++) {
-            const tweetIdsPart=tweetIds.slice(i * maxWhereInNum, (i + 1) * maxWhereInNum)
-            tweetDataResults=tweetDataResults.concat(await runQuery(
-                'SELECT tweet_id, video_id, updated_time FROM youtube_streaming_watcher_tweet_videos ' +
+          for (let i = 0; i < Math.ceil(tweetIds.length / maxWhereInNum); i++) {
+            const tweetIdsPart = tweetIds.slice(i * maxWhereInNum, (i + 1) * maxWhereInNum)
+            tweetDataResults = tweetDataResults.concat(await runQuery(
+              'SELECT tweet_id, video_id, updated_time FROM youtube_streaming_watcher_tweet_videos ' +
                 'WHERE tweet_id IN (' + tweetIdsPart.map(() => '?').join(', ') + ')',
-                tweetIdsPart
+              tweetIdsPart
             ))
           }
-
 
           for (const tweetDataResult of tweetDataResults) {
             if (tweetDataResult.tweet_id.S !== undefined &&
@@ -462,17 +461,17 @@ export async function handler (): Promise<void> {
       const videoIdList = Array.from(videoIdsPerChannels[channelId])
       let postedVideos:Array<{
         [key: string]: AttributeValue
-      }> =[]
+      }> = []
 
       // 登録済み配信取得
-      for (let i=0; i<Math.ceil(videoIdList.length / maxWhereInNum); i++) {
-        const videoIdPartList=videoIdList.slice(i * maxWhereInNum, (i + 1) * maxWhereInNum)
-        postedVideos=postedVideos.concat(await runQuery(
-            'SELECT video_id, start_time, updated_time, notify_mode, privacy_status, is_live_streaming FROM youtube_streaming_watcher_notified_videos ' +
+      for (let i = 0; i < Math.ceil(videoIdList.length / maxWhereInNum); i++) {
+        const videoIdPartList = videoIdList.slice(i * maxWhereInNum, (i + 1) * maxWhereInNum)
+        postedVideos = postedVideos.concat(await runQuery(
+          'SELECT video_id, start_time, updated_time, notify_mode, privacy_status, is_live_streaming FROM youtube_streaming_watcher_notified_videos ' +
             'WHERE channel_id=? AND video_id IN (' + videoIdPartList.map(() => '?').join(', ') + ')',
-            [{ S: channelId }].concat(videoIdPartList.map(v => {
-              return { S: v }
-            }))))
+          [{ S: channelId }].concat(videoIdPartList.map(v => {
+            return { S: v }
+          }))))
       }
 
       for (const item of postedVideos) {
