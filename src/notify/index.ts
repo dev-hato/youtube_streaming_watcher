@@ -260,7 +260,7 @@ export async function handler (): Promise<void> {
             }
           }
 
-          let tweetDataResults:Array<{
+          let tweetDataResults: Array<{
             [key: string]: AttributeValue
           }> = []
 
@@ -459,7 +459,7 @@ export async function handler (): Promise<void> {
       }
 
       const videoIdList = Array.from(videoIdsPerChannels[channelId])
-      let postedVideos:Array<{
+      let postedVideos: Array<{
         [key: string]: AttributeValue
       }> = []
 
