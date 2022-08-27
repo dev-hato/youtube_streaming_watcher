@@ -8,12 +8,6 @@ export const dynamoDBTableProps: dynamodb.TableProps[] = [
     writeCapacity: 1
   },
   {
-    tableName: 'youtube_streaming_watcher_next_notification_times',
-    partitionKey: { name: 'next_notification_at', type: dynamodb.AttributeType.STRING },
-    readCapacity: 1,
-    writeCapacity: 1
-  },
-  {
     tableName: 'youtube_streaming_watcher_next_notification_times2',
     partitionKey: { name: 'name', type: dynamodb.AttributeType.STRING },
     sortKey: { name: 'next_notification_at', type: dynamodb.AttributeType.STRING },
