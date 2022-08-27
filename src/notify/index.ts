@@ -661,26 +661,6 @@ export async function handler (): Promise<void> {
 
         videoResultParams.pageToken = nextPageToken
       }
-
-      for (const videoId of needGetStartTimeVideos[channelId]) {
-        // Slack通知
-        const postMessageParams: ChatPostMessageArguments = {
-          channel: slackChannel,
-          text: ':x: 配信削除\n' +
-                generatePostText(
-                  channelId,
-                  videoId,
-                  notifyVideoData[channelId].title,
-                  notifyVideoData[channelId].videos.get(videoId)
-                )
-        }
-        console.log('call app.client.chat.postMessage:', postMessageParams)
-        await slackApp.client.chat.postMessage(postMessageParams)
-        await runQuery(
-          'DELETE FROM youtube_streaming_watcher_notified_videos WHERE channel_id=? AND video_id=?',
-          [{ S: channelId }, { S: videoId }]
-        )
-      }
     }
 
     // 配信通知
