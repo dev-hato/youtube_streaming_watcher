@@ -311,7 +311,7 @@ export async function handler (): Promise<void> {
             twitterApiGetTweetNum += tweets.length
           } catch (e) {
             if (e instanceof ApiResponseError && e.rateLimitError) {
-              console.error(e)
+              console.log(e)
             } else {
               throw e
             }
@@ -384,7 +384,7 @@ export async function handler (): Promise<void> {
               twitterApiGetTweetNum += tweets.length
             } catch (e) {
               if (e instanceof ApiResponseError && e.rateLimitError) {
-                console.error(e)
+                console.log(e)
                 break
               }
 
