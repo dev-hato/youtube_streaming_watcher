@@ -3,6 +3,16 @@ name: cdk-diff
 
 on:
   pull_request:
+    paths:
+      - .github/workflows/cdk-diff.yml
+      - bin/cdk.ts
+      - lib/**
+      - src/**
+      - .node-version
+      - cdk.json
+      - package*.json
+      - tsconfig.json
+      - .npm*
 
 jobs:
   cdk-diff:
