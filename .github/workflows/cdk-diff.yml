@@ -4,6 +4,7 @@ name: cdk-diff
 on:
   pull_request:
     paths:
+      - .github/workflows/cdk-deploy.yml
       - .github/workflows/cdk-diff.yml
       - bin/cdk.ts
       - lib/**
