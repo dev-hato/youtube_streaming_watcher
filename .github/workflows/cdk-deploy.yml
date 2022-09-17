@@ -5,22 +5,35 @@ on:
   push:
     branches:
       - main
-    paths:
-      - .github/workflows/cdk-deploy.yml
-      - bin/cdk.ts
-      - lib/**
-      - src/**
-      - .node-version
-      - cdk.json
-      - package*.json
-      - tsconfig.json
-      - .npm*
 
 jobs:
+  check-cdk-diff:
+    runs-on: ubuntu-latest
+    outputs:
+      deploy-files: ${{ steps.changes.outputs.deploy-files }}
+    steps:
+      - uses: actions/checkout@v3.0.2
+      - uses: dorny/paths-filter@v2.10.2
+        id: changes
+        with:
+          filters: |
+            deploy-files:
+              - .github/workflows/cdk-deploy.yml
+              - bin/cdk.ts
+              - lib/**
+              - src/**
+              - .node-version
+              - cdk.json
+              - package*.json
+              - tsconfig.json
+              - .npm*
+
   cdk-deploy:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+    needs: check-cdk-diff
+    if: needs.check-cdk-diff.outputs.deploy-files == 'true'
     steps:
       - run: |
           ROLE="arn:aws:iam::${{ secrets.AWS_ACCOUNT }}"
@@ -41,3 +54,15 @@ jobs:
           npm install --prefer-offline --location=global "npm@${npm_version}"
           npm ci --prefer-offline
       - run: npx cdk deploy --require-approval never
+
+  cdk-diff-complete:
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - check-cdk-diff
+      - cdk-deploy
+    steps:
+      - if: ${{ needs.check-cdk-diff.outputs.deploy-files == 'false' || needs.cdk-deploy.result == 'success' }}
+        run: exit 0
+      - if: ${{ !(needs.check-cdk-diff.outputs.deploy-files == 'false' || needs.cdk-deploy.result == 'success') }}
+        run: exit 1
