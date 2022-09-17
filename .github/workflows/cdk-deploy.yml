@@ -62,7 +62,7 @@ jobs:
       - check-cdk-diff
       - cdk-deploy
     steps:
-      - if: needs.check-cdk-diff.outputs.deploy-files == 'false' || needs.cdk-deploy.result == 'success'
+      - if: ${{ needs.check-cdk-diff.outputs.deploy-files == 'false' || needs.cdk-deploy.result == 'success' }}
         run: exit 0
-      - if: !(needs.check-cdk-diff.outputs.deploy-files == 'false' || needs.cdk-deploy.result == 'success')
+      - if: ${{ !(needs.check-cdk-diff.outputs.deploy-files == 'false' || needs.cdk-deploy.result == 'success') }}
         run: exit 1
