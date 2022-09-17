@@ -104,7 +104,7 @@ jobs:
       - uses: actions/setup-node@v3.4.1
         with:
           node-version: ${{steps.get_latest_lambda_support_version.outputs.result}}
-      - uses: dev-hato/actions-diff-pr-management@v1.0.3
+      - uses: dev-hato/actions-diff-pr-management@v1.0.4
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: update-major-node
