@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 import Parser from 'rss-parser'
 import sleep from 'sleep-promise'
 import { TweetV2, TweetV2UserTimelineParams, ApiResponseError } from 'twitter-api-v2'
@@ -339,7 +339,7 @@ export async function handler (): Promise<void> {
                   url = response.request.res.responseUrl
                   console.log('get:', tweetUrl, '->', url, response.statusText)
                 } catch (e) {
-                  if (e instanceof AxiosError && e.response !== undefined) {
+                  if (axios.isAxiosError(e) && e.response !== undefined) {
                     console.log('get:', tweetUrl, e.response.statusText)
                     continue
                   }
