@@ -12,7 +12,7 @@ jobs:
     outputs:
       deploy-files: ${{ steps.changes.outputs.deploy-files }}
     steps:
-      - uses: actions/checkout@v3.0.2
+      - uses: actions/checkout@v3.1.0
       - uses: dorny/paths-filter@v2.10.2
         id: changes
         with:
@@ -44,7 +44,7 @@ jobs:
         with:
           role-to-assume: ${{ env.ROLE }}
           aws-region: ${{ secrets.AWS_REGION }}
-      - uses: actions/checkout@v3.0.2
+      - uses: actions/checkout@v3.1.0
       - uses: actions/setup-node@v3.5.0
         with:
           node-version-file: .node-version
