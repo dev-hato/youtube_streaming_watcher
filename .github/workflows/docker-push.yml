@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Get @types/node version
-        uses: actions/github-script@v6.3.0
+        uses: actions/github-script@v6.3.1
         id: get_types_node_version
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -45,7 +45,7 @@ jobs:
           npm_version=$(jq -r '.engines.npm | ltrimstr("^")' package.json)
           npm install --prefer-offline --location=global "npm@${npm_version}"
           npm ci --prefer-offline
-      - uses: actions/github-script@v6.3.0
+      - uses: actions/github-script@v6.3.1
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
@@ -71,7 +71,7 @@ jobs:
               console.error(err.message)
               process.exit(1)
             }
-      - uses: actions/github-script@v6.3.0
+      - uses: actions/github-script@v6.3.1
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
