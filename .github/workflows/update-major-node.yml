@@ -27,7 +27,7 @@ jobs:
           npm ci --prefer-offline
       - name: Get latest Lambda support version
         id: get_latest_lambda_support_version
-        uses: actions/github-script@v6.3.1
+        uses: actions/github-script@v6.3.2
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           result-encoding: string
@@ -51,7 +51,7 @@ jobs:
             }
 
             return Math.max(...versions)
-      - uses: actions/github-script@v6.3.1
+      - uses: actions/github-script@v6.3.2
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
@@ -77,7 +77,7 @@ jobs:
               console.error(err.message)
               process.exit(1)
             }
-      - uses: actions/github-script@v6.3.1
+      - uses: actions/github-script@v6.3.2
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
