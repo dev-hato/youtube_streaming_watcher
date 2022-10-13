@@ -34,10 +34,10 @@ jobs:
 
             const version = package.devDependencies['@types/node'].split('.')
             return [version[0], version[1]].join('.')
-      - uses: actions/setup-node@v3.5.0
+      - uses: actions/setup-node@v3.5.1
         with:
           node-version: ${{ steps.get_types_node_version.outputs.result }}
-      - uses: actions/setup-node@v3.5.0
+      - uses: actions/setup-node@v3.5.1
         with:
           node-version-file: .node-version
           cache: npm
@@ -211,7 +211,7 @@ jobs:
 
           NPM_PATTERN_DOCKER="s/npm@[0-9.]*/npm@${DEPENDABOT_NPM_VERSION}/g"
           sed -i -e "${NPM_PATTERN_DOCKER}" Dockerfile
-      - uses: actions/setup-node@v3.5.0
+      - uses: actions/setup-node@v3.5.1
         if: github.event_name != 'pull_request' || github.event.action != 'closed'
         with:
           node-version-file: .node-version
