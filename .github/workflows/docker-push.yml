@@ -93,7 +93,7 @@ jobs:
             }
       - name: Get Node.js version
         id: get_node_version
-        run: echo "::set-output name=node_version::$(node --version | sed -e 's/v//g')"
+        run: echo "node_version=$(node --version | sed -e 's/v//g')" >> $GITHUB_OUTPUT
       - run: sed -i -e "s/\(FROM node:\)[0-9.]*\(-.*\)/\1${{steps.get_node_version.outputs.node_version}}\2/g" Dockerfile
       - uses: dev-hato/actions-diff-pr-management@v1.0.5
         with:
@@ -164,8 +164,8 @@ jobs:
           npm_version=${result[1]}
           echo "Node.js version:" "${node_version}"
           echo "npm version:" "${npm_version}"
-          echo "::set-output name=node_version::${node_version}"
-          echo "::set-output name=npm_version::${npm_version}"
+          echo "node_version=${node_version}" >> $GITHUB_OUTPUT
+          echo "npm_version=${npm_version}" >> $GITHUB_OUTPUT
       - run: echo "TAG_NAME=${HEAD_REF//\//-}" >> "$GITHUB_ENV"
         env:
           HEAD_REF: ${{github.head_ref}}
@@ -187,7 +187,7 @@ jobs:
           mapfile -t result < <(docker compose run notify sh -c "${DOCKER_CMD}")
           node_version="${result[0]//v/}"
           echo "Node.js version:" "${node_version}"
-          echo "::set-output name=node_version::${node_version}"
+          echo "node_version=${node_version}" >> $GITHUB_OUTPUT
       - name: Update versions
         if: github.event_name != 'pull_request' || github.event.action != 'closed'
         run: |

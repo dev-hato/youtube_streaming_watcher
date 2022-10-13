@@ -92,9 +92,9 @@ jobs:
         id: check_needs_update
         run: |
           if [[ "$(jq -r '.dependencies.express' package.json)" =~ '${{ steps.get_types_express_version.outputs.result }}' ]]; then
-            echo "::set-output name=needs_update::false"
+            echo "needs_update=false" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=needs_update::true"
+            echo "needs_update=true" >> $GITHUB_OUTPUT
           fi
       - if: steps.check_needs_update.outputs.needs_update == 'true'
         run: yq -i -o json '.dependencies.express|="~${{ steps.get_types_express_version.outputs.result }}"' package.json
