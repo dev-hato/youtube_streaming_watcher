@@ -66,7 +66,7 @@ jobs:
           result="${result//'%'/'%25'}"
           result="${result//$'\n'/'%0A'}"
           result="${result//$'\r'/'%0D'}"
-          echo "::set-output name=result::${result}"
+          echo "result=${result}" >> "${GITHUB_OUTPUT}"
           exit ${exit_code}
       - name: Comment
         uses: actions/github-script@v6.3.2
