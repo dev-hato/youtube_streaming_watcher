@@ -69,7 +69,7 @@ jobs:
           echo "result=${result}" >> "${GITHUB_OUTPUT}"
           exit ${exit_code}
       - name: Comment
-        uses: actions/github-script@v6.3.2
+        uses: actions/github-script@v6.3.3
         env:
           RESULT: ${{steps.diff.outputs.result}}
         with:

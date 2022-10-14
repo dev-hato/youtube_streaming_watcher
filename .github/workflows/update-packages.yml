@@ -28,7 +28,7 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - name: Get @types/express version
-        uses: actions/github-script@v6.3.2
+        uses: actions/github-script@v6.3.3
         id: get_types_express_version
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -42,7 +42,7 @@ jobs:
           npm_version=$(jq -r '.engines.npm | ltrimstr("^")' package.json)
           npm install --prefer-offline --location=global "npm@${npm_version}"
           npm ci --prefer-offline
-      - uses: actions/github-script@v6.3.2
+      - uses: actions/github-script@v6.3.3
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
@@ -68,7 +68,7 @@ jobs:
               console.error(err.message)
               process.exit(1)
             }
-      - uses: actions/github-script@v6.3.2
+      - uses: actions/github-script@v6.3.3
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
