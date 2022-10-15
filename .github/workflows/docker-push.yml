@@ -95,7 +95,7 @@ jobs:
         id: get_node_version
         run: echo "node_version=$(node --version | sed -e 's/v//g')" >> "${GITHUB_OUTPUT}"
       - run: sed -i -e "s/\(FROM node:\)[0-9.]*\(-.*\)/\1${{steps.get_node_version.outputs.node_version}}\2/g" Dockerfile
-      - uses: dev-hato/actions-diff-pr-management@v1.0.5
+      - uses: dev-hato/actions-diff-pr-management@v1.0.6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: update-node
@@ -222,7 +222,7 @@ jobs:
           DEPENDABOT_NPM_VERSION="${{steps.get_dependabot_node_version.outputs.npm_version}}"
           npm install --prefer-offline --location=global "npm@${DEPENDABOT_NPM_VERSION}"
           npm install
-      - uses: dev-hato/actions-diff-pr-management@v1.0.5
+      - uses: dev-hato/actions-diff-pr-management@v1.0.6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: fix-version
