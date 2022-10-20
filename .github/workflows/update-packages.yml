@@ -100,7 +100,7 @@ jobs:
         run: yq -i -o json '.dependencies.express|="~${{ steps.get_types_express_version.outputs.result }}"' package.json
       - if: steps.check_needs_update.outputs.needs_update == 'true'
         run: npm install
-      - uses: dev-hato/actions-diff-pr-management@v1.0.6
+      - uses: dev-hato/actions-diff-pr-management@v1.0.7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: update-packages
