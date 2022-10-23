@@ -63,7 +63,7 @@
     "googleapis": "108.0.0",
     "rss-parser": "3.12.0",
     "sleep-promise": "9.1.0",
-    "twitter-api-v2": "1.12.8"
+    "twitter-api-v2": "1.12.9"
   },
   "engines": {
     "node": "^16.18.0 || ^16.16.0",
