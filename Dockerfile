@@ -30,7 +30,7 @@ COPY .node-version .
 COPY .npmignore .
 COPY .npmrc .
 COPY package*.json .
-RUN npm cache clear \
+RUN npm cache clear --force \
     && npm ci \
     && rm -rf /home/node/.npm
 COPY tsconfig.json .
