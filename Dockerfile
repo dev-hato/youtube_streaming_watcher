@@ -30,7 +30,8 @@ COPY .node-version .
 COPY .npmignore .
 COPY .npmrc .
 COPY package*.json .
-RUN npm ci \
+RUN npm cache clear \
+    && npm ci \
     && rm -rf /home/node/.npm
 COPY tsconfig.json .
 COPY lib/props/ lib/props/
