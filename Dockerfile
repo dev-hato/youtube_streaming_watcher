@@ -1,4 +1,4 @@
-FROM node:16.18.0-bullseye-slim AS base
+FROM node:16.16.0-bullseye-slim AS base
 
 RUN apt-get update \
     # hadolint ignore=DL3008
@@ -30,8 +30,7 @@ COPY .node-version .
 COPY .npmignore .
 COPY .npmrc .
 COPY package*.json .
-RUN npm cache clear --force \
-    && npm ci \
+RUN npm ci \
     && rm -rf /home/node/.npm
 COPY tsconfig.json .
 COPY lib/props/ lib/props/
