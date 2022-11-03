@@ -1,4 +1,4 @@
-const packages = require(`${process.env.GITHUB_WORKSPACE}/package.json`) // eslint @typescript-eslint/no-var-requires: 0
+const packages = require(`${process.env.GITHUB_WORKSPACE}/package.json`)
 
 module.exports = () => {
   const version = packages.dependencies['@types/express'].split('.')
