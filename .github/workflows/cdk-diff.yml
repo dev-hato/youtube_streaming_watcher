@@ -38,11 +38,9 @@ jobs:
     if: needs.check-cdk-diff.outputs.deploy-files == 'true'
     env:
       REPOSITORY: ${{github.repository}}
+      ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/youtube_streaming_watcher_cdk_diff
     steps:
       - uses: actions/checkout@v3.1.0
-      - env:
-          AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
-        run: bash "${GITHUB_WORKSPACE}/scripts/cdk_diff/cdk_diff/set_env.sh"
       - uses: aws-actions/configure-aws-credentials@v1.7.0
         with:
           role-to-assume: ${{ env.ROLE }}
