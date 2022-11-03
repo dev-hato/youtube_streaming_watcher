@@ -1,4 +1,4 @@
-const packages = require(`${process.env.GITHUB_WORKSPACE}/package.json`)
+const packages = require(`${process.env.GITHUB_WORKSPACE}/package.json`) // eslint no-var-requires: 0
 
 module.exports = () => {
   const version = packages.devDependencies['@types/node'].split('.')

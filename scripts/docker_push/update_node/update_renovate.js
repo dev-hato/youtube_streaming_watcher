@@ -1,5 +1,5 @@
 const fs = require('fs')
-const renovate = require(`${process.env.GITHUB_WORKSPACE}/renovate.json`)
+const renovate = require(`${process.env.GITHUB_WORKSPACE}/renovate.json`) // eslint no-var-requires: 0
 
 module.exports = () => {
   for (const rule of renovate.packageRules) {
