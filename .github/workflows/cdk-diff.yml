@@ -39,6 +39,7 @@ jobs:
     env:
       REPOSITORY: ${{github.repository}}
     steps:
+      - uses: actions/checkout@v3.1.0
       - env:
           AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
         run: bash "${GITHUB_WORKSPACE}/scripts/cdk_diff/cdk_diff/set_env.sh"
