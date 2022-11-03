@@ -21,6 +21,7 @@ jobs:
               - .github/workflows/cdk-deploy.yml
               - bin/cdk.ts
               - lib/**
+              - scripts/**
               - src/**
               - .node-version
               - cdk.json
@@ -34,12 +35,12 @@ jobs:
       id-token: write
     needs: check-cdk-diff
     if: needs.check-cdk-diff.outputs.deploy-files == 'true'
+    env:
+      REPOSITORY: ${{github.repository}}
     steps:
-      - run: |
-          ROLE="arn:aws:iam::${{ secrets.AWS_ACCOUNT }}"
-          ROLE+=":role/youtube_streaming_watcher_cdk_deploy"
-          echo "ROLE=${ROLE}" >> "${GITHUB_ENV}"
-          echo "REPOSITORY=${{github.repository}}" >> "${GITHUB_ENV}"
+      - env:
+          AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
+        run: bash "${GITHUB_WORKSPACE}/scripts/cdk_deploy/cdk_deploy/set_env.sh"
       - uses: aws-actions/configure-aws-credentials@v1.7.0
         with:
           role-to-assume: ${{ env.ROLE }}
@@ -49,10 +50,7 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
-      - run: |
-          npm_version=$(jq -r '.engines.npm | ltrimstr("^")' package.json)
-          npm install --prefer-offline --location=global "npm@${npm_version}"
-          npm ci --prefer-offline
+      - run: bash "${GITHUB_WORKSPACE}/scripts/npm_ci.sh"
       - run: npx cdk deploy --require-approval never
 
   cdk-diff-complete:

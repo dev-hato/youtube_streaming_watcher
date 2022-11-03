@@ -30,10 +30,8 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           result-encoding: string
           script: |
-            const package = require('./package.json')
-
-            const version = package.devDependencies['@types/node'].split('.')
-            return [version[0], version[1]].join('.')
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/docker_push/update_node/get_types_node_version.js`)
+            return script()
       - uses: actions/setup-node@v3.5.1
         with:
           node-version: ${{ steps.get_types_node_version.outputs.result }}
@@ -41,56 +39,23 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
-      - run: |
-          npm_version=$(jq -r '.engines.npm | ltrimstr("^")' package.json)
-          npm install --prefer-offline --location=global "npm@${npm_version}"
-          npm ci --prefer-offline
+      - run: bash "${GITHUB_WORKSPACE}/scripts/npm_ci.sh"
       - uses: actions/github-script@v6.3.3
+        env:
+          TYPE_NODE_VERSION: ${{ steps.get_types_node_version.outputs.result }}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const fs = require('fs')
-            const yaml = require('js-yaml')
-
-            const config_filename = '.github/dependabot.yml'
-            const config = yaml.load(fs.readFileSync(config_filename, 'utf8'))
-
-            for (const update of config.updates) {
-              if (update['package-ecosystem'] === 'docker') {
-                for (const ignore of update.ignore) {
-                  if (ignore['dependency-name'] === 'node') {
-                    ignore.versions[0] = '>${{ steps.get_types_node_version.outputs.result }}'
-                  }
-                }
-              }
-            }
-
-            try {
-              fs.writeFileSync(config_filename, "---\n" + yaml.dump(config), 'utf8')
-            } catch (err) {
-              console.error(err.message)
-              process.exit(1)
-            }
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/docker_push/update_node/update_dependabot.js`)
+            script()
       - uses: actions/github-script@v6.3.3
+        env:
+          TYPE_NODE_VERSION: ${{ steps.get_types_node_version.outputs.result }}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const fs = require('fs')
-
-            const renovate = require('./renovate.json')
-
-            for (const rule of renovate.packageRules) {
-              if (rule.matchPackageNames.includes('node')) {
-                rule.allowedVersions = '<=${{ steps.get_types_node_version.outputs.result }}'
-              }
-            }
-
-            try {
-              fs.writeFileSync('./renovate.json', JSON.stringify(renovate, null, "  ") + "\n", 'utf8')
-            } catch (err) {
-              console.error(err.message)
-              process.exit(1)
-            }
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/docker_push/update_node/update_renovate.js`)
+            script()
       - name: Get Node.js version
         id: get_node_version
         run: echo "node_version=$(node --version | sed -e 's/v//g')" >> "${GITHUB_OUTPUT}"
@@ -157,15 +122,7 @@ jobs:
       - name: Get Dependabot Node.js version
         if: github.event_name != 'pull_request' || github.event.action != 'closed'
         id: get_dependabot_node_version
-        run: |
-          DOCKER_CMD="node --version && npm --version"
-          mapfile -t result < <(docker run ghcr.io/dependabot/dependabot-core sh -c "${DOCKER_CMD}")
-          node_version="${result[0]//v/}"
-          npm_version=${result[1]}
-          echo "Node.js version:" "${node_version}"
-          echo "npm version:" "${npm_version}"
-          echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
-          echo "npm_version=${npm_version}" >> "${GITHUB_OUTPUT}"
+        run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_version/get_dependabot_node_version.sh"
       - run: echo "TAG_NAME=${HEAD_REF//\//-}" >> "$GITHUB_ENV"
         env:
           HEAD_REF: ${{github.head_ref}}
@@ -182,35 +139,14 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.action != 'closed'
         env:
           DOCKER_CONTENT_TRUST: 1
-        run: |
-          DOCKER_CMD="node --version"
-          mapfile -t result < <(docker compose run notify sh -c "${DOCKER_CMD}")
-          node_version="${result[0]//v/}"
-          echo "Node.js version:" "${node_version}"
-          echo "node_version=${node_version}" >> "${GITHUB_OUTPUT}"
+        run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_version/get_node_version.sh"
       - name: Update versions
         if: github.event_name != 'pull_request' || github.event.action != 'closed'
-        run: |
-          DEPENDABOT_NODE_VERSION="${{steps.get_dependabot_node_version.outputs.node_version}}"
-          DEPENDABOT_NPM_VERSION="${{steps.get_dependabot_node_version.outputs.npm_version}}"
-          NODE_VERSION="${{steps.get_node_version.outputs.node_version}}"
-          echo "${NODE_VERSION}" > .node-version
-
-          NODE_PATTERN="s/\"node\": \".*\"/\"node\": \"^${DEPENDABOT_NODE_VERSION}"
-
-          if [ "${DEPENDABOT_NODE_VERSION}" != "${NODE_VERSION}" ]
-          then
-            NODE_PATTERN+=" || ^${NODE_VERSION}"
-          fi
-
-          NODE_PATTERN+="\"/g"
-          sed -i -e "${NODE_PATTERN}" package.json
-
-          NPM_PATTERN_PACKAGE="s/\"npm\": \".*\"/\"npm\": \"^${DEPENDABOT_NPM_VERSION}\"/g"
-          sed -i -e "${NPM_PATTERN_PACKAGE}" package.json
-
-          NPM_PATTERN_DOCKER="s/npm@[0-9.]*/npm@${DEPENDABOT_NPM_VERSION}/g"
-          sed -i -e "${NPM_PATTERN_DOCKER}" Dockerfile
+        env:
+          DEPENDABOT_NODE_VERSION: ${{steps.get_dependabot_node_version.outputs.node_version}}
+          DEPENDABOT_NPM_VERSION: ${{steps.get_dependabot_node_version.outputs.npm_version}}
+          NODE_VERSION: ${{steps.get_node_version.outputs.node_version}}
+        run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_version/update_versions.sh"
       - uses: actions/setup-node@v3.5.1
         if: github.event_name != 'pull_request' || github.event.action != 'closed'
         with:
@@ -218,10 +154,9 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - if: github.event_name != 'pull_request' || github.event.action != 'closed'
-        run: |
-          DEPENDABOT_NPM_VERSION="${{steps.get_dependabot_node_version.outputs.npm_version}}"
-          npm install --prefer-offline --location=global "npm@${DEPENDABOT_NPM_VERSION}"
-          npm install
+        env:
+          DEPENDABOT_NPM_VERSION: ${{steps.get_dependabot_node_version.outputs.npm_version}}
+        run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_version/npm_install.sh"
       - uses: dev-hato/actions-diff-pr-management@v1.0.8
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -259,26 +194,10 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       # jscpd:ignore-end
-      - run: |
-          dockle_version="$(cat .dockle-version)"
-          curl -L -o dockle.deb "https://github.com/goodwithtech/dockle/releases/download/v${dockle_version}/dockle_${dockle_version}_Linux-64bit.deb"
-          sudo dpkg -i dockle.deb
+      - run: ash "${GITHUB_WORKSPACE}/scripts/docker_push/dockle/install_dockle.sh"
       - run: docker compose pull
       - run: docker compose up -d
-      - run: |
-          for image_name in $(docker compose images | awk 'OFS=":" {print $2,$3}' | tail -n +2); do
-            cmd="dockle --exit-code 1 --ak AWS_ACCESS_KEY_ID --ak AWS_SECRET_ACCESS_KEY "
-
-            if [[ "${image_name}" =~ "db" ]]; then
-              cmd+="-i CIS-DI-0009 "
-            elif [[ "${image_name}" =~ "reply" ]] || [[ "${image_name}" =~ "notify" ]]; then
-              cmd+="-i DKL-LI-0003 "
-            fi
-
-            cmd+="${image_name}"
-            echo "> ${cmd}"
-            eval "${cmd}"
-          done
+      - run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/dockle/run_dockle.sh"
 
   docker-push-complete:
     runs-on: ubuntu-latest
