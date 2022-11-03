@@ -194,7 +194,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
       - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       # jscpd:ignore-end
-      - run: ash "${GITHUB_WORKSPACE}/scripts/docker_push/dockle/install_dockle.sh"
+      - run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/dockle/install_dockle.sh"
       - run: docker compose pull
       - run: docker compose up -d
       - run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/dockle/run_dockle.sh"
