@@ -2,7 +2,7 @@ const fs = require('fs')
 const yaml = require('js-yaml')
 
 module.exports = () => {
-  const configFilename = `${process.env.GITHUB_WORKSPACE}/github/dependabot.yml`
+  const configFilename = `${process.env.GITHUB_WORKSPACE}/.github/dependabot.yml`
   const config = yaml.load(fs.readFileSync(configFilename, 'utf8'))
 
   for (const update of config.updates) {
