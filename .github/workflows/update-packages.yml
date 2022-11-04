@@ -34,68 +34,30 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           result-encoding: string
           script: |
-            const package = require('./package.json')
-
-            const version = package.dependencies['@types/express'].split('.')
-            return [version[0], version[1]].join('.')
-      - run: |
-          npm_version=$(jq -r '.engines.npm | ltrimstr("^")' package.json)
-          npm install --prefer-offline --location=global "npm@${npm_version}"
-          npm ci --prefer-offline
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_packages/update_packages/get_types_express_version.js`)
+            return script()
+      - run: bash "${GITHUB_WORKSPACE}/scripts/npm_ci.sh"
       - uses: actions/github-script@v6.3.3
+        env:
+          TYPES_EXPRESS_VERSION: ${{ steps.get_types_express_version.outputs.result }}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const fs = require('fs')
-            const yaml = require('js-yaml')
-
-            const config_filename = '.github/dependabot.yml'
-            const config = yaml.load(fs.readFileSync(config_filename, 'utf8'))
-
-            for (const update of config.updates) {
-              if (update['package-ecosystem'] === 'npm') {
-                for (const ignore of update.ignore) {
-                  if (ignore['dependency-name'] === 'express') {
-                    ignore.versions[0] = '>${{ steps.get_types_express_version.outputs.result }}'
-                  }
-                }
-              }
-            }
-
-            try {
-              fs.writeFileSync(config_filename, "---\n" + yaml.dump(config), 'utf8')
-            } catch (err) {
-              console.error(err.message)
-              process.exit(1)
-            }
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_packages/update_packages/update_dependabot.js`)
+            script()
       - uses: actions/github-script@v6.3.3
+        env:
+          TYPES_EXPRESS_VERSION: ${{ steps.get_types_express_version.outputs.result }}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const fs = require('fs')
-
-            const renovate = require('./renovate.json')
-
-            for (const rule of renovate.packageRules) {
-              if (rule.matchPackageNames.includes('express')) {
-                rule.allowedVersions = '<=${{ steps.get_types_express_version.outputs.result }}'
-              }
-            }
-
-            try {
-              fs.writeFileSync('./renovate.json', JSON.stringify(renovate, null, "  ") + "\n", 'utf8')
-            } catch (err) {
-              console.error(err.message)
-              process.exit(1)
-            }
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_packages/update_packages/update_renovate.js`)
+            script()
       - name: Check needs update
         id: check_needs_update
-        run: |
-          if [[ "$(jq -r '.dependencies.express' package.json)" =~ '${{ steps.get_types_express_version.outputs.result }}' ]]; then
-            echo "needs_update=false" >> "${GITHUB_OUTPUT}"
-          else
-            echo "needs_update=true" >> "${GITHUB_OUTPUT}"
-          fi
+        env:
+          TYPES_EXPRESS_VERSION: ${{ steps.get_types_express_version.outputs.result }}
+        run: bash "${GITHUB_WORKSPACE}/scripts/update_packages/update_packages/check_needs_update.sh"
       - if: steps.check_needs_update.outputs.needs_update == 'true'
         run: yq -i -o json '.dependencies.express|="~${{ steps.get_types_express_version.outputs.result }}"' package.json
       - if: steps.check_needs_update.outputs.needs_update == 'true'

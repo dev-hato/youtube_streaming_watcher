@@ -21,10 +21,7 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
-      - run: |
-          npm_version=$(jq -r '.engines.npm | ltrimstr("^")' package.json)
-          npm install --prefer-offline --location=global "npm@${npm_version}"
-          npm ci --prefer-offline
+      - run: bash "${GITHUB_WORKSPACE}/scripts/npm_ci.sh"
       - name: Get latest Lambda support version
         id: get_latest_lambda_support_version
         uses: actions/github-script@v6.3.3
@@ -32,75 +29,27 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           result-encoding: string
           script: |
-            const axios = require('axios')
-            const cheerio = require('cheerio')
-            const {Text} = require('domhandler')
-
-            const response = await axios.get('https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/lambda-runtimes.html')
-            const $ = cheerio.load(response.data)
-            const versions = []
-
-            for (const element of $('table tbody tr:first-child td:first-child p').get()) {
-                const textElement = element.children[0]
-                if (textElement instanceof Text && textElement.data.startsWith('Node')) {
-                    const texts = textElement.data.split(' ')
-                    if (1 < texts.length) {
-                        versions.push(Number(texts[1]))
-                    }
-                }
-            }
-
-            return Math.max(...versions)
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_major_node/update_major_node/get_latest_lambda_support_version.js`)
+            return await script()
       - uses: actions/github-script@v6.3.3
+        env:
+          LAMBDA_VERSION: ${{steps.get_latest_lambda_support_version.outputs.result}}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const fs = require('fs')
-            const yaml = require('js-yaml')
-
-            const config_filename = '.github/dependabot.yml'
-            const config = yaml.load(fs.readFileSync(config_filename, 'utf8'))
-
-            for (const update of config.updates) {
-              if (update['package-ecosystem'] === 'npm') {
-                for (const ignore of update.ignore) {
-                  if (ignore['dependency-name'] === '@types/node') {
-                    ignore.versions[0] = '>${{steps.get_latest_lambda_support_version.outputs.result}}'
-                  }
-                }
-              }
-            }
-
-            try {
-              fs.writeFileSync(config_filename, "---\n" + yaml.dump(config), 'utf8')
-            } catch (err) {
-              console.error(err.message)
-              process.exit(1)
-            }
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_major_node/update_major_node/update_dependabot.js`)
+            script()
       - uses: actions/github-script@v6.3.3
+        env:
+          LAMBDA_VERSION: ${{steps.get_latest_lambda_support_version.outputs.result}}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const fs = require('fs')
-
-            const renovate = require('./renovate.json')
-
-            for (const rule of renovate.packageRules) {
-              if (rule.matchPackageNames.includes('@types/node')) {
-                rule.allowedVersions = '<=${{steps.get_latest_lambda_support_version.outputs.result}}'
-              }
-            }
-
-            try {
-              fs.writeFileSync('./renovate.json', JSON.stringify(renovate, null, "  ") + "\n", 'utf8')
-            } catch (err) {
-              console.error(err.message)
-              process.exit(1)
-            }
-      - run: |
-          if grep '^${{steps.get_latest_lambda_support_version.outputs.result}}' .node-version; then
-            exit 0
-          fi
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_major_node/update_major_node/update_renovate.js`)
+            script()
+      - env:
+          LAMBDA_VERSION: ${{steps.get_latest_lambda_support_version.outputs.result}}
+        run: bash "${GITHUB_WORKSPACE}/scripts/update_major_node/update_major_node/exit.sh"
       - uses: actions/setup-node@v3.5.1
         with:
           node-version: ${{steps.get_latest_lambda_support_version.outputs.result}}
