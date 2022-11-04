@@ -104,9 +104,9 @@ jobs:
       - uses: actions/setup-node@v3.5.1
         with:
           node-version: ${{steps.get_latest_lambda_support_version.outputs.result}}
-      #- uses: dev-hato/actions-diff-pr-management@v1.0.7
-      #  with:
-      #    github-token: ${{secrets.GITHUB_TOKEN}}
-      #    branch-name-prefix: update-major-node
-      #    pr-title-prefix: "@types/nodeのアップデート条件を修正してあげたよ！"
-      #    repo-name: dev-hato/youtube_streaming_watcher
+      - uses: dev-hato/actions-diff-pr-management@v1.0.7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          branch-name-prefix: update-major-node
+          pr-title-prefix: "@types/nodeのアップデート条件を修正してあげたよ！"
+          repo-name: dev-hato/youtube_streaming_watcher
