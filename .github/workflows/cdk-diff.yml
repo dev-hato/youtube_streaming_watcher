@@ -21,6 +21,7 @@ jobs:
               - .github/workflows/cdk-diff.yml
               - bin/cdk.ts
               - lib/**
+              - scripts/**
               - src/**
               - .node-version
               - cdk.json
@@ -35,12 +36,11 @@ jobs:
       pull-requests: write
     needs: check-cdk-diff
     if: needs.check-cdk-diff.outputs.deploy-files == 'true'
+    env:
+      REPOSITORY: ${{github.repository}}
+      ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/youtube_streaming_watcher_cdk_diff
     steps:
-      - run: |
-          ROLE="arn:aws:iam::${{ secrets.AWS_ACCOUNT }}"
-          ROLE+=":role/youtube_streaming_watcher_cdk_diff"
-          echo "ROLE=${ROLE}" >> "${GITHUB_ENV}"
-          echo "REPOSITORY=${{github.repository}}" >> "${GITHUB_ENV}"
+      - uses: actions/checkout@v3.1.0
       - uses: aws-actions/configure-aws-credentials@v1.7.0
         with:
           role-to-assume: ${{ env.ROLE }}
@@ -50,24 +50,12 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
-      - run: |
-          npm_version=$(jq -r '.engines.npm | ltrimstr("^")' package.json)
-          npm install --prefer-offline --location=global "npm@${npm_version}"
-          npm ci --prefer-offline
+      - run: bash "${GITHUB_WORKSPACE}/scripts/npm_ci.sh"
       # 差分があったときは差分を出力する
       - name: Show diff
         id: diff
         continue-on-error: true
-        run: |
-          set +e
-          result=$(npx cdk diff 2>&1)
-          exit_code=${?}
-          echo -e "${result}"
-          result="${result//'%'/'%25'}"
-          result="${result//$'\n'/'%0A'}"
-          result="${result//$'\r'/'%0D'}"
-          echo "result=${result}" >> "${GITHUB_OUTPUT}"
-          exit ${exit_code}
+        run: bash "${GITHUB_WORKSPACE}/scripts/cdk_diff/cdk_diff/diff.sh"
       - name: Comment
         uses: actions/github-script@v6.3.3
         env:
@@ -75,16 +63,8 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const RESULT = process.env["RESULT"]
-            let body = 'インフラの差分\n<details>\n\n```\n'
-            body += RESULT.replace(/%0D/g, '\r').replace(/%0A/g, '\n').replace(/%25/g, '%').trim()
-            body += '\n```\n\n</details>'
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body,
-            })
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/cdk_diff/cdk_diff/comment.js`)
+            await script({github, context})
       - if: steps.diff.outcome == 'failure'
         run: exit 1
 
