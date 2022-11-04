@@ -73,6 +73,7 @@ jobs:
     env:
       DOCKER_BUILDKIT: 1
       COMPOSE_DOCKER_CLI_BUILD: 1
+      REPOSITORY: ${{github.repository}}
     permissions:
       contents: read
       packages: write
@@ -95,7 +96,6 @@ jobs:
         env:
           HEAD_REF: ${{github.head_ref}}
         if: ${{ github.event_name == 'pull_request' }}
-      - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       # jscpd:ignore-end
       - run: cp .env.example .env
       - run: cat .env >> "$GITHUB_ENV"
@@ -114,6 +114,8 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    env:
+      REPOSITORY: ${{github.repository}}
     steps:
       - uses: actions/checkout@v3.1.0
         with:
@@ -127,7 +129,6 @@ jobs:
         env:
           HEAD_REF: ${{github.head_ref}}
         if: github.event_name == 'pull_request'
-      - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       - run: cp .env.example .env
       - run: cat .env >> "$GITHUB_ENV"
       - run: docker compose pull
@@ -183,6 +184,7 @@ jobs:
       - docker-push
     env:
       DOCKER_CONTENT_TRUST: 1
+      REPOSITORY: ${{github.repository}}
     steps:
       - uses: actions/checkout@v3.1.0
       - run: cp .env.example .env
@@ -192,7 +194,6 @@ jobs:
         env:
           HEAD_REF: ${{github.head_ref}}
         if: ${{ github.event_name == 'pull_request' }}
-      - run: echo "REPOSITORY=${{github.repository}}" >> "$GITHUB_ENV"
       # jscpd:ignore-end
       - run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/dockle/install_dockle.sh"
       - run: docker compose pull
