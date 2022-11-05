@@ -60,7 +60,7 @@ jobs:
         id: get_node_version
         run: echo "node_version=$(node --version | sed -e 's/v//g')" >> "${GITHUB_OUTPUT}"
       - run: sed -i -e "s/\(FROM node:\)[0-9.]*\(-.*\)/\1${{steps.get_node_version.outputs.node_version}}\2/g" Dockerfile
-      - uses: dev-hato/actions-diff-pr-management@v1.0.7
+      - uses: dev-hato/actions-diff-pr-management@v1.0.8
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: update-node
