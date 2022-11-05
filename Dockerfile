@@ -3,7 +3,7 @@ FROM node:16.18.0-bullseye-slim AS base
 RUN apt-get update \
     # hadolint ignore=DL3008
     && apt-get install -y --no-install-recommends curl \
-    && npm install --loglevel verbose --location=global npm@8.19.2 \
+    && npm install --location=global npm@8.19.2 \
     && find / -type f -perm /u+s -ignore_readdir_race -exec chmod u-s {} \; \
     && find / -type f -perm /g+s -ignore_readdir_race -exec chmod g-s {} \; \
     && rm -rf /root/.npm /tmp /var/lib/apt/lists
@@ -30,7 +30,8 @@ COPY .node-version .
 COPY .npmignore .
 COPY .npmrc .
 COPY package*.json .
-RUN npm ci --loglevel verbose \
+RUN npm cache clear --force \
+    && npm ci \
     && rm -rf /home/node/.npm
 COPY tsconfig.json .
 COPY lib/props/ lib/props/
