@@ -79,3 +79,7 @@ jobs:
         run: exit 0
       - if: ${{ !(github.repository != github.event.pull_request.head.repo.full_name || needs.check-cdk-diff.outputs.deploy-files == 'false' || needs.cdk-diff.result == 'success') }}
         run: exit 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
