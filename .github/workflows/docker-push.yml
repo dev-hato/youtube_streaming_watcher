@@ -211,3 +211,7 @@ jobs:
         run: exit 0
       - if: ${{ !(needs.update-version.result == 'success' && needs.dockle.result == 'success') }}
         run: exit 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
