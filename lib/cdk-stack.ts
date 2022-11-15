@@ -126,7 +126,7 @@ export class CdkStack extends Stack {
     const provider = new iam.OpenIdConnectProvider(this, 'OIDCProvider-github', {
       url: 'https://token.actions.githubusercontent.com',
       clientIds: [oidcAud],
-      thumbprints: ['6938FD4D98BAB03FAADB97B34396831E3780AEA1'],
+      thumbprints: ['6938FD4D98BAB03FAADB97B34396831E3780AEA1']
     })
 
     const qualifier: string = this.node.tryGetContext(BOOTSTRAP_QUALIFIER_CONTEXT) ?? DefaultStackSynthesizer.DEFAULT_QUALIFIER
