@@ -3,7 +3,7 @@ const cheerio = require('cheerio')
 const { Text } = require('domhandler')
 
 module.exports = async () => {
-  const response = await axios.get('https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/lambda-runtimes.html')
+  const response = await axios.get('https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html')
   const $ = cheerio.load(response.data)
   const versions = []
 
