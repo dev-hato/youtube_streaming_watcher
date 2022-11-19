@@ -30,8 +30,7 @@ COPY .node-version .
 COPY .npmignore .
 COPY .npmrc .
 COPY package*.json .
-RUN npm ci \
-    && rm -rf /home/node/.npm
+RUN npm ci
 COPY tsconfig.json .
 COPY lib/props/ lib/props/
 COPY src/common/ src/common/
