@@ -43,15 +43,7 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_packages/update_packages/update_dependabot.js`)
-            script()
-      - uses: actions/github-script@v6.3.3
-        env:
-          TYPES_EXPRESS_VERSION: ${{ steps.get_types_express_version.outputs.result }}
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_packages/update_packages/update_renovate.js`)
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_packages/update_packages/update.js`)
             script()
       - name: Check needs update
         id: check_needs_update
@@ -59,9 +51,7 @@ jobs:
           TYPES_EXPRESS_VERSION: ${{ steps.get_types_express_version.outputs.result }}
         run: bash "${GITHUB_WORKSPACE}/scripts/update_packages/update_packages/check_needs_update.sh"
       - if: steps.check_needs_update.outputs.needs_update == 'true'
-        run: yq -i -o json '.dependencies.express|="~${{ steps.get_types_express_version.outputs.result }}"' package.json
-      - if: steps.check_needs_update.outputs.needs_update == 'true'
-        run: npm install
+        run: bash "${GITHUB_WORKSPACE}/scripts/update_packages/update_packages/update.sh"
       - uses: dev-hato/actions-diff-pr-management@v1.0.8
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}

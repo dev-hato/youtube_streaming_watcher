@@ -2,6 +2,7 @@
 
 set +e
 
+bash "${GITHUB_WORKSPACE}/scripts/npm_ci.sh"
 result=$(npx cdk diff 2>&1)
 exit_code=${?}
 echo -e "${result}"

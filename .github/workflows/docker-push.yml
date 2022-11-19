@@ -39,27 +39,15 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
-      - run: bash "${GITHUB_WORKSPACE}/scripts/npm_ci.sh"
+      - run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_node/update_docker_version.sh"
       - uses: actions/github-script@v6.3.3
         env:
           TYPE_NODE_VERSION: ${{ steps.get_types_node_version.outputs.result }}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/docker_push/update_node/update_dependabot.js`)
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/docker_push/update_node/update.js`)
             script()
-      - uses: actions/github-script@v6.3.3
-        env:
-          TYPE_NODE_VERSION: ${{ steps.get_types_node_version.outputs.result }}
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/docker_push/update_node/update_renovate.js`)
-            script()
-      - name: Get Node.js version
-        id: get_node_version
-        run: echo "node_version=$(node --version | sed -e 's/v//g')" >> "${GITHUB_OUTPUT}"
-      - run: sed -i -e "s/\(FROM node:\)[0-9.]*\(-.*\)/\1${{steps.get_node_version.outputs.node_version}}\2/g" Dockerfile
       - uses: dev-hato/actions-diff-pr-management@v1.0.8
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -97,8 +85,7 @@ jobs:
           HEAD_REF: ${{github.head_ref}}
         if: ${{ github.event_name == 'pull_request' }}
       # jscpd:ignore-end
-      - run: cp .env.example .env
-      - run: cat .env >> "$GITHUB_ENV"
+      - run: cat .env.example >> "$GITHUB_ENV"
       - name: Build and push (main)
         uses: docker/bake-action@v2.3.0
         env:
@@ -129,24 +116,14 @@ jobs:
         env:
           HEAD_REF: ${{github.head_ref}}
         if: github.event_name == 'pull_request'
-      - run: cp .env.example .env
-      - run: cat .env >> "$GITHUB_ENV"
-      - run: docker compose pull
-        if: github.event_name != 'pull_request' || github.event.action != 'closed'
-        env:
-          DOCKER_CONTENT_TRUST: 1
+      - run: cat .env.example >> "$GITHUB_ENV"
       - name: Get Node.js version
         id: get_node_version
         if: github.event_name != 'pull_request' || github.event.action != 'closed'
         env:
           DOCKER_CONTENT_TRUST: 1
-        run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_version/get_node_version.sh"
-      - name: Update versions
-        if: github.event_name != 'pull_request' || github.event.action != 'closed'
-        env:
           DEPENDABOT_NODE_VERSION: ${{steps.get_dependabot_node_version.outputs.node_version}}
           DEPENDABOT_NPM_VERSION: ${{steps.get_dependabot_node_version.outputs.npm_version}}
-          NODE_VERSION: ${{steps.get_node_version.outputs.node_version}}
         run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_version/update_versions.sh"
       - uses: actions/setup-node@v3.5.1
         if: github.event_name != 'pull_request' || github.event.action != 'closed'
@@ -157,7 +134,7 @@ jobs:
       - if: github.event_name != 'pull_request' || github.event.action != 'closed'
         env:
           DEPENDABOT_NPM_VERSION: ${{steps.get_dependabot_node_version.outputs.npm_version}}
-        run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_version/npm_install.sh"
+        run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_version/fix.sh"
       - uses: dev-hato/actions-diff-pr-management@v1.0.8
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -187,17 +164,12 @@ jobs:
       REPOSITORY: ${{github.repository}}
     steps:
       - uses: actions/checkout@v3.1.0
-      - run: cp .env.example .env
-      - run: cat .env >> "$GITHUB_ENV"
       # jscpd:ignore-start
       - run: echo "TAG_NAME=${HEAD_REF//\//-}" >> "$GITHUB_ENV"
         env:
           HEAD_REF: ${{github.head_ref}}
         if: ${{ github.event_name == 'pull_request' }}
       # jscpd:ignore-end
-      - run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/dockle/install_dockle.sh"
-      - run: docker compose pull
-      - run: docker compose up -d
       - run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/dockle/run_dockle.sh"
 
   docker-push-complete:

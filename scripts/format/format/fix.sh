@@ -2,3 +2,4 @@
 
 bash "${GITHUB_WORKSPACE}/scripts/install_npm.sh"
 npm install
+npm run fix

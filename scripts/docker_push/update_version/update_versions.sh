@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+docker compose pull
+
+DOCKER_CMD="node --version"
+mapfile -t result < <(docker compose run notify sh -c "${DOCKER_CMD}")
+NODE_VERSION="${result[0]//v/}"
+echo "Node.js version:" "${NODE_VERSION}"
+
 echo "${NODE_VERSION}" >.node-version
 
 NODE_PATTERN="s/\"node\": \".*\"/\"node\": \"^${DEPENDABOT_NODE_VERSION}"

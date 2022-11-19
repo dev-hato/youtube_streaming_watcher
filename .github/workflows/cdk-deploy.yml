@@ -48,8 +48,7 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
-      - run: bash "${GITHUB_WORKSPACE}/scripts/npm_ci.sh"
-      - run: npx cdk deploy --require-approval never
+      - run: bash "${GITHUB_WORKSPACE}/scripts/cdk_deploy/cdk_deploy/deploy.sh"
 
   cdk-diff-complete:
     runs-on: ubuntu-latest
