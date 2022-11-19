@@ -136,7 +136,7 @@ jobs:
       - if: github.event_name != 'pull_request' || github.event.action != 'closed'
         env:
           DEPENDABOT_NPM_VERSION: ${{steps.get_dependabot_node_version.outputs.npm_version}}
-        run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_version/fix.sh"
+        run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_version/npm_install.sh"
       - uses: dev-hato/actions-diff-pr-management@v1.0.8
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
