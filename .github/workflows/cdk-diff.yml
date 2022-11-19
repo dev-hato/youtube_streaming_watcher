@@ -50,7 +50,6 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
-      - run: bash "${GITHUB_WORKSPACE}/scripts/npm_ci.sh"
       # 差分があったときは差分を出力する
       - name: Show diff
         id: diff

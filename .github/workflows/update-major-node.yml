@@ -42,19 +42,13 @@ jobs:
             return await script()
       - uses: actions/github-script@v6.3.3
         env:
-          LAMBDA_VERSION: ${{steps.get_latest_lambda_support_version.outputs.result}}
+          PACKAGE_ECOSYSTEM: npm
+          MATCH_PACKAGE_NAME: "@types/node"
+          MAX_ALLOWED_VERSION: ${{steps.get_latest_lambda_support_version.outputs.result}}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_major_node/update_major_node/update_dependabot.js`)
-            script()
-      - uses: actions/github-script@v6.3.3
-        env:
-          LAMBDA_VERSION: ${{steps.get_latest_lambda_support_version.outputs.result}}
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_major_node/update_major_node/update_renovate.js`)
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_config.js`)
             script()
       - env:
           LAMBDA_VERSION: ${{steps.get_latest_lambda_support_version.outputs.result}}
