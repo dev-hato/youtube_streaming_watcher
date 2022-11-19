@@ -43,7 +43,7 @@ jobs:
       - uses: actions/github-script@v6.3.3
         env:
           PACKAGE_ECOSYSTEM: npm
-          MATCH_PACKAGE_NAME: @types/node
+          MATCH_PACKAGE_NAME: "@types/node"
           MAX_ALLOWED_VERSION: ${{steps.get_latest_lambda_support_version.outputs.result}}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
