@@ -13,8 +13,8 @@ services:
       x-bake:
         platforms:
           - linux/amd64
-          - linux/arm64
     image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/notify:${TAG_NAME:-latest}
+    platform: linux/amd64
     env_file: .env
     depends_on:
       db:
@@ -31,8 +31,8 @@ services:
       x-bake:
         platforms:
           - linux/amd64
-          - linux/arm64
     image: ghcr.io/${REPOSITORY:-dev-hato/youtube_streaming_watcher}/reply:${TAG_NAME:-latest}
+    platform: linux/amd64
     environment:
       NODE_OPTIONS: ${NODE_OPTIONS}
       SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
