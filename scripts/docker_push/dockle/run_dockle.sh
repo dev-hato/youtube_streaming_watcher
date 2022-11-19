@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cat .env.example >> "$GITHUB_ENV"
+bash "${GITHUB_WORKSPACE}/scripts/docker_push/set_env.sh"
 
 dockle_version="$(cat .dockle-version)"
 curl -L -o dockle.deb "https://github.com/goodwithtech/dockle/releases/download/v${dockle_version}/dockle_${dockle_version}_Linux-64bit.deb"

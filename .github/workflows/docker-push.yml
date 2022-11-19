@@ -42,11 +42,13 @@ jobs:
       - run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_node/update_docker_version.sh"
       - uses: actions/github-script@v6.3.3
         env:
-          TYPE_NODE_VERSION: ${{ steps.get_types_node_version.outputs.result }}
+          PACKAGE_ECOSYSTEM: docker
+          MATCH_PACKAGE_NAME: node
+          MAX_ALLOWED_VERSION: ${{ steps.get_types_node_version.outputs.result }}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/docker_push/update_node/update.js`)
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_config.js`)
             script()
       - uses: dev-hato/actions-diff-pr-management@v1.0.8
         with:

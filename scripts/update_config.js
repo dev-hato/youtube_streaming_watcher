@@ -7,10 +7,10 @@ module.exports = () => {
   const config = yaml.load(fs.readFileSync(configFilename, 'utf8'))
 
   for (const update of config.updates) {
-    if (update['package-ecosystem'] === 'docker') {
+    if (update['package-ecosystem'] === process.env.PACKAGE_ECOSYSTEM) {
       for (const ignore of update.ignore) {
-        if (ignore['dependency-name'] === 'node') {
-          ignore.versions[0] = `>${process.env.TYPE_NODE_VERSION}`
+        if (ignore['dependency-name'] === process.env.MATCH_PACKAGE_NAME) {
+          ignore.versions[0] = `>${process.env.MAX_ALLOWED_VERSION}`
         }
       }
     }
@@ -24,8 +24,8 @@ module.exports = () => {
   }
 
   for (const rule of renovate.packageRules) {
-    if (rule.matchPackageNames.includes('node')) {
-      rule.allowedVersions = `<=${process.env.TYPE_NODE_VERSION}`
+    if (rule.matchPackageNames.includes(process.env.MATCH_PACKAGE_NAME)) {
+      rule.allowedVersions = `<=${process.env.MAX_ALLOWED_VERSION}`
     }
   }
 
