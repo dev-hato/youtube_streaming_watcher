@@ -53,6 +53,8 @@ jobs:
           TYPES_EXPRESS_VERSION: ${{ steps.get_types_express_version.outputs.result }}
         run: bash "${GITHUB_WORKSPACE}/scripts/update_packages/update_packages/check_needs_update.sh"
       - if: steps.check_needs_update.outputs.needs_update == 'true'
+        env:
+          EXPRESS_VERSION: ${{ steps.get_types_express_version.outputs.result }}
         run: bash "${GITHUB_WORKSPACE}/scripts/update_packages/update_packages/update.sh"
       - uses: dev-hato/actions-diff-pr-management@v1.0.8
         with:
