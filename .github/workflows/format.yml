@@ -30,7 +30,7 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: bash "${GITHUB_WORKSPACE}/scripts/format/format/fix.sh"
-      - uses: dev-hato/actions-diff-pr-management@v1.0.9
+      - uses: dev-hato/actions-diff-pr-management@v1.1.0
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: fix-format
