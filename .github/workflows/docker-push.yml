@@ -55,7 +55,6 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: update-node
           pr-title-prefix: nodeをアップデートしてあげたよ！
-          repo-name: ${{ github.event.pull_request.head.repo.full_name }}
 
   docker-push:
     runs-on: ubuntu-latest
@@ -142,7 +141,6 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: fix-version
           pr-title-prefix: nodeをアップデートしてあげたよ！
-          repo-name: ${{ github.event.pull_request.head.repo.full_name }}
 
   update-dockle:
     runs-on: ubuntu-latest
