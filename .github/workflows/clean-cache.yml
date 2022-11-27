@@ -8,44 +8,13 @@ jobs:
   clean-cache:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3.1.0
       - uses: actions/github-script@v6.3.3
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const actionsGetActionsCacheUsageParams = {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            }
-            console.log('call actions.getActionsCacheUsage', actionsGetActionsCacheUsageParams)
-            const actionsCacheUsage = await github.rest.actions.getActionsCacheUsage(actionsGetActionsCacheUsageParams)
-            console.log(actionsCacheUsage.data.active_caches_size_in_bytes)
-
-            if (actionsCacheUsage.data.active_caches_size_in_bytes <= 9 * 1024 * 1024 * 1024) {
-              return
-            }
-
-            const actionsGetActionsCacheListParams = {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sort: 'last_accessed_at',
-              direction: 'asc',
-            }
-            console.log('call actions.getActionsCacheList', actionsGetActionsCacheListParams)
-            const actionsGetActionsCacheList = await github.rest.actions.getActionsCacheList(actionsGetActionsCacheListParams)
-            const actionCaches = actionsGetActionsCacheList.data.actions_caches
-            console.log(actionCaches[0].size_in_bytes)
-
-            if (actionCaches.length < 1) {
-              return
-            }
-
-            const actionsDeleteActionsCacheByKey = {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              key: actionCaches[0].key,
-            }
-            console.log('call actions.deleteActionsCacheByKey', actionsDeleteActionsCacheByKey)
-            await github.rest.actions.deleteActionsCacheByKey(actionsDeleteActionsCacheByKey)
+            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/clean_cache/clean_cache/clean-cache.js`)
+            await script({github, context})
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
