@@ -1,4 +1,4 @@
-module.exports = async ({github, context}) => {
+module.exports = async ({ github, context }) => {
   while (true) {
     const actionsGetActionsCacheUsageParams = {
       owner: context.repo.owner,
