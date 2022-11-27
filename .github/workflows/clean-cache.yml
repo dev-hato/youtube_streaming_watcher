@@ -32,11 +32,11 @@ jobs:
             console.log('call actions.getActionsCacheList', actionsGetActionsCacheListParams)
             const actionsGetActionsCacheList = await github.rest.actions.getActionsCacheList(actionsGetActionsCacheListParams)
             const actionCaches = actionsGetActionsCacheList.data.actions_caches
-            
+
             if (actionCaches.length < 1) {
               return
             }
-            
+
             const actionsDeleteActionsCacheByKey = {
               owner: context.repo.owner,
               repo: context.repo.repo,
