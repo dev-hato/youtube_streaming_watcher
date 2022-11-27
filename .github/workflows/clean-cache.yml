@@ -18,17 +18,32 @@ jobs:
             }
             console.log('call actions.getActionsCacheUsage', actionsGetActionsCacheUsageParams)
             const actionsCacheUsage = await github.rest.actions.getActionsCacheUsage(actionsGetActionsCacheUsageParams)
+
             if (9 * 1024 * 1024 * 1024 < actionsCacheUsage.data.active_caches_size_in_bytes) {
-              const actionsGetActionsCacheListParams = {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                sort: 'last_accessed_at',
-                direction: 'asc',
-              }
-              console.log('call actions.getActionsCacheList', actionsGetActionsCacheListParams)
-              const actionsGetActionsCacheList = await github.rest.actions.getActionsCacheList(actionsGetActionsCacheListParams)
-              console.log(actionsGetActionsCacheList.data.actions_caches[0].key)
+              return
             }
+
+            const actionsGetActionsCacheListParams = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sort: 'last_accessed_at',
+              direction: 'asc',
+            }
+            console.log('call actions.getActionsCacheList', actionsGetActionsCacheListParams)
+            const actionsGetActionsCacheList = await github.rest.actions.getActionsCacheList(actionsGetActionsCacheListParams)
+            const actionCaches = actionsGetActionsCacheList.data.actions_caches
+            
+            if (actionCaches.length < 1) {
+              return
+            }
+            
+            const actionsDeleteActionsCacheByKey = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              key: actionCaches[0].key,
+            }
+            console.log('call actions.deleteActionsCacheByKey', actionsDeleteActionsCacheByKey)
+            await github.rest.actions.deleteActionsCacheByKey(actionsDeleteActionsCacheByKey)
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
