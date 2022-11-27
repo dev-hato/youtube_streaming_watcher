@@ -2,7 +2,9 @@
 name: clean-cache
 
 on:
-  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   clean-cache:
