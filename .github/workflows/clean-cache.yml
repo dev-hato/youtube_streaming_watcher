@@ -18,6 +18,7 @@ jobs:
             }
             console.log('call actions.getActionsCacheUsage', actionsGetActionsCacheUsageParams)
             const actionsCacheUsage = await github.rest.actions.getActionsCacheUsage(actionsGetActionsCacheUsageParams)
+            console.log(actionsCacheUsage.data.active_caches_size_in_bytes)
 
             if (actionsCacheUsage.data.active_caches_size_in_bytes <= 9 * 1024 * 1024 * 1024) {
               return
@@ -32,6 +33,7 @@ jobs:
             console.log('call actions.getActionsCacheList', actionsGetActionsCacheListParams)
             const actionsGetActionsCacheList = await github.rest.actions.getActionsCacheList(actionsGetActionsCacheListParams)
             const actionCaches = actionsGetActionsCacheList.data.actions_caches
+            console.log(actionCaches[0].size_in_bytes)
 
             if (actionCaches.length < 1) {
               return
