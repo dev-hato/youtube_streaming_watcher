@@ -7,6 +7,7 @@ module.exports = async ({ github, context }) => {
   }
   console.log('call actions.getActionsCacheList', actionsGetActionsCacheListParams)
   const actionsGetActionsCacheList = await github.paginate(github.rest.actions.getActionsCacheList, actionsGetActionsCacheListParams)
+  console.log(actionsGetActionsCacheList)
   const actionCaches = actionsGetActionsCacheList.actions_caches
   let sumSize = actionCaches.reduce((sum, size) => sum + (size.size_in_bytes ?? 0), 0)
 
