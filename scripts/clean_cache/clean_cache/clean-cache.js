@@ -7,7 +7,7 @@ module.exports = async ({ github, context }) => {
     console.log('call actions.getActionsCacheUsage', actionsGetActionsCacheUsageParams)
     const actionsCacheUsage = await github.rest.actions.getActionsCacheUsage(actionsGetActionsCacheUsageParams)
 
-    if (actionsCacheUsage.data.active_caches_size_in_bytes <= 9 * 1024 * 1024 * 1024) {
+    if (actionsCacheUsage.data.active_caches_size_in_bytes <= 8 * 1024 * 1024 * 1024) {
       return
     }
 
