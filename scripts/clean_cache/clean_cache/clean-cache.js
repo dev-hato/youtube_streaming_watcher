@@ -6,13 +6,14 @@ module.exports = async ({ github, context }) => {
     direction: 'asc'
   }
   console.log('call actions.getActionsCacheList', actionsGetActionsCacheListParams)
-  const actionsGetActionsCacheList = await github.paginate(github.rest.actions.getActionsCacheList, actionsGetActionsCacheListParams)
-  console.log(actionsGetActionsCacheList)
-  const actionCaches = actionsGetActionsCacheList.actions_caches
-  let sumSize = actionCaches.reduce((sum, size) => sum + (size.size_in_bytes ?? 0), 0)
+  const actionsGetActionsCacheList = await github.paginate(
+    github.rest.actions.getActionsCacheList,
+    actionsGetActionsCacheListParams
+  )
+  let sumSize = actionsGetActionsCacheList.reduce((sum, size) => sum + (size.size_in_bytes ?? 0), 0)
 
   while (8 * 1024 * 1024 * 1024 < sumSize) {
-    const actionCache = actionCaches.shift()
+    const actionCache = actionsGetActionsCacheList.shift()
     const actionsDeleteActionsCacheByKey = {
       owner: context.repo.owner,
       repo: context.repo.repo,
