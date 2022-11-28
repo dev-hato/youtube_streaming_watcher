@@ -13,7 +13,7 @@
       "matchPackageNames": [
         "@types/node"
       ],
-      "allowedVersions": "<=18"
+      "allowedVersions": "<=16"
     },
     {
       "matchPackageNames": [

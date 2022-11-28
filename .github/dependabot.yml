@@ -13,7 +13,7 @@ updates:
     ignore:
       - dependency-name: '@types/node'
         versions:
-          - '>18'
+          - '>16'
       - dependency-name: express
         versions:
           - '>4.17'
