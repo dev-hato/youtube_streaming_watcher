@@ -18,8 +18,22 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/clean_cache/clean_cache/clean-cache.js`)
-            await script({github, context})
+            const actionsDeleteActionsCacheByKey = {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                key: 'node-cache-Linux-npm-f81f9403044ac556b6ea749e5ff5ea2b357b0410a1cad877b9c5cf06df36f9f1'
+            }
+            console.log('call actions.deleteActionsCacheByKey', actionsDeleteActionsCacheByKey)
+            let deleteActionsCacheByKeyResult
+        
+            try {
+              deleteActionsCacheByKeyResult = await github.rest.actions.deleteActionsCacheByKey(
+                actionsDeleteActionsCacheByKey
+              )
+            }catch (e) {
+              console.log(e)
+              console.log(e.status)
+            }
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
