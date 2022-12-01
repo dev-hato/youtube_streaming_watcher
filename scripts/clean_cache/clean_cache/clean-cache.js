@@ -20,7 +20,7 @@ module.exports = async ({ github, context }) => {
   let actionsGetActionsCacheList = await getActionsGetActionsCacheList({ github, context })
   let sumSize = getSumSize(actionsGetActionsCacheList)
 
-  while (8 * 1024 * 1024 * 1024 < sumSize) {
+  while (7 * 1024 * 1024 * 1024 < sumSize) {
     const actionCache = actionsGetActionsCacheList.shift()
     const actionsDeleteActionsCacheByKey = {
       owner: context.repo.owner,
