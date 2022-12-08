@@ -27,7 +27,6 @@ jobs:
       - uses: dev-hato/actions-format-json-yml@v0.0.27
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
-          repo-name: dev-hato/youtube_streaming_watcher
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
