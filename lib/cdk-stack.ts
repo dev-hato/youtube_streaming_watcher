@@ -147,7 +147,7 @@ export class CdkStack extends Stack {
           }),
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
-            actions: ['GetAnomaly*'],
+            actions: ['ce:GetAnomaly*'],
             resources: ['*']
           })
         ]
