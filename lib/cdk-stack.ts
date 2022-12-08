@@ -11,8 +11,6 @@ import {
   aws_cloudwatch as cloudwatch,
   aws_cloudwatch_actions as cloudwatchActions,
   aws_dynamodb as dynamodb,
-  aws_events as events,
-  aws_events_targets as targets,
   aws_iam as iam,
   aws_lambda as lambda,
   aws_lambda_nodejs as lambdaNode,
