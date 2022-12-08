@@ -134,7 +134,8 @@ export class CdkStack extends Stack {
       'AWSCloudFormationReadOnlyAccess',
       'AmazonEventBridgeReadOnlyAccess',
       'AWSLambda_ReadOnlyAccess',
-      'IAMReadOnlyAccess'
+      'IAMReadOnlyAccess',
+      'AWSBudgetsReadOnlyAccess'
     ].map(name => iam.ManagedPolicy.fromAwsManagedPolicyName(name)).concat([
       new iam.ManagedPolicy(this, 'Policy-cdk', {
         managedPolicyName: 'youtube_streaming_watcher_cdk',
@@ -143,6 +144,11 @@ export class CdkStack extends Stack {
             effect: iam.Effect.ALLOW,
             actions: ['apigateway:Get*'],
             resources: [apiArn]
+          }),
+          new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            actions: ['GetAnomaly*'],
+            resources: ['*']
           })
         ]
       })
@@ -265,6 +271,7 @@ export class CdkStack extends Stack {
       secret.grantRead(cdkRoles.deploy)
     }
 
+    cdkRoles.deploy.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSBudgetsActionsWithAWSResourceControlAccess'))
     cdkRoles.deploy.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_deploy', {
       managedPolicyName: cdkDeployRoleName,
       statements: [
@@ -336,6 +343,11 @@ export class CdkStack extends Stack {
           effect: iam.Effect.ALLOW,
           actions: ['chatbot:CreateSlackChannelConfiguration'],
           resources: [chatbotSlackChannelConfig.slackChannelConfigurationArn]
+        }),
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: ['ce:UpdateAnomaly*','ce:DeleteAnomaly*','ce:CreateAnomaly*'],
+          resources: ['*']
         })
       ]
     }))
