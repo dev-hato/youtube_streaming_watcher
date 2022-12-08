@@ -24,7 +24,6 @@ import {
 } from 'aws-cdk-lib'
 import * as fs from 'fs'
 import { dynamoDBTableProps } from './props/dynamodb-table-props'
-import { rate } from './props/events-rule-props'
 import { functionProps } from './props/function-props'
 import { cdkRoleProps } from './props/cdk-role-props'
 import { secretProps } from './props/secret-props'
@@ -103,10 +102,10 @@ export class CdkStack extends Stack {
         notificationTopics: [lambdaSNSTopic]
       }
     )
-    const rule = new events.Rule(this, 'EventsRule-notify', {
-      schedule: events.Schedule.rate(rate),
-      targets: [new targets.LambdaFunction(functionData.notify)]
-    })
+    // const rule = new events.Rule(this, 'EventsRule-notify', {
+    //   schedule: events.Schedule.rate(rate),
+    //   targets: [new targets.LambdaFunction(functionData.notify)]
+    // })
     const apiAccessLogGroup = new logs.LogGroup(this, 'Log-apigateway_reply', {
       logGroupName: '/aws/apigateway/youtube_streaming_watcher_reply_api/access_log',
       removalPolicy: RemovalPolicy.RETAIN
@@ -297,16 +296,16 @@ export class CdkStack extends Stack {
           ],
           resources: [`arn:aws:cloudformation:${this.region}:${this.account}:stack/${id}/*`]
         }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'events:RemoveTargets',
-            'events:DeleteRule',
-            'events:PutRule',
-            'events:PutTargets'
-          ],
-          resources: [rule.ruleArn]
-        }),
+        // new iam.PolicyStatement({
+        //   effect: iam.Effect.ALLOW,
+        //   actions: [
+        //     'events:RemoveTargets',
+        //     'events:DeleteRule',
+        //     'events:PutRule',
+        //     'events:PutTargets'
+        //   ],
+        //   resources: [rule.ruleArn]
+        // }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: [
