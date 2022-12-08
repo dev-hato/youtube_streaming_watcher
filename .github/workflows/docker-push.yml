@@ -152,7 +152,6 @@ jobs:
       - uses: dev-hato/actions-update-dockle@v0.0.33
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
-          repo-name: ${{ github.event.pull_request.head.repo.full_name }}
 
   dockle:
     runs-on: ubuntu-latest
