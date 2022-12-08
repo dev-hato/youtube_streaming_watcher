@@ -346,7 +346,7 @@ export class CdkStack extends Stack {
         }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
-          actions: ['ce:UpdateAnomaly*','ce:DeleteAnomaly*','ce:CreateAnomaly*'],
+          actions: ['ce:UpdateAnomaly*', 'ce:DeleteAnomaly*', 'ce:CreateAnomaly*'],
           resources: ['*']
         })
       ]
