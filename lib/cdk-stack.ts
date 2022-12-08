@@ -59,9 +59,9 @@ export class CdkStack extends Stack {
           return {
             notification,
             subscribers: [{
-            address: secrets.email.secretValueFromJson('email').toString(),
+              address: secrets.email.secretValueFromJson('email').toString(),
               subscriptionType: 'EMAIL'
-          }]
+            }]
           }
         })
       })
