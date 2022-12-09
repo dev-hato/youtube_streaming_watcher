@@ -8,7 +8,6 @@ import {
   StackProps,
   aws_apigateway as apigateway,
   aws_budgets as budgets,
-  aws_ce as ce,
   aws_chatbot as chatbot,
   aws_cloudwatch as cloudwatch,
   aws_cloudwatch_actions as cloudwatchActions,
@@ -26,10 +25,10 @@ import * as fs from 'fs'
 import { dynamoDBTableProps } from './props/dynamodb-table-props'
 import { functionProps } from './props/function-props'
 import { cdkRoleProps } from './props/cdk-role-props'
-import { secretProps } from './props/secret-props'
+import { secretProps } from '../common/props/secret-props'
 import { budgetProps } from './props/budget-props'
 
-export class CdkStack extends Stack {
+export class DefaultCdkStack extends Stack {
   constructor (scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
 
@@ -67,24 +66,6 @@ export class CdkStack extends Stack {
       })
     }
 
-    const ceAnomalyMonitorName = 'cost'
-    const ceAnomalyMonitor = new ce.CfnAnomalyMonitor(this, `CEAnomalyMonitor-${ceAnomalyMonitorName}`, {
-      monitorName: ceAnomalyMonitorName,
-      monitorType: 'DIMENSIONAL',
-      monitorDimension: 'SERVICE'
-    })
-    const ceAnomalySubscriptionFrequency = 'DAILY'
-    new ce.CfnAnomalySubscription(this, `CEAnomalySubscription-${ceAnomalySubscriptionFrequency.toLowerCase()}_${ceAnomalyMonitorName}`, { // eslint-disable-line no-new
-      subscriptionName: ceAnomalyMonitorName,
-      threshold: 7,
-      frequency: ceAnomalySubscriptionFrequency,
-      monitorArnList: [ceAnomalyMonitor.ref],
-      subscribers: [{
-        address: secrets.email.secretValueFromJson('email').toString(),
-        type: 'EMAIL',
-        status: 'CONFIRMED'
-      }]
-    })
     const environment = {
       NODE_OPTIONS: '--unhandled-rejections=strict',
       SLACK_BOT_TOKEN: secrets.slack.secretValueFromJson('slack_bot_token').toString(),
