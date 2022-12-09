@@ -1,9 +1,9 @@
 import { aws_budgets as budgets } from 'aws-cdk-lib'
 
 interface BudgetProp {
-    budgetName: string;
-    usdLimitAmount: number;
-    notifications: Array<budgets.CfnBudget.NotificationProperty>;
+  budgetName: string
+  usdLimitAmount: number
+  notifications: budgets.CfnBudget.NotificationProperty[]
 }
 
 export const budgetProps: BudgetProp[] = [
