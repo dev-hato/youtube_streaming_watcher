@@ -151,7 +151,6 @@ export class DefaultCdkStack extends Stack {
     })
 
     const qualifier: string = this.node.tryGetContext(BOOTSTRAP_QUALIFIER_CONTEXT) ?? DefaultStackSynthesizer.DEFAULT_QUALIFIER
-    const apiArn = `arn:aws:apigateway:${this.region}::/restapis/${api.restApiId}/*`
     const managedPolicies: iam.IManagedPolicy[] = [
       'AmazonDynamoDBReadOnlyAccess',
       'AmazonS3ReadOnlyAccess',
@@ -159,25 +158,8 @@ export class DefaultCdkStack extends Stack {
       'AWSCloudFormationReadOnlyAccess',
       'AmazonEventBridgeReadOnlyAccess',
       'AWSLambda_ReadOnlyAccess',
-      'IAMReadOnlyAccess',
-      'AWSBudgetsReadOnlyAccess'
-    ].map(name => iam.ManagedPolicy.fromAwsManagedPolicyName(name)).concat([
-      new iam.ManagedPolicy(this, 'Policy-cdk', {
-        managedPolicyName: 'youtube_streaming_watcher_cdk',
-        statements: [
-          new iam.PolicyStatement({
-            effect: iam.Effect.ALLOW,
-            actions: ['apigateway:Get*'],
-            resources: [apiArn]
-          }),
-          new iam.PolicyStatement({
-            effect: iam.Effect.ALLOW,
-            actions: ['ce:GetAnomaly*'],
-            resources: ['*']
-          })
-        ]
-      })
-    ])
+      'IAMReadOnlyAccess'
+    ].map(name => iam.ManagedPolicy.fromAwsManagedPolicyName(name))
 
     const cdkRoles = Object.fromEntries(cdkRoleProps.map(d => {
       const oidcSub = (process.env.REPOSITORY ?? 'dev-hato/youtube_streaming_watcher') + ':' + d.oidcSub
@@ -197,6 +179,25 @@ export class DefaultCdkStack extends Stack {
           ),
           managedPolicies
         })
+      ]
+    }))
+    const apigatewayPolicyStatement = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['apigateway:Get*'],
+      resources: [`arn:aws:apigateway:${this.region}::/restapis/${api.restApiId}/*`]
+    })
+    const ceAnomalyPolicyStatement = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['ce:GetAnomaly*'],
+      resources: ['*']
+    })
+
+    cdkRoles.diff.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSBudgetsReadOnlyAccess'))
+    cdkRoles.diff.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_diff', {
+      managedPolicyName: 'youtube_streaming_watcher_cdk_diff',
+      statements: [
+        apigatewayPolicyStatement,
+        ceAnomalyPolicyStatement
       ]
     }))
 
@@ -296,6 +297,15 @@ export class DefaultCdkStack extends Stack {
       secret.grantRead(cdkRoles.deploy)
     }
 
+    const apigatewayDeployPolicyStatement = apigatewayPolicyStatement.copy()
+    apigatewayDeployPolicyStatement.addActions(
+      'apigateway:DELETE',
+      'apigateway:POST',
+      'apigateway:PUT',
+      'apigateway:PATCH'
+    )
+    const ceAnomalyDeployPolicyStatement = ceAnomalyPolicyStatement.copy()
+    ceAnomalyDeployPolicyStatement.addActions('ce:UpdateAnomaly*', 'ce:DeleteAnomaly*', 'ce:CreateAnomaly*')
     cdkRoles.deploy.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSBudgetsActionsWithAWSResourceControlAccess'))
     cdkRoles.deploy.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_deploy', {
       managedPolicyName: cdkDeployRoleName,
@@ -306,16 +316,7 @@ export class DefaultCdkStack extends Stack {
           actions: ['apigateway:PATCH'],
           resources: [`arn:aws:apigateway:${this.region}::/account`]
         }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'apigateway:DELETE',
-            'apigateway:POST',
-            'apigateway:PUT',
-            'apigateway:PATCH'
-          ],
-          resources: [apiArn]
-        }),
+        apigatewayDeployPolicyStatement,
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: [
@@ -369,11 +370,7 @@ export class DefaultCdkStack extends Stack {
           actions: ['chatbot:CreateSlackChannelConfiguration'],
           resources: [chatbotSlackChannelConfig.slackChannelConfigurationArn]
         }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: ['ce:UpdateAnomaly*', 'ce:DeleteAnomaly*', 'ce:CreateAnomaly*'],
-          resources: ['*']
-        })
+        ceAnomalyDeployPolicyStatement
       ]
     }))
   }
