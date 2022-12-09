@@ -263,19 +263,19 @@ export class DefaultCdkStack extends Stack {
     for (const region of [this.region, 'us-east-1']) {
       s3.Bucket.fromBucketName(
         this,
-        'Bucket-cdk_default',
-          `cdk-${qualifier}-assets-${this.account}-${region}`
+        `Bucket-cdk_default_${region}`,
+        `cdk-${qualifier}-assets-${this.account}-${region}`
       ).grantPut(cdkRoleData.deploy)
       iam.Role.fromRoleName(
         this,
-        'Role-cdk_default_file_publishing_role',
+        `Role-cdk_default_file_publishing_role_${region}`,
         `cdk-${qualifier}-file-publishing-role-${this.account}-${region}`
       ).grant(cdkRoleData.deploy, 'sts:AssumeRole')
 
       for (const kind of ['lookup', 'deploy']) {
         const cdkDefaultRole = iam.Role.fromRoleName(
           this,
-          `Role-cdk_default_${kind}`,
+          `Role-cdk_default_${kind}_${region}`,
           `cdk-${qualifier}-${kind}-role-${this.account}-${region}`
         )
 
