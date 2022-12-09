@@ -9,7 +9,7 @@
     "build": "tsc",
     "watch": "tsc -w",
     "cdk": "cdk",
-    "fix": "eslint --fix bin/**/*.ts lib/*.ts lib/**/*.ts src/**/*.ts"
+    "fix": "eslint --fix bin/**/*.ts lib/**/*.ts src/**/*.ts"
   },
   "devDependencies": {
     "@proofdict/textlint-rule-proofdict": "3.1.2",
