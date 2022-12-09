@@ -161,7 +161,7 @@ export class DefaultCdkStack extends Stack {
       'IAMReadOnlyAccess'
     ].map(name => iam.ManagedPolicy.fromAwsManagedPolicyName(name))
 
-    const cdkRoles = Object.fromEntries(cdkRoleProps.map(d => {
+    const cdkRoleData = Object.fromEntries(cdkRoleProps.map(d => {
       const oidcSub = (process.env.REPOSITORY ?? 'dev-hato/youtube_streaming_watcher') + ':' + d.oidcSub
       return [
         d.name,
@@ -220,7 +220,7 @@ export class DefaultCdkStack extends Stack {
     const iamRoleDeployPolicyResourceArns = [
       functionData.notify.role?.roleArn,
       functionData.reply.role?.roleArn,
-      cdkRoles.diff.roleArn,
+      cdkRoleData.diff.roleArn,
       `arn:aws:iam::${this.account}:role/${cdkDeployRoleName}`,
       `arn:aws:iam::${this.account}:role/${id.slice(0, 24)}*`
     ]
@@ -252,20 +252,42 @@ export class DefaultCdkStack extends Stack {
           'dynamodb:PartiQLUpdate'
         )
         table.grant(
-          cdkRoles.deploy,
+          cdkRoleData.deploy,
           'dynamodb:CreateTable',
           'dynamodb:DeleteTable'
         )
       }
     }
 
-    s3.Bucket.fromBucketName(
-      this,
-      'Bucket-cdk_default',
-        `cdk-${qualifier}-assets-${this.account}-${this.region}`
-    ).grantPut(cdkRoles.deploy)
+    const cdkRoles = Object.values(cdkRoleData)
+
+    for (const region of [this.region, 'us-east-1']) {
+      s3.Bucket.fromBucketName(
+        this,
+        `Bucket-cdk_default_${region}`,
+        `cdk-${qualifier}-assets-${this.account}-${region}`
+      ).grantPut(cdkRoleData.deploy)
+      iam.Role.fromRoleName(
+        this,
+        `Role-cdk_default_file_publishing_role_${region}`,
+        `cdk-${qualifier}-file-publishing-role-${this.account}-${region}`
+      ).grant(cdkRoleData.deploy, 'sts:AssumeRole')
+
+      for (const kind of ['lookup', 'deploy']) {
+        const cdkDefaultRole = iam.Role.fromRoleName(
+          this,
+          `Role-cdk_default_${kind}_${region}`,
+          `cdk-${qualifier}-${kind}-role-${this.account}-${region}`
+        )
+
+        for (const role of cdkRoles) {
+          cdkDefaultRole.grant(role, 'sts:AssumeRole')
+        }
+      }
+    }
+
     apiAccessLogGroup.grant(
-      cdkRoles.deploy,
+      cdkRoleData.deploy,
       'logs:CreateLogGroup',
       'logs:PutRetentionPolicy',
       'logs:DeleteLogGroup'
@@ -275,26 +297,13 @@ export class DefaultCdkStack extends Stack {
       'SSMParameter-cdk_bootstrap',
         `/cdk-bootstrap/${qualifier}/version`
     )
-    iam.Role.fromRoleName(
-      this,
-      'Role-cdk_default_file_publishing_role',
-        `cdk-${qualifier}-file-publishing-role-${this.account}-${this.region}`
-    ).grant(cdkRoles.deploy, 'sts:AssumeRole')
-    const cdkDefaultRoles = ['lookup', 'deploy'].map(s => iam.Role.fromRoleName(
-      this,
-            `Role-cdk_default_${s}`,
-            `cdk-${qualifier}-${s}-role-${this.account}-${this.region}`
-    ))
 
-    for (const role of Object.values(cdkRoles)) {
+    for (const role of cdkRoles) {
       cdkBootstrapParam.grantRead(role)
-      for (const cdkDefaultRole of cdkDefaultRoles) {
-        cdkDefaultRole.grant(role, 'sts:AssumeRole')
-      }
     }
 
     for (const secret of Object.values(secrets)) {
-      secret.grantRead(cdkRoles.deploy)
+      secret.grantRead(cdkRoleData.deploy)
     }
 
     const apigatewayDeployPolicyStatement = apigatewayPolicyStatement.copy()
@@ -306,8 +315,8 @@ export class DefaultCdkStack extends Stack {
     )
     const ceAnomalyDeployPolicyStatement = ceAnomalyPolicyStatement.copy()
     ceAnomalyDeployPolicyStatement.addActions('ce:UpdateAnomaly*', 'ce:DeleteAnomaly*', 'ce:CreateAnomaly*')
-    cdkRoles.deploy.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSBudgetsActionsWithAWSResourceControlAccess'))
-    cdkRoles.deploy.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_deploy', {
+    cdkRoleData.deploy.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSBudgetsActionsWithAWSResourceControlAccess'))
+    cdkRoleData.deploy.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_deploy', {
       managedPolicyName: cdkDeployRoleName,
       statements: [
         iamRoleDeployPolicy,
