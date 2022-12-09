@@ -83,6 +83,8 @@ Slack上でbotに対してリプライを送ることで、設定を変更でき
         * `twitter_bearer_token`: ベアラートークン
     * `youtube_streaming_watcher_youtube`: 配信通知関連 (YouTube)
         * `youtube_api_key`: YouTube Data API用のAPIキー
+    * `youtube_streaming_watcher_email`: コスト通知関連 (メール)
+        * `email`: コスト通知用メールアドレス
 5. スタックをデプロイします。  
 なお、リポジトリが `dev-hato/youtube_streaming_watcher` 以外の場合は環境変数 `REPOSITORY=org/repository` をセットした状態で実行します。
 

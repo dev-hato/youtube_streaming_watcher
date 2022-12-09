@@ -7,6 +7,8 @@ import {
   Stack,
   StackProps,
   aws_apigateway as apigateway,
+  aws_budgets as budgets,
+  aws_ce as ce,
   aws_chatbot as chatbot,
   aws_cloudwatch as cloudwatch,
   aws_cloudwatch_actions as cloudwatchActions,
@@ -25,6 +27,7 @@ import { dynamoDBTableProps } from './props/dynamodb-table-props'
 import { functionProps } from './props/function-props'
 import { cdkRoleProps } from './props/cdk-role-props'
 import { secretProps } from './props/secret-props'
+import { budgetProps } from './props/budget-props'
 
 export class CdkStack extends Stack {
   constructor (scope: Construct, id: string, props?: StackProps) {
@@ -41,6 +44,47 @@ export class CdkStack extends Stack {
         )
       ]
     }))
+
+    for (const budget of budgetProps) {
+      const timeUnit = 'MONTHLY'
+      new budgets.CfnBudget(this, `BudgetsBudget-${timeUnit.toLowerCase()}_${budget.budgetName}`, { // eslint-disable-line no-new
+        budget: {
+          budgetLimit: { amount: budget.usdLimitAmount, unit: 'USD' },
+          timeUnit,
+          budgetName: budget.budgetName,
+          costTypes: { includeRefund: false, includeCredit: false },
+          budgetType: 'COST'
+        },
+        notificationsWithSubscribers: budget.notifications.map(notification => {
+          return {
+            notification,
+            subscribers: [{
+              address: secrets.email.secretValueFromJson('email').toString(),
+              subscriptionType: 'EMAIL'
+            }]
+          }
+        })
+      })
+    }
+
+    const ceAnomalyMonitorName = 'cost'
+    const ceAnomalyMonitor = new ce.CfnAnomalyMonitor(this, `CEAnomalyMonitor-${ceAnomalyMonitorName}`, {
+      monitorName: ceAnomalyMonitorName,
+      monitorType: 'DIMENSIONAL',
+      monitorDimension: 'SERVICE'
+    })
+    const ceAnomalySubscriptionFrequency = 'DAILY'
+    new ce.CfnAnomalySubscription(this, `CEAnomalySubscription-${ceAnomalySubscriptionFrequency.toLowerCase()}_${ceAnomalyMonitorName}`, { // eslint-disable-line no-new
+      subscriptionName: ceAnomalyMonitorName,
+      threshold: 7,
+      frequency: ceAnomalySubscriptionFrequency,
+      monitorArnList: [ceAnomalyMonitor.ref],
+      subscribers: [{
+        address: secrets.email.secretValueFromJson('email').toString(),
+        type: 'EMAIL',
+        status: 'CONFIRMED'
+      }]
+    })
     const environment = {
       NODE_OPTIONS: '--unhandled-rejections=strict',
       SLACK_BOT_TOKEN: secrets.slack.secretValueFromJson('slack_bot_token').toString(),
