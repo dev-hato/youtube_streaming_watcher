@@ -103,7 +103,7 @@ export class DefaultCdkStack extends Stack {
       const alarm = new cloudwatch.Alarm(this, `Alarm-lambda_${key}`, {
         evaluationPeriods: 1,
         metric: func.metric('Errors', {
-          statistic: cloudwatch.Statistic.AVERAGE,
+          statistic: cloudwatch.Stats.AVERAGE,
           period: Duration.minutes(5)
         }),
         threshold: 0,
