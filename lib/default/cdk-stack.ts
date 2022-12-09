@@ -192,8 +192,8 @@ export class DefaultCdkStack extends Stack {
       resources: ['*']
     })
 
-    cdkRoles.diff.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSBudgetsReadOnlyAccess'))
-    cdkRoles.diff.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_diff', {
+    cdkRoleData.diff.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSBudgetsReadOnlyAccess'))
+    cdkRoleData.diff.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_diff', {
       managedPolicyName: 'youtube_streaming_watcher_cdk_diff',
       statements: [
         apigatewayPolicyStatement,
