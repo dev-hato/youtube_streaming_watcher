@@ -199,36 +199,7 @@ export class DefaultCdkStack extends Stack {
         })
       ]
     }))
-
-    const iamRoleDeployPolicy = new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: [
-        'iam:AttachRolePolicy',
-        'iam:CreateRole',
-        'iam:DeleteRole',
-        'iam:DeleteRolePolicy',
-        'iam:DetachRolePolicy',
-        'iam:PassRole',
-        'iam:PutRolePolicy',
-        'iam:CreatePolicyVersion',
-        'iam:DeletePolicyVersion'
-      ]
-    })
-
     const cdkDeployRoleName = 'youtube_streaming_watcher_cdk_deploy'
-    const iamRoleDeployPolicyResourceArns = [
-      functionData.notify.role?.roleArn,
-      functionData.reply.role?.roleArn,
-      cdkRoles.diff.roleArn,
-      `arn:aws:iam::${this.account}:role/${cdkDeployRoleName}`,
-      `arn:aws:iam::${this.account}:role/${id.slice(0, 24)}*`
-    ]
-
-    for (const arn of iamRoleDeployPolicyResourceArns) {
-      if (arn !== undefined) {
-        iamRoleDeployPolicy.addResources(arn)
-      }
-    }
 
     for (const tableProp of dynamoDBTableProps) {
       if (tableProp.tableName === undefined) {
@@ -296,36 +267,23 @@ export class DefaultCdkStack extends Stack {
       secret.grantRead(cdkRoles.deploy)
     }
 
-    cdkRoles.deploy.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSBudgetsActionsWithAWSResourceControlAccess'))
+    const deployRoleManagedPolicies = [
+      'AmazonSNSFullAccess',
+      'AWSCloudFormationFullAccess',
+      'AWSLambda_FullAccess',
+      'IAMFullAccess',
+      'AWSBudgetsActionsWithAWSResourceControlAccess',
+      'AmazonAPIGatewayAdministrator',
+      'CloudWatchFullAccess'
+    ]
+
+    for (const managedPolicy of deployRoleManagedPolicies) {
+      cdkRoles.deploy.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName(managedPolicy))
+    }
+
     cdkRoles.deploy.addManagedPolicy(new iam.ManagedPolicy(this, 'Policy-cdk_deploy', {
       managedPolicyName: cdkDeployRoleName,
       statements: [
-        iamRoleDeployPolicy,
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: ['apigateway:PATCH'],
-          resources: [`arn:aws:apigateway:${this.region}::/account`]
-        }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'apigateway:DELETE',
-            'apigateway:POST',
-            'apigateway:PUT',
-            'apigateway:PATCH'
-          ],
-          resources: [apiArn]
-        }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'cloudformation:DeleteStack',
-            'cloudformation:CreateChangeSet',
-            'cloudformation:ExecuteChangeSet',
-            'cloudformation:DeleteChangeSet'
-          ],
-          resources: [`arn:aws:cloudformation:${this.region}:${this.account}:stack/${id}/*`]
-        }),
         // new iam.PolicyStatement({
         //   effect: iam.Effect.ALLOW,
         //   actions: [
@@ -336,34 +294,6 @@ export class DefaultCdkStack extends Stack {
         //   ],
         //   resources: [rule.ruleArn]
         // }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'lambda:AddPermission',
-            'lambda:CreateFunction',
-            'lambda:RemovePermission',
-            'lambda:DeleteFunction',
-            'lambda:UpdateFunctionCode',
-            'lambda:UpdateFunctionConfiguration'
-          ],
-          resources: functions.map(f => f.functionArn)
-        }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'SNS:CreateTopic',
-            'SNS:DeleteTopic'
-          ],
-          resources: [lambdaSNSTopic.topicArn]
-        }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'cloudwatch:PutMetricAlarm',
-            'cloudwatch:DeleteAlarms'
-          ],
-          resources: alarmArns
-        }),
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ['chatbot:CreateSlackChannelConfiguration'],
