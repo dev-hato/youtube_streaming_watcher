@@ -33,7 +33,7 @@ COPY package*.json .
 RUN npm ci \
     && rm -rf /home/node/.npm
 COPY tsconfig.json .
-COPY lib/props/ lib/props/
+COPY lib/default/props/ lib/default/props/
 COPY src/common/ src/common/
 COPY healthcheck.sh .
 
