@@ -25,7 +25,7 @@ import * as fs from 'fs'
 import { dynamoDBTableProps } from './props/dynamodb-table-props'
 import { functionProps } from './props/function-props'
 import { cdkRoleProps } from './props/cdk-role-props'
-import { secretProps } from '../common/props/secret-props'
+import { secretProps } from './props/secret-props'
 import { budgetProps } from './props/budget-props'
 
 export class DefaultCdkStack extends Stack {
