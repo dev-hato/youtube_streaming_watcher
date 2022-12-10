@@ -1,6 +1,6 @@
 import { App, AppOptions, ExpressReceiver, GenericMessageEvent, SayFn } from '@slack/bolt'
 import axios from 'axios'
-import cheerio from 'cheerio'
+import { load } from 'cheerio'
 import Parser from 'rss-parser'
 import { runQuery } from './dynamodb'
 import { pingHandler, pingPath, port } from './server.dev'
@@ -79,7 +79,7 @@ async function getChannelData (
   if (id.startsWith('https://www.youtube.com/')) {
     console.log('get:', id)
     const response = await axios.get(id)
-    const $ = cheerio.load(response.data)
+    const $ = load(response.data)
     const idContent = $('meta[itemprop="channelId"]').attr('content')
 
     if (idContent === undefined) {
