@@ -1,6 +1,6 @@
 import { Construct } from 'constructs'
 import { aws_ce as ce, aws_secretsmanager as secretmanager, Stack, StackProps } from 'aws-cdk-lib'
-import { secretProps } from '../common/props/secret-props'
+import { secretProps } from './props/secret-props'
 
 export class CEAnomalyCdkStack extends Stack {
   constructor (scope: Construct, id: string, props?: StackProps) {
