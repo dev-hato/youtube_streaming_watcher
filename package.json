@@ -58,7 +58,7 @@
     "aws-cdk-lib": "2.58.1",
     "axios": "1.2.2",
     "cheerio": "1.0.0-rc.12",
-    "constructs": "10.1.205",
+    "constructs": "10.1.206",
     "express": "4.17.3",
     "googleapis": "110.0.0",
     "rss-parser": "3.12.0",
