@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: actions/setup-node@v3.5.1
+      - uses: actions/setup-node@v3.6.0
         with:
           node-version-file: .node-version
           cache: npm
@@ -53,7 +53,7 @@ jobs:
       - env:
           LAMBDA_VERSION: ${{steps.get_latest_lambda_support_version.outputs.result}}
         run: bash "${GITHUB_WORKSPACE}/scripts/update_major_node/update_major_node/exit.sh"
-      - uses: actions/setup-node@v3.5.1
+      - uses: actions/setup-node@v3.6.0
         with:
           node-version: ${{steps.get_latest_lambda_support_version.outputs.result}}
       - uses: dev-hato/actions-diff-pr-management@v1.1.1
