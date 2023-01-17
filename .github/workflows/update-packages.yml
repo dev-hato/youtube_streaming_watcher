@@ -56,7 +56,7 @@ jobs:
         env:
           EXPRESS_VERSION: ${{ steps.get_types_express_version.outputs.result }}
         run: bash "${GITHUB_WORKSPACE}/scripts/update_packages/update_packages/update.sh"
-      - uses: dev-hato/actions-diff-pr-management@v1.1.1
+      - uses: dev-hato/actions-diff-pr-management@v1.1.2
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: update-packages
