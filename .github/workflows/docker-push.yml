@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Get @types/node version
-        uses: actions/github-script@v6.3.3
+        uses: actions/github-script@v6.4.0
         id: get_types_node_version
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -40,7 +40,7 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_node/update_docker_version.sh"
-      - uses: actions/github-script@v6.3.3
+      - uses: actions/github-script@v6.4.0
         env:
           PACKAGE_ECOSYSTEM: docker
           MATCH_PACKAGE_NAME: node

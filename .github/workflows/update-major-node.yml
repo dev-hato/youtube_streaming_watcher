@@ -33,14 +33,14 @@ jobs:
       - run: bash "${GITHUB_WORKSPACE}/scripts/npm_ci.sh"
       - name: Get latest Lambda support version
         id: get_latest_lambda_support_version
-        uses: actions/github-script@v6.3.3
+        uses: actions/github-script@v6.4.0
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           result-encoding: string
           script: |
             const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_major_node/update_major_node/get_latest_lambda_support_version.js`)
             return await script()
-      - uses: actions/github-script@v6.3.3
+      - uses: actions/github-script@v6.4.0
         env:
           PACKAGE_ECOSYSTEM: npm
           MATCH_PACKAGE_NAME: "@types/node"

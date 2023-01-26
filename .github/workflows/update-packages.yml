@@ -28,7 +28,7 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - name: Get @types/express version
-        uses: actions/github-script@v6.3.3
+        uses: actions/github-script@v6.4.0
         id: get_types_express_version
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -37,7 +37,7 @@ jobs:
             const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_packages/update_packages/get_types_express_version.js`)
             return script()
       - run: bash "${GITHUB_WORKSPACE}/scripts/npm_ci.sh"
-      - uses: actions/github-script@v6.3.3
+      - uses: actions/github-script@v6.4.0
         env:
           PACKAGE_ECOSYSTEM: npm
           MATCH_PACKAGE_NAME: express
