@@ -1,4 +1,4 @@
-FROM amazon/dynamodb-local:1.20.0
+FROM amazon/dynamodb-local:1.21.0
 
 USER root
 
