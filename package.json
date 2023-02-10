@@ -21,7 +21,7 @@
     "aws-cdk": "2.64.0",
     "domhandler": "5.0.3",
     "esbuild": "0.17.7",
-    "eslint": "8.33.0",
+    "eslint": "8.34.0",
     "eslint-config-standard": "17.0.0",
     "eslint-plugin-import": "2.27.5",
     "eslint-plugin-jsonc": "2.6.0",
