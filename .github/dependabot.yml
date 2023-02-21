@@ -25,5 +25,5 @@ updates:
     ignore:
       - dependency-name: node
         versions:
-          - '>18.13'
+          - '>18.14'
     open-pull-requests-limit: 1
