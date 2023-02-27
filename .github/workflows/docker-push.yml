@@ -50,7 +50,7 @@ jobs:
           script: |
             const script = require(`${process.env.GITHUB_WORKSPACE}/scripts/update_config.js`)
             script()
-      - uses: dev-hato/actions-diff-pr-management@v1.1.2
+      - uses: dev-hato/actions-diff-pr-management@v1.1.3
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: update-node
@@ -136,7 +136,7 @@ jobs:
         env:
           DEPENDABOT_NPM_VERSION: ${{steps.get_dependabot_node_version.outputs.npm_version}}
         run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/update_version/npm_install.sh"
-      - uses: dev-hato/actions-diff-pr-management@v1.1.2
+      - uses: dev-hato/actions-diff-pr-management@v1.1.3
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           branch-name-prefix: fix-version
