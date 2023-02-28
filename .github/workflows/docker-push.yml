@@ -142,6 +142,26 @@ jobs:
           branch-name-prefix: fix-version
           pr-title-prefix: nodeをアップデートしてあげたよ！
 
+  format:
+    runs-on: ubuntu-latest
+    needs: update-version
+    steps:
+      - uses: actions/checkout@v3.3.0
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v3.6.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/format/fix.sh"
+      - uses: dev-hato/actions-diff-pr-management@v1.1.3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          branch-name-prefix: fix-format
+          pr-title-prefix: formatを直してあげたよ！
+
   update-dockle:
     runs-on: ubuntu-latest
     steps:
@@ -175,12 +195,12 @@ jobs:
     runs-on: ubuntu-latest
     if: always() && (github.event_name != 'pull_request' || github.event.action != 'closed')
     needs:
-      - update-version
+      - format
       - dockle
     steps:
-      - if: needs.update-version.result == 'success' && needs.dockle.result == 'success'
+      - if: needs.format.result == 'success' && needs.dockle.result == 'success'
         run: exit 0
-      - if: ${{ !(needs.update-version.result == 'success' && needs.dockle.result == 'success') }}
+      - if: ${{ !(needs.format.result == 'success' && needs.dockle.result == 'success') }}
         run: exit 1
 
 concurrency:
