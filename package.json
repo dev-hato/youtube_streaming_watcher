@@ -60,7 +60,7 @@
     "cheerio": "1.0.0-rc.12",
     "constructs": "10.1.264",
     "express": "4.17.3",
-    "googleapis": "111.0.0",
+    "googleapis": "112.0.0",
     "rss-parser": "3.12.0",
     "sleep-promise": "9.1.0",
     "twitter-api-v2": "1.14.2"
