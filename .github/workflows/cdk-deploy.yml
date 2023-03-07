@@ -39,7 +39,7 @@ jobs:
       REPOSITORY: ${{github.repository}}
       ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/youtube_streaming_watcher_cdk_deploy
     steps:
-      - uses: aws-actions/configure-aws-credentials@v1.7.0
+      - uses: aws-actions/configure-aws-credentials@v2.0.0
         with:
           role-to-assume: ${{ env.ROLE }}
           aws-region: ${{ secrets.AWS_REGION }}
