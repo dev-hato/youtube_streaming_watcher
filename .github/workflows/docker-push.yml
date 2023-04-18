@@ -88,7 +88,7 @@ jobs:
       # jscpd:ignore-end
       - run: bash "${GITHUB_WORKSPACE}/scripts/docker_push/set_env.sh"
       - name: Build and push (main)
-        uses: docker/bake-action@v2.3.0
+        uses: docker/bake-action@v3.0.0
         env:
           DOCKER_CONTENT_TRUST: 1
         with:
