@@ -1,4 +1,4 @@
-FROM node:18.16.0-bullseye-slim AS base
+FROM node:18.15.0-bullseye-slim AS base
 
 RUN apt-get update \
     # hadolint ignore=DL3008
